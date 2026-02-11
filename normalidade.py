@@ -1,253 +1,108 @@
-import sys
-import streamlit as st
-
-# VERIFICAÇÃO DA VERSÃO DO PYTHON
-if sys.version_info[:2] != (3, 11):
-    st.error(f"""
-    ⚠️ **Versão do Python incorreta!**
-    
-    Este app requer Python 3.11 e está rodando em Python {sys.version_info[0]}.{sys.version_info[1]}.
-    
-    No Streamlit Cloud, crie um arquivo `packages.txt` com o conteúdo:
-    ```
-    python-3.11.9
-    ```
-    
-    Após adicionar o arquivo, faça um novo deploy.
-    """)
-    st.stop()
-
-# LIMPEZA FORÇADA DO CACHE
-st.cache_data.clear()
-st.cache_resource.clear()
-
-# O RESTO DO SEU CÓDIGO AQUI...
-
 import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats as stats
-import plotly.express as px
-import plotly.graph_objects as go
 
 st.set_page_config(page_title="Teste de Normalidade dos Dados", layout="wide")
 st.title("Teste de Normalidade dos Dados")
 
-# Inicializar session state
+# Inicializar session state para manter os dados entre interações
 if 'df_completo' not in st.session_state:
     st.session_state.df_completo = None
 if 'atletas_selecionados' not in st.session_state:
     st.session_state.atletas_selecionados = []
-if 'processar' not in st.session_state:
-    st.session_state.processar = False
-if 'lista_atletas' not in st.session_state:
-    st.session_state.lista_atletas = []
-if 'selecionar_todos' not in st.session_state:
-    st.session_state.selecionar_todos = True
-if 'upload_concluido' not in st.session_state:
-    st.session_state.upload_concluido = False
 
 with st.sidebar:
     upload_file = st.file_uploader(
         "Escolha o arquivo:", 
         type=['csv'],
-        accept_multiple_files=False,
-        key="file_uploader"
+        accept_multiple_files=False
     )
     
     n_classes = st.slider(
         "Número de classes (faixas):", 
         min_value=3, 
         max_value=20, 
-        value=5,
-        key="n_classes"
+        value=5
     )
     
     # Processar arquivo quando enviado
-   # Processar arquivo quando enviado
-if upload_file is not None and not st.session_state.upload_concluido:
-    try:
-        data = pd.read_csv(upload_file)
-
-        # Validação básica
-        if data.shape[1] < 2 or data.empty:
-            st.error("O arquivo precisa ter pelo menos duas colunas com dados válidos.")
-        else:
-            # Garantir que a segunda coluna seja numérica
-            data[data.columns[1]] = pd.to_numeric(
-                data[data.columns[1]], errors="coerce"
-            )
-
-            # Remover linhas com NaN na coluna de valores
-            data = data.dropna(subset=[data.columns[1]])
-
-            if data.empty:
-                st.error("Não há valores numéricos válidos na segunda coluna.")
-            else:
-                # Criar DataFrame estruturado de forma segura
-                df_completo = pd.DataFrame({
-                    "Nome": data.iloc[:, 0].astype(str).str.split("-").str[0].str.strip(),
-                    "Minuto": data.iloc[:, 0].astype(str).str[-13:].str.strip(),
-                    "Valor": data.iloc[:, 1].values
-                })
-
-                # Remover nomes vazios
-                df_completo = df_completo[df_completo["Nome"].str.len() > 0]
-
-                if df_completo.empty:
-                    st.error("Nenhum dado válido encontrado após processamento.")
-                else:
-                    # Atualizar session state
-                    st.session_state.df_completo = df_completo.copy()
-                    st.session_state.lista_atletas = sorted(
-                        df_completo["Nome"].unique().tolist()
-                    )
-                    st.session_state.atletas_selecionados = (
-                        st.session_state.lista_atletas.copy()
-                    )
-                    st.session_state.selecionar_todos = True
-                    st.session_state.processar = False
-                    st.session_state.upload_concluido = True
-
-    except Exception as e:
-        st.error(f"Erro ao ler arquivo: {str(e)}")
-        st.session_state.upload_concluido = False
-
-        data = pd.read_csv(upload_file)
-
-        # Validação básica
-        if data.shape[1] < 2 or data.empty:
-            st.error("O arquivo precisa ter pelo menos duas colunas com dados válidos.")
-        else:
-            # Garantir que a segunda coluna seja numérica
-            data[data.columns[1]] = pd.to_numeric(
-                data[data.columns[1]], errors="coerce"
-            )
-
-            # Remover linhas com NaN na coluna de valores
-            data = data.dropna(subset=[data.columns[1]])
-
-            if data.empty:
-                st.error("Não há valores numéricos válidos na segunda coluna.")
-            else:
-                # Criar DataFrame estruturado de forma segura
-                df_completo = pd.DataFrame({
-                    "Nome": data.iloc[:, 0].astype(str).str.split("-").str[0].str.strip(),
-                    "Minuto": data.iloc[:, 0].astype(str).str[-13:].str.strip(),
-                    "Valor": data.iloc[:, 1].values
-                })
-
-                # Remover nomes vazios
-                df_completo = df_completo[df_completo["Nome"].str.len() > 0]
-
-                if df_completo.empty:
-                    st.error("Nenhum dado válido encontrado após processamento.")
-                else:
-                    # Atualizar session state
-                    st.session_state.df_completo = df_completo.copy()
-                    st.session_state.lista_atletas = sorted(
-                        df_completo["Nome"].unique().tolist()
-                    )
-                    st.session_state.atletas_selecionados = (
-                        st.session_state.lista_atletas.copy()
-                    )
-                    st.session_state.selecionar_todos = True
-                    st.session_state.processar = False
-                    st.session_state.upload_concluido = True
-
-    except Exception as e:
-        st.error(f"Erro ao ler arquivo: {str(e)}")
-        st.session_state.upload_concluido = False
+    if upload_file is not None:
+        try:
+            data = pd.read_csv(upload_file)
+            
+            if data.shape[1] >= 2 and not data.empty and not data.iloc[:, 1].isnull().all():
+                # Processar dados
+                dados_teste = data.iloc[:, 1].dropna()
+                primeira_coluna = data.iloc[:, 0].astype(str)
+                
+                nomes = primeira_coluna.str.split('-').str[0].str.strip()
+                minutos = primeira_coluna.str[-13:].str.strip()
+                
+                if len(nomes) == len(minutos) == len(dados_teste):
+                    df_completo = pd.DataFrame({
+                        'Nome': nomes.reset_index(drop=True),
+                        'Minuto': minutos.reset_index(drop=True),
+                        'Valor': dados_teste.reset_index(drop=True)
+                    })
+                    
+                    df_completo = df_completo[df_completo['Nome'].str.len() > 0]
+                    
+                    if not df_completo.empty:
+                        st.session_state.df_completo = df_completo
+                        st.session_state.atletas_selecionados = sorted(df_completo['Nome'].unique())
+        except Exception as e:
+            st.error(f"Erro ao ler arquivo: {str(e)}")
     
-    # Reset do estado de upload se um novo arquivo for carregado
-    if upload_file is None:
-        st.session_state.upload_concluido = False
-        st.session_state.df_completo = None
-        st.session_state.lista_atletas = []
-        st.session_state.atletas_selecionados = []
-    
-    # --- FILTRO POR ATLETA - SOMENTE SE EXISTIREM ATLETAS NA LISTA ---
-    if st.session_state.lista_atletas and len(st.session_state.lista_atletas) > 0:
+    # --- FILTRO POR ATLETA ---
+    if st.session_state.df_completo is not None:
         st.markdown("---")
         st.subheader("🔍 Filtro por Atleta")
         
-        # Checkbox para selecionar todos
+        lista_atletas = sorted(st.session_state.df_completo['Nome'].unique())
+        
         selecionar_todos = st.checkbox(
             "Selecionar todos os atletas",
-            value=st.session_state.selecionar_todos,
-            key="selecionar_todos_checkbox"
+            value=True,
+            key="selecionar_todos"
         )
         
-        # Atualizar session_state.selecionar_todos
-        st.session_state.selecionar_todos = selecionar_todos
-        
         if selecionar_todos:
-            st.session_state.atletas_selecionados = st.session_state.lista_atletas.copy()
-            st.info(f"✅ {len(st.session_state.lista_atletas)} atletas selecionados")
-            
-            # Exibir multiselect desabilitado
-            st.multiselect(
-                "Selecione os atletas:",
-                options=st.session_state.lista_atletas,
-                default=st.session_state.lista_atletas,
-                disabled=True,
-                key="multiselect_disabled"
-            )
+            st.session_state.atletas_selecionados = lista_atletas
+            # Mostrar apenas um texto informativo quando "selecionar todos" está ativo
+            st.info(f"✅ {len(lista_atletas)} atletas selecionados")
         else:
-            # Multiselect para seleção individual
-            default_values = []
-            if st.session_state.atletas_selecionados:
-                default_values = [a for a in st.session_state.atletas_selecionados if a in st.session_state.lista_atletas]
-            
             atletas_sel = st.multiselect(
                 "Selecione os atletas:",
-                options=st.session_state.lista_atletas,
-                default=default_values,
-                key="multiselect_enabled"
+                options=lista_atletas,
+                default=st.session_state.atletas_selecionados if st.session_state.atletas_selecionados else [],
+                key="multiselect_ativos"
             )
-            
             if atletas_sel:
-                st.session_state.atletas_selecionados = atletas_sel.copy()
-                st.caption(f"✅ {len(atletas_sel)} atletas selecionados")
+                st.session_state.atletas_selecionados = atletas_sel
             else:
                 st.session_state.atletas_selecionados = []
                 st.warning("Selecione pelo menos um atleta")
+        
+        if st.session_state.atletas_selecionados:
+            st.caption(f"✅ {len(st.session_state.atletas_selecionados)} atletas selecionados")
     
-    # Botões
-    col1, col2 = st.columns([1, 1])
-    with col1:
-        processar_click = st.button("Processar", type="primary", use_container_width=True)
-    with col2:
-        limpar_click = st.button("Limpar", type="secondary", use_container_width=True)
-    
-    if limpar_click:
-        st.session_state.processar = False
-        st.session_state.df_completo = None
-        st.session_state.lista_atletas = []
-        st.session_state.atletas_selecionados = []
-        st.session_state.selecionar_todos = True
-        st.session_state.upload_concluido = False
-        st.rerun()
-    
-    if processar_click:
-        if st.session_state.df_completo is not None and st.session_state.atletas_selecionados:
-            st.session_state.processar = True
-        else:
-            st.error("Selecione pelo menos um atleta antes de processar")
-            st.session_state.processar = False
+    process_button = st.button("Processar", type="primary", use_container_width=True)
+    if st.session_state.df_completo is not None and not st.session_state.atletas_selecionados:
+        st.error("Selecione pelo menos um atleta antes de processar")
+        process_button = False
 
 # --- ÁREA PRINCIPAL ---
-if st.session_state.processar and st.session_state.df_completo is not None and st.session_state.atletas_selecionados:
+if process_button and st.session_state.df_completo is not None and st.session_state.atletas_selecionados:
     df_completo = st.session_state.df_completo
     atletas_selecionados = st.session_state.atletas_selecionados
     
     # Aplicar filtro
-    df_filtrado = df_completo[df_completo['Nome'].isin(atletas_selecionados)].copy()
+    df_filtrado = df_completo[df_completo['Nome'].isin(atletas_selecionados)]
     
     if df_filtrado.empty:
         st.warning("Nenhum dado encontrado para os atletas selecionados")
-        st.session_state.processar = False
     else:
         # --- GRÁFICOS ---
         col1, col2 = st.columns(2)
@@ -412,178 +267,89 @@ if st.session_state.processar and st.session_state.df_completo is not None and s
             else:
                 st.warning("Existem evidências suficientes para rejeitar a hipótese de normalidade dos dados")
         
-        # --- GRÁFICO DE LINHA DO TEMPO (INTERATIVO COM PLOTLY) ---
+        # --- GRÁFICO DE LINHA DO TEMPO ---
         st.subheader("⏱️ Evolução Temporal dos Valores")
         
         # Ordenar por minuto
         df_tempo = df_filtrado.copy()
         df_tempo = df_tempo.sort_values('Minuto').reset_index(drop=True)
         
-        # Calcular métricas
+        # Calcular média e limiar de 80%
         media_valor = df_tempo['Valor'].mean()
-        max_valor = df_tempo['Valor'].max()
-        limiar_80 = max_valor * 0.8
-        limiar_70 = max_valor * 0.7
+        limiar_80 = df_tempo['Valor'].max() * 0.8
         
-        # Criar coluna de cores baseada nos limiares
-        def get_color(valor):
-            if valor > limiar_80:
-                return 'red'
-            elif valor > limiar_70:
-                return 'gold'
-            else:
-                return 'steelblue'
+        # Criar gráfico
+        fig_tempo, ax_tempo = plt.subplots(figsize=(12, 6))
         
-        df_tempo['Cor'] = df_tempo['Valor'].apply(get_color)
+        # Definir cores baseadas no limiar de 80%
+        cores = ['red' if valor > limiar_80 else 'steelblue' for valor in df_tempo['Valor']]
         
-        # Criar gráfico interativo com Plotly
-        fig_tempo = go.Figure()
-        
-        # Adicionar barras
-        fig_tempo.add_trace(go.Bar(
-            x=df_tempo['Minuto'],
-            y=df_tempo['Valor'],
-            marker_color=df_tempo['Cor'],
-            hovertemplate='<b>Minuto:</b> %{x}<br><b>Valor:</b> %{y:.2f}<br><extra></extra>',
-            name='Valor',
-            opacity=0.7
-        ))
-        
-        # Adicionar linha da média
-        fig_tempo.add_trace(go.Scatter(
-            x=df_tempo['Minuto'],
-            y=[media_valor] * len(df_tempo),
-            mode='lines',
-            name=f'Média: {media_valor:.2f}',
-            line=dict(color='black', width=2, dash='dash'),
-            hovertemplate=f'Média: {media_valor:.2f}<extra></extra>'
-        ))
-        
-        # Adicionar linha de 80%
-        fig_tempo.add_trace(go.Scatter(
-            x=df_tempo['Minuto'],
-            y=[limiar_80] * len(df_tempo),
-            mode='lines',
-            name=f'80% do Máx: {limiar_80:.2f}',
-            line=dict(color='orange', width=1, dash='dot'),
-            hovertemplate=f'80% do Máximo: {limiar_80:.2f}<extra></extra>'
-        ))
-        
-        # Adicionar linha de 70%
-        fig_tempo.add_trace(go.Scatter(
-            x=df_tempo['Minuto'],
-            y=[limiar_70] * len(df_tempo),
-            mode='lines',
-            name=f'70% do Máx: {limiar_70:.2f}',
-            line=dict(color='gold', width=1, dash='dot'),
-            hovertemplate=f'70% do Máximo: {limiar_70:.2f}<extra></extra>'
-        ))
-        
-        # Layout do gráfico
-        fig_tempo.update_layout(
-            title=f"Evolução Temporal - {len(atletas_selecionados)} atleta(s)",
-            xaxis_title="Minuto",
-            yaxis_title="Valor",
-            hovermode='x unified',
-            legend=dict(
-                yanchor="top",
-                y=0.99,
-                xanchor="left",
-                x=0.01
-            ),
-            height=500,
-            margin=dict(l=50, r=50, t=50, b=50),
-            plot_bgcolor='white',
-            hoverlabel=dict(
-                bgcolor="white",
-                font_size=12
-            )
+        # Plotar barras
+        bars = ax_tempo.bar(
+            range(len(df_tempo)),
+            df_tempo['Valor'],
+            color=cores,
+            alpha=0.7,
+            edgecolor='black',
+            linewidth=0.5
         )
         
-        # Configurar grid
-        fig_tempo.update_xaxes(gridcolor='lightgrey', gridwidth=0.5, tickangle=45)
-        fig_tempo.update_yaxes(gridcolor='lightgrey', gridwidth=0.5)
+        # Configurar eixo X com minutos
+        ax_tempo.set_xticks(range(len(df_tempo)))
+        ax_tempo.set_xticklabels(
+            df_tempo['Minuto'], 
+            rotation=45, 
+            ha='right',
+            fontsize=8
+        )
+        
+        # Adicionar linha média tracejada em preto
+        ax_tempo.axhline(
+            y=media_valor,
+            color='black',
+            linestyle='--',
+            linewidth=1.5,
+            label=f'Média: {media_valor:.2f}'
+        )
+        
+        # Adicionar linha do limiar (opcional - para referência)
+        ax_tempo.axhline(
+            y=limiar_80,
+            color='orange',
+            linestyle=':',
+            linewidth=1,
+            alpha=0.5,
+            label=f'80% do Máx: {limiar_80:.2f}'
+        )
+        
+        # Títulos e labels
+        ax_tempo.set_title(f"Evolução Temporal - {len(atletas_selecionados)} atleta(s)", fontsize=14)
+        ax_tempo.set_xlabel("Minuto", fontsize=12)
+        ax_tempo.set_ylabel("Valor", fontsize=12)
+        
+        # Legenda
+        ax_tempo.legend(loc='upper right')
+        
+        # Grid para melhor legibilidade
+        ax_tempo.grid(axis='y', alpha=0.3, linestyle='-', linewidth=0.5)
+        
+        # Ajustar layout
+        plt.tight_layout()
         
         # Exibir gráfico
-        st.plotly_chart(fig_tempo, use_container_width=True)
+        st.pyplot(fig_tempo)
+        plt.close(fig_tempo)
         
         # Legenda explicativa
         st.caption(
-            "🔵 Barras azuis: valores ≤ 70% do máximo | "
-            "🟡 Barras amarelas: 70% < valores ≤ 80% do máximo | "
+            "🔵 Barras azuis: valores ≤ 80% do máximo | "
             "🔴 Barras vermelhas: valores > 80% do máximo | "
-            "⚫ Linha tracejada preta: média"
+            "⚫ Linha tracejada preta: média | "
+            "🟠 Linha pontilhada laranja: 80% do valor máximo"
         )
-        
-        # --- TABELA DE FREQUÊNCIA POR PERCENTIS (10 em 10%) ---
-        st.subheader("📊 Tabela de Frequência - Distribuição por Percentis (10% em 10%)")
-        
-        # Calcular percentis
-        percentis = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
-        limites_percentis = [df_filtrado['Valor'].quantile(p/100) for p in percentis]
-        
-        # Criar rótulos para as faixas percentílicas
-        rotulos_percentis = []
-        inicio = df_filtrado['Valor'].min()
-        
-        for i, p in enumerate(percentis):
-            if i == 0:
-                rotulos_percentis.append(f"[{inicio:.2f} - {limites_percentis[i]:.2f})")
-            else:
-                rotulos_percentis.append(f"[{limites_percentis[i-1]:.2f} - {limites_percentis[i]:.2f})")
-        
-        # Categorizar os dados por percentis
-        categorias_percentis = pd.cut(
-            df_filtrado['Valor'],
-            bins=[inicio] + limites_percentis,
-            labels=rotulos_percentis,
-            include_lowest=True,
-            right=False
-        )
-        
-        # Criar tabela de frequência para percentis
-        freq_percentil = pd.DataFrame({
-            'Faixa de Valores (Percentil)': rotulos_percentis,
-            'Percentil': [f"{p}%" for p in percentis],
-            'Frequência': [0] * len(percentis)
-        })
-        
-        # Preencher frequências
-        contagens_percentis = categorias_percentis.value_counts().sort_index()
-        for i, rotulo in enumerate(rotulos_percentis):
-            if rotulo in contagens_percentis.index:
-                freq_percentil.loc[i, 'Frequência'] = int(contagens_percentis[rotulo])
-        
-        # Calcular percentuais e acumulados
-        freq_percentil['Percentual (%)'] = (
-            freq_percentil['Frequência'] / len(df_filtrado) * 100
-        ).round(2)
-        freq_percentil['Frequência Acumulada'] = freq_percentil['Frequência'].cumsum()
-        freq_percentil['Percentual Acumulado (%)'] = freq_percentil['Percentual (%)'].cumsum()
-        
-        # Exibir tabela
-        st.dataframe(
-            freq_percentil[['Faixa de Valores (Percentil)', 'Frequência', 'Percentual (%)', 
-                           'Frequência Acumulada', 'Percentual Acumulado (%)']].style.format({
-                'Frequência': '{:.0f}',
-                'Percentual (%)': '{:.2f}%',
-                'Frequência Acumulada': '{:.0f}',
-                'Percentual Acumulado (%)': '{:.2f}%'
-            }),
-            use_container_width=True,
-            hide_index=True
-        )
-        
-        # Estatísticas adicionais dos percentis
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.metric("Mediana (50%)", f"{limites_percentis[4]:.2f}")
-        with col2:
-            st.metric("Q1 (25%)", f"{df_filtrado['Valor'].quantile(0.25):.2f}")
-        with col3:
-            st.metric("Q3 (75%)", f"{df_filtrado['Valor'].quantile(0.75):.2f}")
 
-elif st.session_state.df_completo is None:
-    st.info("👈 Faça upload de um arquivo CSV para começar")
-else:
-    st.info("👈 Selecione os atletas e clique em 'Processar'")
+elif not process_button:
+    if st.session_state.df_completo is None:
+        st.info("👈 Faça upload de um arquivo CSV para começar")
+    else:
+        st.info("👈 Selecione os atletas e clique em 'Processar'")
