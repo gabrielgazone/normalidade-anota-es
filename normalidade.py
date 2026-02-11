@@ -21,6 +21,10 @@ with st.sidebar:
         value=5
     )
     
+    # Placeholder para o filtro de atletas (será preenchido após upload)
+    filtro_atletas = None
+    atletas_selecionados = []
+    
     process_button = st.button("Processar")
 
 if process_button and upload_file is not None:
@@ -55,163 +59,205 @@ if process_button and upload_file is not None:
                 if df_completo.empty:
                     st.error("Não foi possível extrair nomes válidos da primeira coluna")
                 else:
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        fig_hist, ax_hist = plt.subplots()
-                        ax_hist.hist(
-                            df_completo['Valor'], 
-                            bins=n_classes,
-                            color='blue', 
-                            alpha=0.7, 
-                            rwidth=0.85
-                        )
-                        ax_hist.set_title("Histograma")
-                        ax_hist.set_xlabel("Valores")
-                        ax_hist.set_ylabel("Frequência")
-                        st.pyplot(fig_hist)
-                        plt.close(fig_hist)
-                    
-                    with col2:
-                        fig_qq, ax_qq = plt.subplots()
-                        stats.probplot(
-                            df_completo['Valor'], 
-                            dist='norm', 
-                            plot=ax_qq
-                        )
-                        ax_qq.set_title("QQ Plot")
-                        st.pyplot(fig_qq)
-                        plt.close(fig_qq)
-                    
-                    st.subheader("📊 Tabela de Frequência")
-                    
-                    minimo = df_completo['Valor'].min()
-                    maximo = df_completo['Valor'].max()
-                    amplitude_total = maximo - minimo
-                    largura_classe = amplitude_total / n_classes if amplitude_total > 0 else 1
-                    
-                    limites = [minimo + i * largura_classe for i in range(n_classes + 1)]
-                    
-                    rotulos = []
-                    for i in range(n_classes):
-                        inicio = limites[i]
-                        fim = limites[i + 1]
-                        rotulos.append(f"[{inicio:.2f} - {fim:.2f})")
-                    
-                    categorias = pd.cut(
-                        df_completo['Valor'], 
-                        bins=limites, 
-                        labels=rotulos, 
-                        include_lowest=True, 
-                        right=False
-                    )
-                    
-                    freq_table = pd.DataFrame({
-                        'Faixa de Valores': rotulos,
-                        'Frequência': [0] * n_classes
-                    })
-                    
-                    contagens = categorias.value_counts()
-                    for i, rotulo in enumerate(rotulos):
-                        if rotulo in contagens.index:
-                            freq_table.loc[i, 'Frequência'] = int(contagens[rotulo])
-                    
-                    freq_table['Percentual (%)'] = (
-                        freq_table['Frequência'] / len(df_completo) * 100
-                    ).round(2)
-                    freq_table['Frequência Acumulada'] = freq_table['Frequência'].cumsum()
-                    freq_table['Percentual Acumulado (%)'] = freq_table['Percentual (%)'].cumsum()
-                    
-                    st.dataframe(
-                        freq_table.style.format({
-                            'Frequência': '{:.0f}',
-                            'Percentual (%)': '{:.2f}%',
-                            'Frequência Acumulada': '{:.0f}',
-                            'Percentual Acumulado (%)': '{:.2f}%'
-                        }),
-                        use_container_width=True,
-                        hide_index=True
-                    )
-                    
-                    col1, col2, col3, col4 = st.columns(4)
-                    with col1:
-                        st.metric("Mínimo", f"{minimo:.2f}")
-                    with col2:
-                        st.metric("Máximo", f"{maximo:.2f}")
-                    with col3:
-                        st.metric("Amplitude", f"{amplitude_total:.2f}")
-                    with col4:
-                        st.metric("Nº de Classes", n_classes)
-                    
-                    st.subheader("🏃 Resumo por Atleta")
-                    
-                    resumo_atletas = []
-                    
-                    for nome in df_completo['Nome'].unique():
-                        dados_atleta = df_completo[df_completo['Nome'] == nome]
+                    # --- FILTRO POR ATLETA (AGORA NA SIDEBAR) ---
+                    with st.sidebar:
+                        st.markdown("---")
+                        st.subheader("🔍 Filtros")
                         
-                        if not dados_atleta.empty:
-                            idx_max = dados_atleta['Valor'].idxmax()
-                            valor_max = dados_atleta.loc[idx_max, 'Valor']
-                            minuto_max = dados_atleta.loc[idx_max, 'Minuto']
+                        # Lista única de atletas
+                        lista_atletas = sorted(df_completo['Nome'].unique())
+                        
+                        # Checkbox para selecionar todos
+                        selecionar_todos = st.checkbox(
+                            "Selecionar todos os atletas",
+                            value=True
+                        )
+                        
+                        if selecionar_todos:
+                            atletas_selecionados = lista_atletas
+                        else:
+                            atletas_selecionados = st.multiselect(
+                                "Selecione os atletas:",
+                                options=lista_atletas,
+                                default=[]
+                            )
                             
-                            idx_min = dados_atleta['Valor'].idxmin()
-                            valor_min = dados_atleta.loc[idx_min, 'Valor']
-                            minuto_min = dados_atleta.loc[idx_min, 'Minuto']
-                            
-                            amplitude = valor_max - valor_min
-                            
-                            resumo_atletas.append({
-                                'Atleta': nome,
-                                'Valor Máximo': valor_max,
-                                'Minuto do Máximo': minuto_max,
-                                'Valor Mínimo': valor_min,
-                                'Minuto do Mínimo': minuto_min,
-                                'Amplitude (Máx - Mín)': amplitude
-                            })
+                            if not atletas_selecionados:
+                                st.warning("Selecione pelo menos um atleta")
+                                atletas_selecionados = lista_atletas
                     
-                    if resumo_atletas:
-                        df_resumo = pd.DataFrame(resumo_atletas)
-                        df_resumo = df_resumo.sort_values('Atleta').reset_index(drop=True)
+                    # Aplicar filtro
+                    df_filtrado = df_completo[df_completo['Nome'].isin(atletas_selecionados)]
+                    
+                    if df_filtrado.empty:
+                        st.warning("Nenhum dado encontrado para os atletas selecionados")
+                    else:
+                        # --- GRÁFICOS COM DADOS FILTRADOS ---
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            fig_hist, ax_hist = plt.subplots()
+                            ax_hist.hist(
+                                df_filtrado['Valor'], 
+                                bins=n_classes,
+                                color='blue', 
+                                alpha=0.7, 
+                                rwidth=0.85
+                            )
+                            ax_hist.set_title(f"Histograma - {len(atletas_selecionados)} atleta(s)")
+                            ax_hist.set_xlabel("Valores")
+                            ax_hist.set_ylabel("Frequência")
+                            st.pyplot(fig_hist)
+                            plt.close(fig_hist)
+                        
+                        with col2:
+                            fig_qq, ax_qq = plt.subplots()
+                            stats.probplot(
+                                df_filtrado['Valor'], 
+                                dist='norm', 
+                                plot=ax_qq
+                            )
+                            ax_qq.set_title(f"QQ Plot - {len(atletas_selecionados)} atleta(s)")
+                            st.pyplot(fig_qq)
+                            plt.close(fig_qq)
+                        
+                        # --- TABELA DE FREQUÊNCIA ---
+                        st.subheader("📊 Tabela de Frequência")
+                        
+                        minimo = df_filtrado['Valor'].min()
+                        maximo = df_filtrado['Valor'].max()
+                        amplitude_total = maximo - minimo
+                        largura_classe = amplitude_total / n_classes if amplitude_total > 0 else 1
+                        
+                        limites = [minimo + i * largura_classe for i in range(n_classes + 1)]
+                        
+                        rotulos = []
+                        for i in range(n_classes):
+                            inicio = limites[i]
+                            fim = limites[i + 1]
+                            rotulos.append(f"[{inicio:.2f} - {fim:.2f})")
+                        
+                        categorias = pd.cut(
+                            df_filtrado['Valor'], 
+                            bins=limites, 
+                            labels=rotulos, 
+                            include_lowest=True, 
+                            right=False
+                        )
+                        
+                        freq_table = pd.DataFrame({
+                            'Faixa de Valores': rotulos,
+                            'Frequência': [0] * n_classes
+                        })
+                        
+                        contagens = categorias.value_counts()
+                        for i, rotulo in enumerate(rotulos):
+                            if rotulo in contagens.index:
+                                freq_table.loc[i, 'Frequência'] = int(contagens[rotulo])
+                        
+                        freq_table['Percentual (%)'] = (
+                            freq_table['Frequência'] / len(df_filtrado) * 100
+                        ).round(2)
+                        freq_table['Frequência Acumulada'] = freq_table['Frequência'].cumsum()
+                        freq_table['Percentual Acumulado (%)'] = freq_table['Percentual (%)'].cumsum()
                         
                         st.dataframe(
-                            df_resumo.style.format({
-                                'Valor Máximo': '{:.2f}',
-                                'Valor Mínimo': '{:.2f}',
-                                'Amplitude (Máx - Mín)': '{:.2f}'
+                            freq_table.style.format({
+                                'Frequência': '{:.0f}',
+                                'Percentual (%)': '{:.2f}%',
+                                'Frequência Acumulada': '{:.0f}',
+                                'Percentual Acumulado (%)': '{:.2f}%'
                             }),
                             use_container_width=True,
                             hide_index=True
                         )
-                    else:
-                        st.warning("Não foi possível gerar resumo dos atletas")
-                    
-                    st.subheader("🧪 Resultado do Teste de Normalidade")
-                    st.write(f"**Tamanho da amostra:** {len(df_completo)}")
-                    
-                    if len(df_completo) < 3:
-                        st.error("Amostra muito pequena (n < 3). Teste não aplicável.")
-                    elif len(df_completo) > 5000:
-                        st.warning("Amostra grande demais para Shapiro-Wilk. Usando teste D'Agostino-Pearson.")
-                        k2, p_value = stats.normaltest(df_completo['Valor'])
-                        if p_value < 0.0001:
-                            st.write(f"**Valor de p:** {p_value:.2e} (notação científica)")
+                        
+                        # --- ESTATÍSTICAS DESCRITIVAS GERAIS ---
+                        col1, col2, col3, col4 = st.columns(4)
+                        with col1:
+                            st.metric("Mínimo", f"{minimo:.2f}")
+                        with col2:
+                            st.metric("Máximo", f"{maximo:.2f}")
+                        with col3:
+                            st.metric("Amplitude", f"{amplitude_total:.2f}")
+                        with col4:
+                            st.metric("Nº de Classes", n_classes)
+                            st.metric("Atletas Selecionados", len(atletas_selecionados))
+                        
+                        # --- TABELA RESUMO POR ATLETA (APENAS ATLETAS SELECIONADOS) ---
+                        st.subheader("🏃 Resumo por Atleta")
+                        
+                        resumo_atletas = []
+                        
+                        for nome in atletas_selecionados:
+                            dados_atleta = df_filtrado[df_filtrado['Nome'] == nome]
+                            
+                            if not dados_atleta.empty:
+                                idx_max = dados_atleta['Valor'].idxmax()
+                                valor_max = dados_atleta.loc[idx_max, 'Valor']
+                                minuto_max = dados_atleta.loc[idx_max, 'Minuto']
+                                
+                                idx_min = dados_atleta['Valor'].idxmin()
+                                valor_min = dados_atleta.loc[idx_min, 'Valor']
+                                minuto_min = dados_atleta.loc[idx_min, 'Minuto']
+                                
+                                amplitude = valor_max - valor_min
+                                
+                                resumo_atletas.append({
+                                    'Atleta': nome,
+                                    'Valor Máximo': valor_max,
+                                    'Minuto do Máximo': minuto_max,
+                                    'Valor Mínimo': valor_min,
+                                    'Minuto do Mínimo': minuto_min,
+                                    'Amplitude (Máx - Mín)': amplitude,
+                                    'Nº Amostras': len(dados_atleta)
+                                })
+                        
+                        if resumo_atletas:
+                            df_resumo = pd.DataFrame(resumo_atletas)
+                            df_resumo = df_resumo.sort_values('Atleta').reset_index(drop=True)
+                            
+                            st.dataframe(
+                                df_resumo.style.format({
+                                    'Valor Máximo': '{:.2f}',
+                                    'Valor Mínimo': '{:.2f}',
+                                    'Amplitude (Máx - Mín)': '{:.2f}',
+                                    'Nº Amostras': '{:.0f}'
+                                }),
+                                use_container_width=True,
+                                hide_index=True
+                            )
                         else:
-                            st.write(f"**Valor de p:** {p_value:.5f}")
-                        if p_value > 0.05:
-                            st.success("Não existem evidências suficientes para rejeitar a hipótese de normalidade dos dados")
+                            st.warning("Não foi possível gerar resumo dos atletas")
+                        
+                        # --- TESTE DE NORMALIDADE ---
+                        st.subheader("🧪 Resultado do Teste de Normalidade")
+                        st.write(f"**Tamanho da amostra:** {len(df_filtrado)}")
+                        st.write(f"**Atletas analisados:** {', '.join(atletas_selecionados[:3])}{'...' if len(atletas_selecionados) > 3 else ''}")
+                        
+                        if len(df_filtrado) < 3:
+                            st.error("Amostra muito pequena (n < 3). Teste não aplicável.")
+                        elif len(df_filtrado) > 5000:
+                            st.warning("Amostra grande demais para Shapiro-Wilk. Usando teste D'Agostino-Pearson.")
+                            k2, p_value = stats.normaltest(df_filtrado['Valor'])
+                            if p_value < 0.0001:
+                                st.write(f"**Valor de p:** {p_value:.2e} (notação científica)")
+                            else:
+                                st.write(f"**Valor de p:** {p_value:.5f}")
+                            if p_value > 0.05:
+                                st.success("Não existem evidências suficientes para rejeitar a hipótese de normalidade dos dados")
+                            else:
+                                st.warning("Existem evidências suficientes para rejeitar a hipótese de normalidade dos dados")
                         else:
-                            st.warning("Existem evidências suficientes para rejeitar a hipótese de normalidade dos dados")
-                    else:
-                        shapiro_test = stats.shapiro(df_completo['Valor'])
-                        p_valor = shapiro_test.pvalue
-                        if p_valor < 0.0001:
-                            st.write(f"**Valor de p:** {p_valor:.2e} (notação científica)")
-                        else:
-                            st.write(f"**Valor de p:** {p_valor:.5f}")
-                        if p_valor > 0.05:
-                            st.success("Não existem evidências suficientes para rejeitar a hipótese de normalidade dos dados")
-                        else:
-                            st.warning("Existem evidências suficientes para rejeitar a hipótese de normalidade dos dados")
+                            shapiro_test = stats.shapiro(df_filtrado['Valor'])
+                            p_valor = shapiro_test.pvalue
+                            if p_valor < 0.0001:
+                                st.write(f"**Valor de p:** {p_valor:.2e} (notação científica)")
+                            else:
+                                st.write(f"**Valor de p:** {p_valor:.5f}")
+                            if p_valor > 0.05:
+                                st.success("Não existem evidências suficientes para rejeitar a hipótese de normalidade dos dados")
+                            else:
+                                st.warning("Existem evidências suficientes para rejeitar a hipótese de normalidade dos dados")
                     
     except Exception as e:
         st.error(f"Erro ao processar o arquivo: {str(e)}")
