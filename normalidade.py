@@ -1,4 +1,19 @@
 import streamlit as st
+
+# 🔥 FORÇAR LIMPEZA TOTAL DO CACHE - APAGUE APÓS USAR 🔥
+st.cache_data.clear()  # Limpa cache de dados
+st.cache_resource.clear()  # Limpa cache de recursos
+
+# Opcional: limpar cache antigo (legado)
+try:
+    from streamlit import caching
+    caching.clear_cache()
+except:
+    pass
+
+
+
+import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
