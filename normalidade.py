@@ -1,17 +1,27 @@
+import sys
 import streamlit as st
 
-# 🔥 FORÇAR LIMPEZA TOTAL DO CACHE - APAGUE APÓS USAR 🔥
-st.cache_data.clear()  # Limpa cache de dados
-st.cache_resource.clear()  # Limpa cache de recursos
+# VERIFICAÇÃO DA VERSÃO DO PYTHON
+if sys.version_info[:2] != (3, 11):
+    st.error(f"""
+    ⚠️ **Versão do Python incorreta!**
+    
+    Este app requer Python 3.11 e está rodando em Python {sys.version_info[0]}.{sys.version_info[1]}.
+    
+    No Streamlit Cloud, crie um arquivo `packages.txt` com o conteúdo:
+    ```
+    python-3.11.9
+    ```
+    
+    Após adicionar o arquivo, faça um novo deploy.
+    """)
+    st.stop()
 
-# Opcional: limpar cache antigo (legado)
-try:
-    from streamlit import caching
-    caching.clear_cache()
-except:
-    pass
+# LIMPEZA FORÇADA DO CACHE
+st.cache_data.clear()
+st.cache_resource.clear()
 
-
+# O RESTO DO SEU CÓDIGO AQUI...
 
 import streamlit as st
 import pandas as pd
