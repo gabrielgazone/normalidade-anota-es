@@ -276,17 +276,14 @@ if process_button and st.session_state.df_completo is not None and st.session_st
         
         # Calcular média e limiar de 80%
         media_valor = df_tempo['Valor'].mean()
-        limiar_80 = df_tempo['Valor'].max() * 0.8                
-        limiar_70 = df_tempo['Valor'].max() * 0.7
-
+        limiar_80 = df_tempo['Valor'].max() * 0.8
         
         # Criar gráfico
         fig_tempo, ax_tempo = plt.subplots(figsize=(12, 6))
         
         # Definir cores baseadas no limiar de 80%
         cores = ['red' if valor > limiar_80 else 'steelblue' for valor in df_tempo['Valor']]
-        cores = ['gold' if valor > limiar_70 else 'steelblue' for valor in df_tempo['Valor']]
-        
+
         # Plotar barras
         bars = ax_tempo.bar(
             range(len(df_tempo)),
@@ -345,12 +342,10 @@ if process_button and st.session_state.df_completo is not None and st.session_st
         
         # Legenda explicativa
         st.caption(
-            "🔵 Barras azuis: valores ≤ 80% do máximo | "
-            "🟡 Barras amarelas: valores entre 70-80% do máximo | "
+           "🔵 Barras azuis: valores ≤ 80% do máximo | "
             "🔴 Barras vermelhas: valores > 80% do máximo | "
             "⚫ Linha tracejada preta: média | "
-            "🟠 Linha pontilhada laranja: 80% do valor máximo"
-        )
+            "🟠 Linha pontilhada laranja: 80% do valor máximo")
 
 elif not process_button:
     if st.session_state.df_completo is None:
