@@ -55,14 +55,13 @@ with st.sidebar:
         except Exception as e:
             st.error(f"Erro ao ler arquivo: {str(e)}")
     
-    # --- FILTRO POR ATLETA (SEMPRE VISÍVEL QUANDO HÁ DADOS) ---
+    # --- FILTRO POR ATLETA ---
     if st.session_state.df_completo is not None:
         st.markdown("---")
         st.subheader("🔍 Filtro por Atleta")
         
         lista_atletas = sorted(st.session_state.df_completo['Nome'].unique())
-        
-        # Checkbox para selecionar todos
+
         selecionar_todos = st.checkbox(
             "Selecionar todos os atletas",
             value=True,
@@ -71,13 +70,8 @@ with st.sidebar:
         
         if selecionar_todos:
             st.session_state.atletas_selecionados = lista_atletas
-            st.multiselect(
-                "Atletas selecionados:",
-                options=lista_atletas,
-                default=lista_atletas,
-                disabled=True,
-                key="multiselect_todos"
-            )
+            # Mostrar apenas um texto informativo quando "selecionar todos" está ativo
+            st.info(f"✅ {len(lista_atletas)} atletas selecionados")
         else:
             atletas_sel = st.multiselect(
                 "Selecione os atletas:",
@@ -87,13 +81,20 @@ with st.sidebar:
             )
             if atletas_sel:
                 st.session_state.atletas_selecionados = atletas_sel
+            else:
+                st.session_state.atletas_selecionados = []
+                st.warning("Selecione pelo menos um atleta")
         
-        st.caption(f"✅ {len(st.session_state.atletas_selecionados)} atletas selecionados")
+        if st.session_state.atletas_selecionados:
+            st.caption(f"✅ {len(st.session_state.atletas_selecionados)} atletas selecionados")
     
     process_button = st.button("Processar", type="primary", use_container_width=True)
+    if st.session_state.df_completo is not None and not st.session_state.atletas_selecionados:
+        st.error("Selecione pelo menos um atleta antes de processar")
+        process_button = False
 
 # --- ÁREA PRINCIPAL ---
-if process_button and st.session_state.df_completo is not None:
+if process_button and st.session_state.df_completo is not None and st.session_state.atletas_selecionados:
     df_completo = st.session_state.df_completo
     atletas_selecionados = st.session_state.atletas_selecionados
     
@@ -265,6 +266,87 @@ if process_button and st.session_state.df_completo is not None:
                 st.success("Não existem evidências suficientes para rejeitar a hipótese de normalidade dos dados")
             else:
                 st.warning("Existem evidências suficientes para rejeitar a hipótese de normalidade dos dados")
+        
+        # --- GRÁFICO DE LINHA DO TEMPO ---
+        st.subheader("⏱️ Evolução Temporal dos Valores")
+        
+        # Ordenar por minuto
+        df_tempo = df_filtrado.copy()
+        df_tempo = df_tempo.sort_values('Minuto').reset_index(drop=True)
+        
+        # Calcular média e limiar de 80%
+        media_valor = df_tempo['Valor'].mean()
+        limiar_80 = df_tempo['Valor'].max() * 0.8
+        
+        # Criar gráfico
+        fig_tempo, ax_tempo = plt.subplots(figsize=(12, 6))
+        
+        # Definir cores baseadas no limiar de 80%
+        cores = ['red' if valor > limiar_80 else 'steelblue' for valor in df_tempo['Valor']]
+        
+        # Plotar barras
+        bars = ax_tempo.bar(
+            range(len(df_tempo)),
+            df_tempo['Valor'],
+            color=cores,
+            alpha=0.7,
+            edgecolor='black',
+            linewidth=0.5
+        )
+        
+        # Configurar eixo X com minutos
+        ax_tempo.set_xticks(range(len(df_tempo)))
+        ax_tempo.set_xticklabels(
+            df_tempo['Minuto'], 
+            rotation=45, 
+            ha='right',
+            fontsize=8
+        )
+        
+        # Adicionar linha média tracejada em preto
+        ax_tempo.axhline(
+            y=media_valor,
+            color='black',
+            linestyle='--',
+            linewidth=1.5,
+            label=f'Média: {media_valor:.2f}'
+        )
+        
+        # Adicionar linha do limiar (opcional - para referência)
+        ax_tempo.axhline(
+            y=limiar_80,
+            color='orange',
+            linestyle=':',
+            linewidth=1,
+            alpha=0.5,
+            label=f'80% do Máx: {limiar_80:.2f}'
+        )
+        
+        # Títulos e labels
+        ax_tempo.set_title(f"Evolução Temporal - {len(atletas_selecionados)} atleta(s)", fontsize=14)
+        ax_tempo.set_xlabel("Minuto", fontsize=12)
+        ax_tempo.set_ylabel("Valor", fontsize=12)
+        
+        # Legenda
+        ax_tempo.legend(loc='upper right')
+        
+        # Grid para melhor legibilidade
+        ax_tempo.grid(axis='y', alpha=0.3, linestyle='-', linewidth=0.5)
+        
+        # Ajustar layout
+        plt.tight_layout()
+        
+        # Exibir gráfico
+        st.pyplot(fig_tempo)
+        plt.close(fig_tempo)
+        
+        # Legenda explicativa
+        st.caption(
+            "🔵 Barras azuis: valores ≤ 80% do máximo | "
+            "🔴 Barras vermelhas: valores > 80% do máximo | "
+            "⚫ Linha tracejada preta: média | "
+            "🟠 Linha pontilhada laranja: 80% do valor máximo"
+        )
 
 elif not process_button:
     if st.session_state.df_completo is None:
