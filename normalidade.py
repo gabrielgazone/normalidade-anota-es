@@ -164,6 +164,7 @@ with st.sidebar:
         
         if selecionar_todos_periodos:
             st.session_state.periodos_selecionados = lista_periodos.copy()
+            st.session_state.ordem_personalizada = lista_periodos.copy()
             st.info(f"✅ {len(lista_periodos)} períodos selecionados")
         else:
             periodos_sel = st.multiselect(
@@ -253,7 +254,7 @@ with st.sidebar:
         key="ordem_temporal"
     )
     
-    # ORDEM PERSONALIZADA - VERSÃO CORRIGIDA E FUNCIONAL
+    # ORDEM PERSONALIZADA - VERSÃO 100% FUNCIONAL
     if ordem_opcao == "🎯 Ordem Personalizada" and st.session_state.periodos_selecionados:
         st.markdown("##### Defina a ordem dos períodos:")
         
@@ -271,17 +272,19 @@ with st.sidebar:
                     st.session_state.ordem_personalizada.append(p)
         
         # MOSTRAR ORDEM ATUAL
-        st.markdown("**Ordem atual:**")
+        st.markdown("**Ordem atual no gráfico:**")
         for i, p in enumerate(st.session_state.ordem_personalizada):
             st.markdown(f"&nbsp;&nbsp;&nbsp;&nbsp;{i+1}. {p}")
         
         st.markdown("---")
         
         # CRIAR SELECT BOXES PARA CADA POSIÇÃO
-        st.markdown("**Selecione o período para cada posição:**")
+        st.markdown("**Selecione a nova ordem:**")
         
-        # Usar um formulário para evitar múltiplos reruns
-        with st.form(key="ordem_form"):
+        # Usar um formulário com chave única baseada nos períodos
+        form_key = f"ordem_form_{len(periodos_validos)}_{abs(hash(tuple(periodos_validos)))}"
+        
+        with st.form(key=form_key):
             nova_ordem = []
             for i in range(len(periodos_validos)):
                 col1, col2 = st.columns([1, 5])
@@ -289,7 +292,6 @@ with st.sidebar:
                     st.write(f"**Posição {i+1}:**")
                 with col2:
                     valor_atual = st.session_state.ordem_personalizada[i] if i < len(st.session_state.ordem_personalizada) else periodos_validos[0]
-                    # Garantir que o valor atual está na lista de opções
                     if valor_atual not in periodos_validos:
                         valor_atual = periodos_validos[0]
                     
@@ -297,7 +299,7 @@ with st.sidebar:
                         f"pos_{i}",
                         options=periodos_validos,
                         index=periodos_validos.index(valor_atual),
-                        key=f"ordem_select_{i}",
+                        key=f"ordem_select_{i}_{form_key}",
                         label_visibility="collapsed"
                     )
                     nova_ordem.append(periodo_escolhido)
@@ -310,6 +312,7 @@ with st.sidebar:
                 if len(set(nova_ordem)) == len(nova_ordem) and set(nova_ordem) == set(periodos_validos):
                     st.session_state.ordem_personalizada = nova_ordem.copy()
                     st.success("✅ Ordem atualizada com sucesso!")
+                    st.rerun()
                 else:
                     st.error("❌ Cada período deve aparecer exatamente uma vez!")
     # ================================================================
