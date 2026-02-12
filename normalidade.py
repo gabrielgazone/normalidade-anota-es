@@ -43,17 +43,21 @@ def extrair_periodo(texto):
         # Converter para string
         texto = str(texto)
         
-        # Separar por hífen
-        partes = texto.split('-')
+        # Encontrar a posição do primeiro hífen
+        primeiro_hifen = texto.find('-')
         
-        if len(partes) >= 3:
-            # O período é tudo entre a primeira parte (nome) e a última parte (minuto)
-            # Reunir as partes do meio
-            periodo = '-'.join(partes[1:-1])
-            return periodo.strip()
-        else:
-            # Se não tiver período, retorna vazio
+        if primeiro_hifen == -1:
             return ""
+        
+        # Se o texto for menor que 13 caracteres, não tem minuto válido
+        if len(texto) < 13:
+            return ""
+        
+        # Período = do primeiro hífen +1 até o 14º último caractere
+        # O 14º último caractere é o início dos últimos 13 caracteres (minuto)
+        periodo = texto[primeiro_hifen + 1:-13].strip()
+        
+        return periodo
     except:
         return ""
 
