@@ -22,8 +22,8 @@ if 'todos_periodos' not in st.session_state:
     st.session_state.todos_periodos = []
 if 'process_button_disabled' not in st.session_state:
     st.session_state.process_button_disabled = True
-if 'ordem_personalizada' not in st.session_state:
-    st.session_state.ordem_personalizada = []
+if 'ordem_atual' not in st.session_state:
+    st.session_state.ordem_atual = 0
 
 # --- FUNÇÕES AUXILIARES ---
 def interpretar_teste(p_valor, nome_teste):
@@ -42,23 +42,15 @@ def interpretar_teste(p_valor, nome_teste):
 def extrair_periodo(texto):
     """Extrai o período entre o nome e o minuto"""
     try:
-        # Converter para string
         texto = str(texto)
-        
-        # Encontrar a posição do primeiro hífen
         primeiro_hifen = texto.find('-')
         
         if primeiro_hifen == -1:
             return ""
-        
-        # Se o texto for menor que 13 caracteres, não tem minuto válido
         if len(texto) < 13:
             return ""
         
-        # Período = do primeiro hífen +1 até o 14º último caractere
-        # O 14º último caractere é o início dos últimos 13 caracteres (minuto)
         periodo = texto[primeiro_hifen + 1:-13].strip()
-        
         return periodo
     except:
         return ""
@@ -76,53 +68,38 @@ with st.sidebar:
     # Processar arquivo quando enviado
     if upload_file is not None:
         try:
-            # Carregar dados
             data = pd.read_csv(upload_file)
             
-            # Verificar estrutura mínima
             if data.shape[1] >= 2 and not data.empty:
-                # Processar primeira coluna (identificação)
                 primeira_coluna = data.iloc[:, 0].astype(str)
                 
-                # Separar Nome e Minuto
                 nomes = primeira_coluna.str.split('-').str[0].str.strip()
-                
-                # Extrair minuto (últimos 13 caracteres)
                 minutos = primeira_coluna.str[-13:].str.strip()
-                
-                # Extrair período (tudo entre o nome e o minuto)
                 periodos = primeira_coluna.apply(extrair_periodo)
                 
-                # Identificar valores únicos de período (removendo vazios)
                 periodos_unicos = sorted([p for p in periodos.unique() if p and p.strip() != ""])
                 
-                # Identificar variáveis quantitativas (todas as colunas a partir da 2ª)
                 variaveis_quant = []
                 dados_quantitativos = {}
                 
                 for col_idx in range(1, data.shape[1]):
                     nome_var = data.columns[col_idx]
-                    # Tentar converter para numérico
                     valores = pd.to_numeric(data.iloc[:, col_idx], errors='coerce')
                     
-                    # Verificar se há pelo menos alguns valores não-nulos
                     if not valores.dropna().empty:
                         variaveis_quant.append(nome_var)
                         dados_quantitativos[nome_var] = valores.reset_index(drop=True)
                 
                 if variaveis_quant:
-                    # Criar DataFrame base com identificação
                     df_completo = pd.DataFrame({
                         'Nome': nomes.reset_index(drop=True),
                         'Período': periodos.reset_index(drop=True),
                         'Minuto': minutos.reset_index(drop=True)
                     })
                     
-                    # Adicionar variáveis quantitativas
                     for var_nome, var_valores in dados_quantitativos.items():
                         df_completo[var_nome] = var_valores
                     
-                    # Remover linhas sem nome
                     df_completo = df_completo[df_completo['Nome'].str.len() > 0]
                     
                     if not df_completo.empty:
@@ -130,19 +107,15 @@ with st.sidebar:
                         st.session_state.variaveis_quantitativas = variaveis_quant
                         st.session_state.atletas_selecionados = sorted(df_completo['Nome'].unique())
                         st.session_state.todos_periodos = periodos_unicos
-                        st.session_state.periodos_selecionados = periodos_unicos.copy()  # Selecionar todos por padrão
+                        st.session_state.periodos_selecionados = periodos_unicos.copy()
                         
-                        # Inicializar ordem personalizada com períodos selecionados
-                        st.session_state.ordem_personalizada = periodos_unicos.copy()
-                        
-                        # Selecionar primeira variável por padrão
                         if variaveis_quant and st.session_state.variavel_selecionada is None:
                             st.session_state.variavel_selecionada = variaveis_quant[0]
                         
-                        st.success(f"✅ Arquivo carregado! {len(variaveis_quant)} variáveis, {len(periodos_unicos)} períodos identificados.")
+                        st.success(f"✅ Arquivo carregado! {len(variaveis_quant)} variáveis, {len(periodos_unicos)} períodos.")
                         
                         if periodos_unicos:
-                            st.info(f"📌 Períodos encontrados: {', '.join(periodos_unicos[:3])}{'...' if len(periodos_unicos) > 3 else ''}")
+                            st.info(f"📌 Períodos: {', '.join(periodos_unicos[:3])}{'...' if len(periodos_unicos) > 3 else ''}")
                 else:
                     st.error("❌ Nenhuma variável numérica válida encontrada nas colunas 2+")
             else:
@@ -156,7 +129,6 @@ with st.sidebar:
         st.markdown("---")
         st.header("📈 Seleção da Variável")
         
-        # Determinar o índice atual
         current_index = 0
         if st.session_state.variavel_selecionada in st.session_state.variaveis_quantitativas:
             current_index = st.session_state.variaveis_quantitativas.index(st.session_state.variavel_selecionada)
@@ -169,10 +141,9 @@ with st.sidebar:
         )
         st.session_state.variavel_selecionada = variavel_selecionada
         
-        # Mostrar estatísticas básicas da variável
         df_temp = st.session_state.df_completo[variavel_selecionada].dropna()
         if not df_temp.empty:
-            st.caption(f"📊 {len(df_temp)} observações | Média: {df_temp.mean():.2f} | Desvio: {df_temp.std():.2f}")
+            st.caption(f"📊 {len(df_temp)} obs | Média: {df_temp.mean():.2f} | DP: {df_temp.std():.2f}")
     
     # --- FILTRO POR PERÍODO ---
     if st.session_state.df_completo is not None and st.session_state.todos_periodos:
@@ -181,11 +152,9 @@ with st.sidebar:
         
         lista_periodos = st.session_state.todos_periodos
         
-        # Inicializar períodos selecionados se estiver vazio
         if not st.session_state.periodos_selecionados and lista_periodos:
             st.session_state.periodos_selecionados = lista_periodos.copy()
         
-        # Checkbox para selecionar todos os períodos
         selecionar_todos_periodos = st.checkbox(
             "Selecionar todos os períodos",
             value=len(st.session_state.periodos_selecionados) == len(lista_periodos) if lista_periodos else True,
@@ -196,7 +165,6 @@ with st.sidebar:
             st.session_state.periodos_selecionados = lista_periodos.copy()
             st.info(f"✅ {len(lista_periodos)} períodos selecionados")
         else:
-            # Multiselect para seleção individual de períodos
             periodos_sel = st.multiselect(
                 "Selecione os períodos:",
                 options=lista_periodos,
@@ -204,16 +172,8 @@ with st.sidebar:
                 key="multiselect_periodos"
             )
             
-            # Atualizar session state com a seleção atual
             if periodos_sel:
                 st.session_state.periodos_selecionados = periodos_sel
-                # Atualizar ordem personalizada para incluir apenas períodos selecionados
-                if st.session_state.ordem_personalizada:
-                    st.session_state.ordem_personalizada = [p for p in st.session_state.ordem_personalizada if p in periodos_sel]
-                    # Adicionar novos períodos no final
-                    for p in periodos_sel:
-                        if p not in st.session_state.ordem_personalizada:
-                            st.session_state.ordem_personalizada.append(p)
                 st.caption(f"✅ {len(periodos_sel)} períodos selecionados")
             else:
                 st.session_state.periodos_selecionados = []
@@ -224,39 +184,32 @@ with st.sidebar:
         st.markdown("---")
         st.header("🔍 Filtro por Atleta")
         
-        # Aplicar filtro de período antes de listar atletas
         df_temp_atletas = st.session_state.df_completo.copy()
         
-        # Aplicar filtro de período se houver períodos selecionados
         if st.session_state.periodos_selecionados:
             df_temp_atletas = df_temp_atletas[df_temp_atletas['Período'].isin(st.session_state.periodos_selecionados)]
         
         lista_atletas = sorted(df_temp_atletas['Nome'].unique())
         
-        # Atualizar lista de atletas disponíveis baseada no filtro de período
         if lista_atletas:
-            # Remover atletas que não estão mais disponíveis
             if st.session_state.atletas_selecionados:
                 st.session_state.atletas_selecionados = [a for a in st.session_state.atletas_selecionados if a in lista_atletas]
             
-            # Inicializar se estiver vazio
             if not st.session_state.atletas_selecionados:
                 st.session_state.atletas_selecionados = lista_atletas.copy()
         else:
             st.session_state.atletas_selecionados = []
         
-        # Checkbox para selecionar todos os atletas
-        selecionar_todos = st.checkbox(
+        selecionar_todos_atletas = st.checkbox(
             "Selecionar todos os atletas",
             value=len(st.session_state.atletas_selecionados) == len(lista_atletas) if lista_atletas else True,
             key="selecionar_todos_atletas"
         )
         
-        if selecionar_todos:
+        if selecionar_todos_atletas:
             st.session_state.atletas_selecionados = lista_atletas.copy()
             st.info(f"✅ {len(lista_atletas)} atletas selecionados")
         else:
-            # Multiselect para seleção individual
             atletas_sel = st.multiselect(
                 "Selecione os atletas:",
                 options=lista_atletas,
@@ -264,7 +217,6 @@ with st.sidebar:
                 key="multiselect_atletas"
             )
             
-            # Atualizar session state com a seleção atual
             if atletas_sel:
                 st.session_state.atletas_selecionados = atletas_sel
                 st.caption(f"✅ {len(atletas_sel)} atletas selecionados")
@@ -288,83 +240,49 @@ with st.sidebar:
     st.markdown("---")
     st.header("🔄 Ordenação do Eixo X")
     
-    opcoes_ordenacao = ["⏫ Minuto (Crescente)", "⏬ Minuto (Decrescente)", 
-                        "📋 Período (A-Z)", "📋 Período (Z-A)", 
-                        "🎯 Ordem Personalizada"]
+    # Inicializar estado da ordem
+    if 'ordem_atual' not in st.session_state:
+        st.session_state.ordem_atual = 0
     
-    ordem_opcao = st.radio(
-        "Ordem do gráfico temporal:",
-        options=opcoes_ordenacao,
-        index=0,
-        key="ordem_temporal"
-    )
+    # Opções de ordem
+    ordens = [
+        "⏫ Minuto (Crescente)",
+        "⏬ Minuto (Decrescente)",
+        "📋 Período (A-Z)",
+        "📋 Período (Z-A)"
+    ]
     
-    # Se escolheu ordem personalizada, mostrar interface de reordenação
-    if ordem_opcao == "🎯 Ordem Personalizada" and st.session_state.periodos_selecionados:
-        st.markdown("##### ⬆️⬇️ Reordenar períodos:")
-        
-        # Garantir que ordem_personalizada esteja sincronizada
-        if not st.session_state.ordem_personalizada:
-            st.session_state.ordem_personalizada = st.session_state.periodos_selecionados.copy()
-        else:
-            # Remover períodos que não estão mais selecionados
-            st.session_state.ordem_personalizada = [p for p in st.session_state.ordem_personalizada 
-                                                   if p in st.session_state.periodos_selecionados]
-            # Adicionar novos períodos no final
-            for p in st.session_state.periodos_selecionados:
-                if p not in st.session_state.ordem_personalizada:
-                    st.session_state.ordem_personalizada.append(p)
-        
-        # Interface de reordenação
-        periodos_ordem = st.session_state.ordem_personalizada.copy()
-        
-        for i, periodo in enumerate(periodos_ordem):
-            cols = st.columns([1, 8, 1, 1])
-            with cols[0]:
-                st.write(f"**{i+1}.**")
-            with cols[1]:
-                st.write(periodo)
-            with cols[2]:
-                if i > 0 and st.button("⬆️", key=f"up_periodo_{i}"):
-                    periodos_ordem[i], periodos_ordem[i-1] = periodos_ordem[i-1], periodos_ordem[i]
-                    st.session_state.ordem_personalizada = periodos_ordem
-                    st.rerun()
-            with cols[3]:
-                if i < len(periodos_ordem)-1 and st.button("⬇️", key=f"down_periodo_{i}"):
-                    periodos_ordem[i], periodos_ordem[i+1] = periodos_ordem[i+1], periodos_ordem[i]
-                    st.session_state.ordem_personalizada = periodos_ordem
-                    st.rerun()
-        
-        # Mostrar preview da ordem atual
-        with st.expander("👁️ Preview da ordem"):
-            for i, periodo in enumerate(st.session_state.ordem_personalizada, 1):
-                st.write(f"{i}. {periodo}")
+    # Mostrar ordem atual
+    st.info(f"**Ordem atual:** {ordens[st.session_state.ordem_atual]}")
+    
+    # Botão para alternar ordem
+    if st.button("🔄 Alternar Ordem", use_container_width=True):
+        st.session_state.ordem_atual = (st.session_state.ordem_atual + 1) % len(ordens)
+        st.rerun()
+    
+    # Salvar ordem escolhida
+    ordem_opcao = ordens[st.session_state.ordem_atual]
+    st.session_state.ordem_temporal = ordem_opcao
     # ================================================================
     
-    # --- BOTÃO PROCESSAR (CORRIGIDO!) ---
-    
-    # 1. Primeiro, fazemos as validações
+    # --- BOTÃO PROCESSAR ---
     pode_processar = True
     
     if st.session_state.df_completo is not None:
-        # Verificar variável selecionada (pode ser None ou string vazia)
         if 'variavel_selecionada' not in st.session_state or not st.session_state.variavel_selecionada:
             st.error("❌ Selecione uma variável para análise")
             pode_processar = False
         
-        # Verificar se periodos_selecionados existe e não está vazio
         if 'periodos_selecionados' not in st.session_state or not st.session_state.periodos_selecionados:
             st.error("❌ Selecione pelo menos um período")
             pode_processar = False
             
-        # Verificar se atletas_selecionados existe e não está vazio
         if 'atletas_selecionados' not in st.session_state or not st.session_state.atletas_selecionados:
             st.error("❌ Selecione pelo menos um atleta")
             pode_processar = False
     else:
         pode_processar = False
     
-    # 2. Depois, criamos o botão com base no resultado das validações
     process_button = st.button(
         "🔄 Processar Análise", 
         type="primary", 
@@ -380,7 +298,6 @@ if process_button and st.session_state.df_completo is not None and st.session_st
     periodos_selecionados = st.session_state.periodos_selecionados
     variavel_analise = st.session_state.variavel_selecionada
     
-    # Aplicar filtros
     df_filtrado = df_completo[
         df_completo['Nome'].isin(atletas_selecionados) & 
         df_completo['Período'].isin(periodos_selecionados)
@@ -391,10 +308,8 @@ if process_button and st.session_state.df_completo is not None and st.session_st
     if df_filtrado.empty:
         st.warning("⚠️ Nenhum dado encontrado para os filtros selecionados")
     else:
-        # Título da análise com resumo dos filtros
         st.header(f"📊 Análise de Normalidade: **{variavel_analise}**")
         
-        # Mostrar resumo dos filtros aplicados
         col_f1, col_f2, col_f3 = st.columns(3)
         with col_f1:
             st.metric("Períodos", f"{len(periodos_selecionados)}")
@@ -474,9 +389,7 @@ if process_button and st.session_state.df_completo is not None and st.session_st
             if rotulo in contagens.index:
                 freq_table.loc[i, 'Frequência'] = int(contagens[rotulo])
         
-        freq_table['Percentual (%)'] = (
-            freq_table['Frequência'] / len(df_filtrado) * 100
-        ).round(2)
+        freq_table['Percentual (%)'] = (freq_table['Frequência'] / len(df_filtrado) * 100).round(2)
         freq_table['Frequência Acumulada'] = freq_table['Frequência'].cumsum()
         freq_table['Percentual Acumulado (%)'] = freq_table['Percentual (%)'].cumsum()
         
@@ -491,7 +404,7 @@ if process_button and st.session_state.df_completo is not None and st.session_st
             hide_index=True
         )
         
-        # --- ESTATÍSTICAS DESCRITIVAS GERAIS ---
+        # --- ESTATÍSTICAS DESCRITIVAS ---
         st.subheader("📊 Estatísticas Descritivas")
         
         col1, col2, col3, col4, col5 = st.columns(5)
@@ -618,14 +531,6 @@ if process_button and st.session_state.df_completo is not None and st.session_st
             df_tempo = df_tempo.sort_values(['Período', 'Minuto'])
         elif ordem_escolhida == "📋 Período (Z-A)":
             df_tempo = df_tempo.sort_values(['Período', 'Minuto'], ascending=[False, True])
-        elif ordem_escolhida == "🎯 Ordem Personalizada":
-            # Usar ordem personalizada definida pelo usuário
-            if st.session_state.ordem_personalizada:
-                # Criar coluna de ordenação baseada na ordem personalizada
-                ordem_map = {periodo: i for i, periodo in enumerate(st.session_state.ordem_personalizada)}
-                df_tempo['ordem_temp'] = df_tempo['Período'].map(ordem_map)
-                df_tempo = df_tempo.sort_values(['ordem_temp', 'Minuto'])
-                df_tempo = df_tempo.drop('ordem_temp', axis=1)
         
         df_tempo = df_tempo.reset_index(drop=True)
         
@@ -636,10 +541,8 @@ if process_button and st.session_state.df_completo is not None and st.session_st
         # Criar gráfico
         fig_tempo, ax_tempo = plt.subplots(figsize=(14, 6))
         
-        # Definir cores baseadas no limiar de 80%
         cores = ['red' if valor > limiar_80 else 'steelblue' for valor in df_tempo[variavel_analise]]
         
-        # Plotar barras
         bars = ax_tempo.bar(
             range(len(df_tempo)),
             df_tempo[variavel_analise],
@@ -649,7 +552,6 @@ if process_button and st.session_state.df_completo is not None and st.session_st
             linewidth=0.5
         )
         
-        # Configurar eixo X com minutos
         ax_tempo.set_xticks(range(len(df_tempo)))
         ax_tempo.set_xticklabels(
             df_tempo['Minuto'], 
@@ -658,7 +560,6 @@ if process_button and st.session_state.df_completo is not None and st.session_st
             fontsize=8
         )
         
-        # Adicionar linha média tracejada em preto
         ax_tempo.axhline(
             y=media_valor,
             color='black',
@@ -667,7 +568,6 @@ if process_button and st.session_state.df_completo is not None and st.session_st
             label=f'Média: {media_valor:.2f}'
         )
         
-        # Adicionar linha do limiar
         ax_tempo.axhline(
             y=limiar_80,
             color='orange',
@@ -677,25 +577,16 @@ if process_button and st.session_state.df_completo is not None and st.session_st
             label=f'80% do Máx: {limiar_80:.2f}'
         )
         
-        # Títulos e labels
         ax_tempo.set_title(f"Evolução Temporal - {variavel_analise}", fontsize=14, fontweight='bold')
         ax_tempo.set_xlabel("Minuto", fontsize=12)
         ax_tempo.set_ylabel(variavel_analise, fontsize=12)
-        
-        # Legenda
         ax_tempo.legend(loc='upper right')
-        
-        # Grid para melhor legibilidade
         ax_tempo.grid(axis='y', alpha=0.3, linestyle='-', linewidth=0.5)
         
-        # Ajustar layout
         plt.tight_layout()
-        
-        # Exibir gráfico
         st.pyplot(fig_tempo)
         plt.close(fig_tempo)
         
-        # Legenda explicativa
         st.caption(
             "🔵 Barras azuis: valores ≤ 80% do máximo | "
             "🔴 Barras vermelhas: valores > 80% do máximo | "
@@ -704,7 +595,6 @@ if process_button and st.session_state.df_completo is not None and st.session_st
             f"**Ordenação:** {ordem_escolhida}"
         )
         
-        # --- DADOS BRUTOS (EXPANSÍVEL) ---
         with st.expander("📋 Visualizar dados brutos filtrados"):
             st.dataframe(df_filtrado, use_container_width=True)
 
@@ -728,13 +618,12 @@ elif not process_button:
         
         **Componentes da primeira coluna:**
         - **Nome:** Primeira parte antes do primeiro hífen "-"
-        - **Período:** Texto entre o "nome" e o 14º último caractere (extraído automaticamente)
+        - **Período:** Texto entre o "nome" e o 14º último caractere
         - **Minuto:** Últimos 13 caracteres
         """)
     else:
         st.info("👈 **Passo 2:** Selecione a variável, períodos, atletas e clique em 'Processar Análise'")
         
-        # Mostrar preview dos dados carregados
         with st.expander("📋 Preview dos dados carregados"):
             st.dataframe(st.session_state.df_completo.head(10), use_container_width=True)
             st.caption(f"**Variáveis disponíveis:** {', '.join(st.session_state.variaveis_quantitativas)}")
