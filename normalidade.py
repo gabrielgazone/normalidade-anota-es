@@ -22,8 +22,8 @@ if 'todos_periodos' not in st.session_state:
     st.session_state.todos_periodos = []
 if 'process_button_disabled' not in st.session_state:
     st.session_state.process_button_disabled = True
-if 'ordem_atual' not in st.session_state:
-    st.session_state.ordem_atual = 0
+if 'ordem_personalizada' not in st.session_state:
+    st.session_state.ordem_personalizada = []
 
 # --- FUNÇÕES AUXILIARES ---
 def interpretar_teste(p_valor, nome_teste):
@@ -108,6 +108,7 @@ with st.sidebar:
                         st.session_state.atletas_selecionados = sorted(df_completo['Nome'].unique())
                         st.session_state.todos_periodos = periodos_unicos
                         st.session_state.periodos_selecionados = periodos_unicos.copy()
+                        st.session_state.ordem_personalizada = periodos_unicos.copy()
                         
                         if variaveis_quant and st.session_state.variavel_selecionada is None:
                             st.session_state.variavel_selecionada = variaveis_quant[0]
@@ -174,6 +175,7 @@ with st.sidebar:
             
             if periodos_sel:
                 st.session_state.periodos_selecionados = periodos_sel
+                st.session_state.ordem_personalizada = periodos_sel.copy()
                 st.caption(f"✅ {len(periodos_sel)} períodos selecionados")
             else:
                 st.session_state.periodos_selecionados = []
@@ -240,29 +242,68 @@ with st.sidebar:
     st.markdown("---")
     st.header("🔄 Ordenação do Eixo X")
     
-    # Inicializar estado da ordem
-    if 'ordem_atual' not in st.session_state:
-        st.session_state.ordem_atual = 0
+    opcoes_ordenacao = ["⏫ Minuto (Crescente)", "⏬ Minuto (Decrescente)", 
+                        "📋 Período (A-Z)", "📋 Período (Z-A)", 
+                        "🎯 Ordem Personalizada"]
     
-    # Opções de ordem
-    ordens = [
-        "⏫ Minuto (Crescente)",
-        "⏬ Minuto (Decrescente)",
-        "📋 Período (A-Z)",
-        "📋 Período (Z-A)"
-    ]
+    ordem_opcao = st.radio(
+        "Ordem do gráfico temporal:",
+        options=opcoes_ordenacao,
+        index=0,
+        key="ordem_temporal"
+    )
     
-    # Mostrar ordem atual
-    st.info(f"**Ordem atual:** {ordens[st.session_state.ordem_atual]}")
-    
-    # Botão para alternar ordem
-    if st.button("🔄 Alternar Ordem", use_container_width=True):
-        st.session_state.ordem_atual = (st.session_state.ordem_atual + 1) % len(ordens)
-        st.rerun()
-    
-    # Salvar ordem escolhida
-    ordem_opcao = ordens[st.session_state.ordem_atual]
-    st.session_state.ordem_temporal = ordem_opcao
+    # ORDEM PERSONALIZADA - VERSÃO ESTÁVEL E FUNCIONAL
+    if ordem_opcao == "🎯 Ordem Personalizada" and st.session_state.periodos_selecionados:
+        st.markdown("##### Defina a ordem dos períodos:")
+        
+        # Garantir que ordem_personalizada esteja sincronizada
+        periodos_validos = st.session_state.periodos_selecionados
+        if not st.session_state.ordem_personalizada:
+            st.session_state.ordem_personalizada = periodos_validos.copy()
+        else:
+            # Remover períodos que não estão mais selecionados
+            st.session_state.ordem_personalizada = [p for p in st.session_state.ordem_personalizada if p in periodos_validos]
+            # Adicionar novos períodos
+            for p in periodos_validos:
+                if p not in st.session_state.ordem_personalizada:
+                    st.session_state.ordem_personalizada.append(p)
+        
+        # Mostrar ordem atual
+        st.markdown("**Ordem atual:**")
+        for i, p in enumerate(st.session_state.ordem_personalizada):
+            st.markdown(f"&nbsp;&nbsp;&nbsp;&nbsp;{i+1}. {p}")
+        
+        st.markdown("---")
+        
+        # Select boxes para reordenar
+        st.markdown("**Selecione o período para cada posição:**")
+        
+        nova_ordem = []
+        for i in range(len(periodos_validos)):
+            col1, col2 = st.columns([1, 5])
+            with col1:
+                st.write(f"**Posição {i+1}:**")
+            with col2:
+                valor_atual = st.session_state.ordem_personalizada[i] if i < len(st.session_state.ordem_personalizada) else periodos_validos[0]
+                periodo_escolhido = st.selectbox(
+                    f"pos_{i}",
+                    options=periodos_validos,
+                    index=periodos_validos.index(valor_atual) if valor_atual in periodos_validos else 0,
+                    key=f"ordem_select_{i}",
+                    label_visibility="collapsed"
+                )
+                nova_ordem.append(periodo_escolhido)
+        
+        # Botão para aplicar
+        if st.button("✅ Aplicar Nova Ordem", use_container_width=True, type="primary"):
+            # Verificar se todos os períodos estão presentes uma única vez
+            if len(set(nova_ordem)) == len(nova_ordem) and set(nova_ordem) == set(periodos_validos):
+                st.session_state.ordem_personalizada = nova_ordem
+                st.success("✅ Ordem atualizada com sucesso!")
+                st.rerun()
+            else:
+                st.error("❌ Cada período deve aparecer exatamente uma vez!")
     # ================================================================
     
     # --- BOTÃO PROCESSAR ---
@@ -531,6 +572,13 @@ if process_button and st.session_state.df_completo is not None and st.session_st
             df_tempo = df_tempo.sort_values(['Período', 'Minuto'])
         elif ordem_escolhida == "📋 Período (Z-A)":
             df_tempo = df_tempo.sort_values(['Período', 'Minuto'], ascending=[False, True])
+        elif ordem_escolhida == "🎯 Ordem Personalizada":
+            # Usar ordem personalizada definida pelo usuário
+            if st.session_state.ordem_personalizada:
+                ordem_map = {periodo: i for i, periodo in enumerate(st.session_state.ordem_personalizada)}
+                df_tempo['ordem_temp'] = df_tempo['Período'].map(ordem_map)
+                df_tempo = df_tempo.sort_values(['ordem_temp', 'Minuto'])
+                df_tempo = df_tempo.drop('ordem_temp', axis=1)
         
         df_tempo = df_tempo.reset_index(drop=True)
         
