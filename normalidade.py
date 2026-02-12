@@ -16,6 +16,12 @@ if 'variavel_selecionada' not in st.session_state:
     st.session_state.variavel_selecionada = None
 if 'atletas_selecionados' not in st.session_state:
     st.session_state.atletas_selecionados = []
+if 'periodos_selecionados' not in st.session_state:
+    st.session_state.periodos_selecionados = []
+if 'todos_periodos' not in st.session_state:
+    st.session_state.todos_periodos = []
+if 'process_button_disabled' not in st.session_state:
+    st.session_state.process_button_disabled = True
 
 # --- FUNÇÕES AUXILIARES ---
 def interpretar_teste(p_valor, nome_teste):
@@ -31,6 +37,26 @@ def interpretar_teste(p_valor, nome_teste):
     else:
         st.warning("⚠️ Existem evidências suficientes para rejeitar a hipótese de normalidade dos dados")
 
+def extrair_periodo(texto):
+    """Extrai o período entre o nome e o minuto"""
+    try:
+        # Converter para string
+        texto = str(texto)
+        
+        # Separar por hífen
+        partes = texto.split('-')
+        
+        if len(partes) >= 3:
+            # O período é tudo entre a primeira parte (nome) e a última parte (minuto)
+            # Reunir as partes do meio
+            periodo = '-'.join(partes[1:-1])
+            return periodo.strip()
+        else:
+            # Se não tiver período, retorna vazio
+            return ""
+    except:
+        return ""
+
 # --- SIDEBAR ---
 with st.sidebar:
     st.header("📂 Upload dos Dados")
@@ -38,7 +64,7 @@ with st.sidebar:
         "Escolha o arquivo CSV:", 
         type=['csv'],
         accept_multiple_files=False,
-        help="Formato: Primeira coluna = Identificação (Nome-Minuto), Demais colunas = Variáveis numéricas"
+        help="Formato: Primeira coluna = Identificação (Nome-Período-Minuto), Demais colunas = Variáveis numéricas"
     )
     
     # Processar arquivo quando enviado
@@ -55,8 +81,14 @@ with st.sidebar:
                 # Separar Nome e Minuto
                 nomes = primeira_coluna.str.split('-').str[0].str.strip()
                 
-                # Extrair minuto (últimos caracteres após o último '-')
-                minutos = primeira_coluna.str.split('-').str[-1].str.strip()
+                # Extrair minuto (últimos 13 caracteres)
+                minutos = primeira_coluna.str[-13:].str.strip()
+                
+                # Extrair período (tudo entre o nome e o minuto)
+                periodos = primeira_coluna.apply(extrair_periodo)
+                
+                # Identificar valores únicos de período (removendo vazios)
+                periodos_unicos = sorted([p for p in periodos.unique() if p and p.strip() != ""])
                 
                 # Identificar variáveis quantitativas (todas as colunas a partir da 2ª)
                 variaveis_quant = []
@@ -76,6 +108,7 @@ with st.sidebar:
                     # Criar DataFrame base com identificação
                     df_completo = pd.DataFrame({
                         'Nome': nomes.reset_index(drop=True),
+                        'Período': periodos.reset_index(drop=True),
                         'Minuto': minutos.reset_index(drop=True)
                     })
                     
@@ -90,12 +123,17 @@ with st.sidebar:
                         st.session_state.df_completo = df_completo
                         st.session_state.variaveis_quantitativas = variaveis_quant
                         st.session_state.atletas_selecionados = sorted(df_completo['Nome'].unique())
+                        st.session_state.todos_periodos = periodos_unicos
+                        st.session_state.periodos_selecionados = periodos_unicos.copy()  # Selecionar todos por padrão
                         
                         # Selecionar primeira variável por padrão
                         if variaveis_quant and st.session_state.variavel_selecionada is None:
                             st.session_state.variavel_selecionada = variaveis_quant[0]
                         
-                        st.success(f"✅ Arquivo carregado! {len(variaveis_quant)} variáveis identificadas.")
+                        st.success(f"✅ Arquivo carregado! {len(variaveis_quant)} variáveis, {len(periodos_unicos)} períodos identificados.")
+                        
+                        if periodos_unicos:
+                            st.info(f"📌 Períodos encontrados: {', '.join(periodos_unicos[:3])}{'...' if len(periodos_unicos) > 3 else ''}")
                 else:
                     st.error("❌ Nenhuma variável numérica válida encontrada nas colunas 2+")
             else:
@@ -127,22 +165,75 @@ with st.sidebar:
         if not df_temp.empty:
             st.caption(f"📊 {len(df_temp)} observações | Média: {df_temp.mean():.2f} | Desvio: {df_temp.std():.2f}")
     
+    # --- FILTRO POR PERÍODO ---
+    if st.session_state.df_completo is not None and st.session_state.todos_periodos:
+        st.markdown("---")
+        st.header("📅 Filtro por Período")
+        
+        lista_periodos = st.session_state.todos_periodos
+        
+        # Inicializar períodos selecionados se estiver vazio
+        if not st.session_state.periodos_selecionados and lista_periodos:
+            st.session_state.periodos_selecionados = lista_periodos.copy()
+        
+        # Checkbox para selecionar todos os períodos
+        selecionar_todos_periodos = st.checkbox(
+            "Selecionar todos os períodos",
+            value=len(st.session_state.periodos_selecionados) == len(lista_periodos) if lista_periodos else True,
+            key="selecionar_todos_periodos"
+        )
+        
+        if selecionar_todos_periodos:
+            st.session_state.periodos_selecionados = lista_periodos.copy()
+            st.info(f"✅ {len(lista_periodos)} períodos selecionados")
+        else:
+            # Multiselect para seleção individual de períodos
+            periodos_sel = st.multiselect(
+                "Selecione os períodos:",
+                options=lista_periodos,
+                default=st.session_state.periodos_selecionados if st.session_state.periodos_selecionados else lista_periodos[:1],
+                key="multiselect_periodos"
+            )
+            
+            # Atualizar session state com a seleção atual
+            if periodos_sel:
+                st.session_state.periodos_selecionados = periodos_sel
+                st.caption(f"✅ {len(periodos_sel)} períodos selecionados")
+            else:
+                st.session_state.periodos_selecionados = []
+                st.warning("⚠️ Selecione pelo menos um período")
+    
     # --- FILTRO POR ATLETA ---
     if st.session_state.df_completo is not None:
         st.markdown("---")
         st.header("🔍 Filtro por Atleta")
         
-        lista_atletas = sorted(st.session_state.df_completo['Nome'].unique())
+        # Aplicar filtro de período antes de listar atletas
+        df_temp_atletas = st.session_state.df_completo.copy()
         
-        # Inicializar ou atualizar atletas_selecionados se estiver vazio
-        if not st.session_state.atletas_selecionados:
-            st.session_state.atletas_selecionados = lista_atletas.copy()
+        # Aplicar filtro de período se houver períodos selecionados
+        if st.session_state.periodos_selecionados:
+            df_temp_atletas = df_temp_atletas[df_temp_atletas['Período'].isin(st.session_state.periodos_selecionados)]
         
-        # Checkbox para selecionar todos
+        lista_atletas = sorted(df_temp_atletas['Nome'].unique())
+        
+        # Atualizar lista de atletas disponíveis baseada no filtro de período
+        if lista_atletas:
+            # Remover atletas que não estão mais disponíveis
+            if st.session_state.atletas_selecionados:
+                st.session_state.atletas_selecionados = [a for a in st.session_state.atletas_selecionados if a in lista_atletas]
+            
+            # Inicializar se estiver vazio
+            if not st.session_state.atletas_selecionados:
+                st.session_state.atletas_selecionados = lista_atletas.copy()
+        else:
+            st.session_state.atletas_selecionados = []
+        
+        # Checkbox para selecionar todos os atletas
         selecionar_todos = st.checkbox(
             "Selecionar todos os atletas",
-            value=len(st.session_state.atletas_selecionados) == len(lista_atletas),
-            key="selecionar_todos"
+            value=len(st.session_state.atletas_selecionados) == len(lista_atletas) if lista_atletas else True,
+            key="selecionar_todos_atletas"
         )
         
         if selecionar_todos:
@@ -153,8 +244,8 @@ with st.sidebar:
             atletas_sel = st.multiselect(
                 "Selecione os atletas:",
                 options=lista_atletas,
-                default=st.session_state.atletas_selecionados if st.session_state.atletas_selecionados else lista_atletas[:1],
-                key="multiselect_ativos"
+                default=st.session_state.atletas_selecionados if st.session_state.atletas_selecionados else lista_atletas[:1] if lista_atletas else [],
+                key="multiselect_atletas"
             )
             
             # Atualizar session state com a seleção atual
@@ -177,22 +268,30 @@ with st.sidebar:
         help="Define quantas barras o histograma terá"
     )
     
-    # --- BOTÃO PROCESSAR ---
-    # Inicializar variável de controle
+    # --- BOTÃO PROCESSAR (CORRIGIDO!) ---
+    
+    # 1. Primeiro, fazemos as validações
     pode_processar = True
     
-    # Validação pré-processamento
     if st.session_state.df_completo is not None:
-        if not st.session_state.atletas_selecionados:
-            st.error("❌ Selecione pelo menos um atleta antes de processar")
-            pode_processar = False
-        if not st.session_state.variavel_selecionada:
+        # Verificar variável selecionada (pode ser None ou string vazia)
+        if 'variavel_selecionada' not in st.session_state or not st.session_state.variavel_selecionada:
             st.error("❌ Selecione uma variável para análise")
+            pode_processar = False
+        
+        # Verificar se periodos_selecionados existe e não está vazio
+        if 'periodos_selecionados' not in st.session_state or not st.session_state.periodos_selecionados:
+            st.error("❌ Selecione pelo menos um período")
+            pode_processar = False
+            
+        # Verificar se atletas_selecionados existe e não está vazio
+        if 'atletas_selecionados' not in st.session_state or not st.session_state.atletas_selecionados:
+            st.error("❌ Selecione pelo menos um atleta")
             pode_processar = False
     else:
         pode_processar = False
     
-    # Botão processar (desabilitado se não puder processar)
+    # 2. Depois, criamos o botão com base no resultado das validações
     process_button = st.button(
         "🔄 Processar Análise", 
         type="primary", 
@@ -201,22 +300,37 @@ with st.sidebar:
     )
 
 # --- ÁREA PRINCIPAL ---
-if process_button and st.session_state.df_completo is not None and st.session_state.atletas_selecionados and st.session_state.variavel_selecionada:
+if process_button and st.session_state.df_completo is not None and st.session_state.atletas_selecionados and st.session_state.periodos_selecionados and st.session_state.variavel_selecionada:
     
     df_completo = st.session_state.df_completo
     atletas_selecionados = st.session_state.atletas_selecionados
+    periodos_selecionados = st.session_state.periodos_selecionados
     variavel_analise = st.session_state.variavel_selecionada
     
     # Aplicar filtros
-    df_filtrado = df_completo[df_completo['Nome'].isin(atletas_selecionados)].copy()
+    df_filtrado = df_completo[
+        df_completo['Nome'].isin(atletas_selecionados) & 
+        df_completo['Período'].isin(periodos_selecionados)
+    ].copy()
+    
     df_filtrado = df_filtrado.dropna(subset=[variavel_analise])
     
     if df_filtrado.empty:
-        st.warning("⚠️ Nenhum dado encontrado para os atletas e variável selecionados")
+        st.warning("⚠️ Nenhum dado encontrado para os filtros selecionados")
     else:
-        # Título da análise
+        # Título da análise com resumo dos filtros
         st.header(f"📊 Análise de Normalidade: **{variavel_analise}**")
-        st.caption(f"🎯 {len(atletas_selecionados)} atleta(s) | {len(df_filtrado)} observações totais")
+        
+        # Mostrar resumo dos filtros aplicados
+        col_f1, col_f2, col_f3 = st.columns(3)
+        with col_f1:
+            st.metric("Períodos", f"{len(periodos_selecionados)}")
+            if len(periodos_selecionados) <= 3:
+                st.caption(f"{', '.join(periodos_selecionados)}")
+        with col_f2:
+            st.metric("Atletas", f"{len(atletas_selecionados)}")
+        with col_f3:
+            st.metric("Observações", f"{len(df_filtrado)}")
         
         # --- GRÁFICOS ---
         col1, col2 = st.columns(2)
@@ -333,39 +447,44 @@ if process_button and st.session_state.df_completo is not None and st.session_st
             q3 = df_filtrado[variavel_analise].quantile(0.75)
             st.metric("Q3 (75%)", f"{q3:.2f}")
         
-        # --- TABELA RESUMO POR ATLETA ---
-        st.subheader("🏃 Resumo por Atleta")
+        # --- TABELA RESUMO POR ATLETA E PERÍODO ---
+        st.subheader("🏃 Resumo por Atleta e Período")
         
-        resumo_atletas = []
+        resumo_atletas_periodos = []
         
         for nome in atletas_selecionados:
-            dados_atleta = df_filtrado[df_filtrado['Nome'] == nome]
-            
-            if not dados_atleta.empty:
-                idx_max = dados_atleta[variavel_analise].idxmax()
-                valor_max = dados_atleta.loc[idx_max, variavel_analise]
-                minuto_max = dados_atleta.loc[idx_max, 'Minuto']
+            for periodo in periodos_selecionados:
+                dados_atleta_periodo = df_filtrado[
+                    (df_filtrado['Nome'] == nome) & 
+                    (df_filtrado['Período'] == periodo)
+                ]
                 
-                idx_min = dados_atleta[variavel_analise].idxmin()
-                valor_min = dados_atleta.loc[idx_min, variavel_analise]
-                minuto_min = dados_atleta.loc[idx_min, 'Minuto']
-                
-                amplitude = valor_max - valor_min
-                
-                resumo_atletas.append({
-                    'Atleta': nome,
-                    f'Máx {variavel_analise}': valor_max,
-                    'Minuto do Máx': minuto_max,
-                    f'Mín {variavel_analise}': valor_min,
-                    'Minuto do Mín': minuto_min,
-                    'Amplitude': amplitude,
-                    'Média': dados_atleta[variavel_analise].mean(),
-                    'Nº Amostras': len(dados_atleta)
-                })
+                if not dados_atleta_periodo.empty:
+                    idx_max = dados_atleta_periodo[variavel_analise].idxmax()
+                    valor_max = dados_atleta_periodo.loc[idx_max, variavel_analise]
+                    minuto_max = dados_atleta_periodo.loc[idx_max, 'Minuto']
+                    
+                    idx_min = dados_atleta_periodo[variavel_analise].idxmin()
+                    valor_min = dados_atleta_periodo.loc[idx_min, variavel_analise]
+                    minuto_min = dados_atleta_periodo.loc[idx_min, 'Minuto']
+                    
+                    amplitude = valor_max - valor_min
+                    
+                    resumo_atletas_periodos.append({
+                        'Atleta': nome,
+                        'Período': periodo,
+                        f'Máx {variavel_analise}': valor_max,
+                        'Minuto do Máx': minuto_max,
+                        f'Mín {variavel_analise}': valor_min,
+                        'Minuto do Mín': minuto_min,
+                        'Amplitude': amplitude,
+                        'Média': dados_atleta_periodo[variavel_analise].mean(),
+                        'Nº Amostras': len(dados_atleta_periodo)
+                    })
         
-        if resumo_atletas:
-            df_resumo = pd.DataFrame(resumo_atletas)
-            df_resumo = df_resumo.sort_values('Atleta').reset_index(drop=True)
+        if resumo_atletas_periodos:
+            df_resumo = pd.DataFrame(resumo_atletas_periodos)
+            df_resumo = df_resumo.sort_values(['Atleta', 'Período']).reset_index(drop=True)
             
             st.dataframe(
                 df_resumo.style.format({
@@ -466,7 +585,7 @@ if process_button and st.session_state.df_completo is not None and st.session_st
         )
         
         # Títulos e labels
-        ax_tempo.set_title(f"Evolução Temporal - {variavel_analise} - {len(atletas_selecionados)} atleta(s)", fontsize=14, fontweight='bold')
+        ax_tempo.set_title(f"Evolução Temporal - {variavel_analise}", fontsize=14, fontweight='bold')
         ax_tempo.set_xlabel("Minuto", fontsize=12)
         ax_tempo.set_ylabel(variavel_analise, fontsize=12)
         
@@ -501,21 +620,29 @@ elif not process_button:
         st.markdown("""
         ### 📋 Formato esperado do arquivo:
         
-        **Primeira coluna:** Identificação no formato `Nome-Minuto`  
+        **Primeira coluna:** Identificação no formato `Nome-Período-Minuto`  
         **Demais colunas:** Variáveis numéricas para análise
         
         **Exemplo:**
         ```
         Identificacao,Potencia,Frequencia,VO2Max
-        Joao-00:30,250,145,45.2
-        Joao-01:00,245,148,44.8
-        Maria-00:30,230,152,42.1
+        Joao-PRE JOGO-00:30,250,145,45.2
+        Joao-PRE JOGO-01:00,245,148,44.8
+        Joao-POS JOGO-00:30,230,152,42.1
+        Maria-PRE JOGO-00:30,240,150,43.5
         ```
+        
+        **Componentes da primeira coluna:**
+        - **Nome:** Primeira parte antes do primeiro "-"
+        - **Período:** Tudo entre o nome e o minuto (extraído automaticamente)
+        - **Minuto:** Últimos 13 caracteres
         """)
     else:
-        st.info("👈 **Passo 2:** Selecione a variável, os atletas e clique em 'Processar Análise'")
+        st.info("👈 **Passo 2:** Selecione a variável, períodos, atletas e clique em 'Processar Análise'")
         
         # Mostrar preview dos dados carregados
         with st.expander("📋 Preview dos dados carregados"):
             st.dataframe(st.session_state.df_completo.head(10), use_container_width=True)
             st.caption(f"**Variáveis disponíveis:** {', '.join(st.session_state.variaveis_quantitativas)}")
+            if st.session_state.todos_periodos:
+                st.caption(f"**Períodos disponíveis:** {', '.join(st.session_state.todos_periodos)}")
