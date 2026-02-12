@@ -272,6 +272,18 @@ with st.sidebar:
         help="Define quantas barras o histograma terá"
     )
     
+    # ============= NOVO: ORDENAÇÃO DO GRÁFICO TEMPORAL =============
+    st.markdown("---")
+    st.header("🔄 Ordenação do Eixo X")
+    
+    ordem_opcao = st.radio(
+        "Ordem do gráfico temporal:",
+        options=["⏫ Minuto (Crescente)", "⏬ Minuto (Decrescente)", "📋 Período (A-Z)", "📋 Período (Z-A)"],
+        index=0,
+        key="ordem_temporal"
+    )
+    # ================================================================
+    
     # --- BOTÃO PROCESSAR (CORRIGIDO!) ---
     
     # 1. Primeiro, fazemos as validações
@@ -533,12 +545,24 @@ if process_button and st.session_state.df_completo is not None and st.session_st
             except Exception as e:
                 st.error(f"❌ Erro no teste Shapiro-Wilk: {str(e)}")
         
-        # --- GRÁFICO DE LINHA DO TEMPO ---
+        # --- GRÁFICO DE LINHA DO TEMPO COM ORDENAÇÃO FLEXÍVEL ---
         st.subheader("⏱️ Evolução Temporal dos Valores")
         
-        # Ordenar por minuto
+        # APLICAR ORDENAÇÃO CONFORME ESCOLHA DO USUÁRIO
         df_tempo = df_filtrado.copy()
-        df_tempo = df_tempo.sort_values('Minuto').reset_index(drop=True)
+        
+        ordem_escolhida = st.session_state.ordem_temporal
+        
+        if ordem_escolhida == "⏫ Minuto (Crescente)":
+            df_tempo = df_tempo.sort_values('Minuto')
+        elif ordem_escolhida == "⏬ Minuto (Decrescente)":
+            df_tempo = df_tempo.sort_values('Minuto', ascending=False)
+        elif ordem_escolhida == "📋 Período (A-Z)":
+            df_tempo = df_tempo.sort_values(['Período', 'Minuto'])
+        elif ordem_escolhida == "📋 Período (Z-A)":
+            df_tempo = df_tempo.sort_values(['Período', 'Minuto'], ascending=[False, True])
+        
+        df_tempo = df_tempo.reset_index(drop=True)
         
         # Calcular média e limiar de 80%
         media_valor = df_tempo[variavel_analise].mean()
@@ -611,7 +635,8 @@ if process_button and st.session_state.df_completo is not None and st.session_st
             "🔵 Barras azuis: valores ≤ 80% do máximo | "
             "🔴 Barras vermelhas: valores > 80% do máximo | "
             "⚫ Linha tracejada preta: média | "
-            "🟠 Linha pontilhada laranja: 80% do valor máximo"
+            "🟠 Linha pontilhada laranja: 80% do valor máximo | "
+            f"**Ordenação:** {ordem_escolhida}"
         )
         
         # --- DADOS BRUTOS (EXPANSÍVEL) ---
