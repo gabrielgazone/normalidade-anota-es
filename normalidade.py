@@ -253,57 +253,65 @@ with st.sidebar:
         key="ordem_temporal"
     )
     
-    # ORDEM PERSONALIZADA - VERSÃO ESTÁVEL E FUNCIONAL
+    # ORDEM PERSONALIZADA - VERSÃO CORRIGIDA E FUNCIONAL
     if ordem_opcao == "🎯 Ordem Personalizada" and st.session_state.periodos_selecionados:
         st.markdown("##### Defina a ordem dos períodos:")
         
         # Garantir que ordem_personalizada esteja sincronizada
         periodos_validos = st.session_state.periodos_selecionados
+        
         if not st.session_state.ordem_personalizada:
             st.session_state.ordem_personalizada = periodos_validos.copy()
         else:
             # Remover períodos que não estão mais selecionados
             st.session_state.ordem_personalizada = [p for p in st.session_state.ordem_personalizada if p in periodos_validos]
-            # Adicionar novos períodos
+            # Adicionar novos períodos no final
             for p in periodos_validos:
                 if p not in st.session_state.ordem_personalizada:
                     st.session_state.ordem_personalizada.append(p)
         
-        # Mostrar ordem atual
+        # MOSTRAR ORDEM ATUAL
         st.markdown("**Ordem atual:**")
         for i, p in enumerate(st.session_state.ordem_personalizada):
             st.markdown(f"&nbsp;&nbsp;&nbsp;&nbsp;{i+1}. {p}")
         
         st.markdown("---")
         
-        # Select boxes para reordenar
+        # CRIAR SELECT BOXES PARA CADA POSIÇÃO
         st.markdown("**Selecione o período para cada posição:**")
         
-        nova_ordem = []
-        for i in range(len(periodos_validos)):
-            col1, col2 = st.columns([1, 5])
-            with col1:
-                st.write(f"**Posição {i+1}:**")
-            with col2:
-                valor_atual = st.session_state.ordem_personalizada[i] if i < len(st.session_state.ordem_personalizada) else periodos_validos[0]
-                periodo_escolhido = st.selectbox(
-                    f"pos_{i}",
-                    options=periodos_validos,
-                    index=periodos_validos.index(valor_atual) if valor_atual in periodos_validos else 0,
-                    key=f"ordem_select_{i}",
-                    label_visibility="collapsed"
-                )
-                nova_ordem.append(periodo_escolhido)
-        
-        # Botão para aplicar
-        if st.button("✅ Aplicar Nova Ordem", use_container_width=True, type="primary"):
-            # Verificar se todos os períodos estão presentes uma única vez
-            if len(set(nova_ordem)) == len(nova_ordem) and set(nova_ordem) == set(periodos_validos):
-                st.session_state.ordem_personalizada = nova_ordem
-                st.success("✅ Ordem atualizada com sucesso!")
-                st.rerun()
-            else:
-                st.error("❌ Cada período deve aparecer exatamente uma vez!")
+        # Usar um formulário para evitar múltiplos reruns
+        with st.form(key="ordem_form"):
+            nova_ordem = []
+            for i in range(len(periodos_validos)):
+                col1, col2 = st.columns([1, 5])
+                with col1:
+                    st.write(f"**Posição {i+1}:**")
+                with col2:
+                    valor_atual = st.session_state.ordem_personalizada[i] if i < len(st.session_state.ordem_personalizada) else periodos_validos[0]
+                    # Garantir que o valor atual está na lista de opções
+                    if valor_atual not in periodos_validos:
+                        valor_atual = periodos_validos[0]
+                    
+                    periodo_escolhido = st.selectbox(
+                        f"pos_{i}",
+                        options=periodos_validos,
+                        index=periodos_validos.index(valor_atual),
+                        key=f"ordem_select_{i}",
+                        label_visibility="collapsed"
+                    )
+                    nova_ordem.append(periodo_escolhido)
+            
+            # BOTÃO DE SUBMIT DO FORMULÁRIO
+            submit_button = st.form_submit_button("✅ Aplicar Nova Ordem", use_container_width=True, type="primary")
+            
+            if submit_button:
+                # Verificar se todos os períodos estão presentes uma única vez
+                if len(set(nova_ordem)) == len(nova_ordem) and set(nova_ordem) == set(periodos_validos):
+                    st.session_state.ordem_personalizada = nova_ordem.copy()
+                    st.success("✅ Ordem atualizada com sucesso!")
+                else:
+                    st.error("❌ Cada período deve aparecer exatamente uma vez!")
     # ================================================================
     
     # --- BOTÃO PROCESSAR ---
