@@ -629,16 +629,16 @@ elif not process_button:
         
         **Exemplo:**
         ```
-        Identificacao,Potencia,Frequencia,VO2Max
-        Joao-PRE JOGO-00:30,250,145,45.2
-        Joao-PRE JOGO-01:00,245,148,44.8
-        Joao-POS JOGO-00:30,230,152,42.1
-        Maria-PRE JOGO-00:30,240,150,43.5
+        Nome-Período-Minuto; Distancia Total; Velocidade Maxima; Acc Max
+        Joao-1 TEMPO 00:00-01:00,250,23,3.6
+        Maria-SEGUNDO TEMPO 05:00-06:00,127,29,4.2
+        Pele-2 TEMPO 44:00-45:00,200,33,4.9
+        Marta-PRIMEIRO TEMPO 11:00-12:00,90,27,3.1
         ```
         
         **Componentes da primeira coluna:**
-        - **Nome:** Primeira parte antes do primeiro "-"
-        - **Período:** Tudo entre o nome e o minuto (extraído automaticamente)
+        - **Nome:** Primeira parte antes do primeiro hífen "-"
+        - **Período:** Texto entre o "nome" e o 14º último caractere (extraído automaticamente)
         - **Minuto:** Últimos 13 caracteres
         """)
     else:
