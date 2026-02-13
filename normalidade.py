@@ -728,7 +728,7 @@ def comparar_grupos(df, variavel, grupo1, grupo2):
             'n_g1': len(dados_grupo1),
             'n_g2': len(dados_grupo2)
         }
-    except:
+    except Exception as e:
         return None
 
 # ============================================================================
@@ -788,7 +788,6 @@ with st.sidebar:
     
     if upload_files and len(upload_files) > 0:
         with st.spinner('🔄 Processando...'):
-            time.sleep(0.5)
             try:
                 dataframes = []
                 arquivos_validos = []
@@ -799,8 +798,9 @@ with st.sidebar:
                         if data.shape[1] >= 3 and not data.empty:
                             dataframes.append(data)
                             arquivos_validos.append(uploaded_file.name)
-                    except:
-                        pass
+                    except Exception as e:
+                        st.error(f"Erro ao ler {uploaded_file.name}: {str(e)}")
+                        continue
                 
                 if dataframes:
                     estruturas_ok, _ = verificar_estruturas_arquivos(dataframes)
