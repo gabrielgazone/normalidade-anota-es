@@ -206,6 +206,97 @@ translations = {
             2. Select all desired files
             3. The system will check compatibility and concatenate automatically
         '''
+    },
+    'es': {
+        'title': 'Sports Science Analytics Pro',
+        'subtitle': 'Dashboard Profesional para Análisis de Rendimiento Deportivo',
+        'upload': 'Carga de Datos',
+        'variable': 'Variable',
+        'position': 'Posición',
+        'period': 'Período',
+        'athlete': 'Atleta',
+        'config': 'Configuración',
+        'tab_distribution': '📊 Distribución',
+        'tab_temporal': '📈 Estadísticas & Temporal',
+        'tab_boxplots': '📦 Boxplots',
+        'tab_correlation': '🔥 Correlaciones',
+        'tab_comparison': '⚖️ Comparaciones',
+        'tab_executive': '📋 Ejecutivo',
+        'positions': 'Posiciones',
+        'periods': 'Períodos',
+        'athletes': 'Atletas',
+        'observations': 'Observaciones',
+        'mean': 'Media',
+        'median': 'Mediana',
+        'mode': 'Moda',
+        'std': 'Desviación Estándar',
+        'variance': 'Varianza',
+        'cv': 'Coeficiente de Variación',
+        'min': 'Mínimo',
+        'max': 'Máximo',
+        'amplitude': 'Amplitud',
+        'q1': 'Q1 (25%)',
+        'q3': 'Q3 (75%)',
+        'iqr': 'IQR',
+        'skewness': 'Asimetría',
+        'kurtosis': 'Curtosis',
+        'max_value': 'VALOR MÁXIMO',
+        'min_value': 'VALOR MÍNIMO',
+        'minute_of_max': 'Minuto del Máx',
+        'minute_of_min': 'Minuto del Mín',
+        'threshold_80': 'UMBRAL 80%',
+        'critical_events': 'EVENTOS CRÍTICOS',
+        'above_threshold': 'por encima del umbral 80%',
+        'intensity_zones': '🎚️ Zonas de Intensidad',
+        'zone_method': 'Método de definición',
+        'percentiles': 'Percentiles',
+        'based_on_max': 'Basado en Máximo',
+        'very_low': 'Muy Baja',
+        'low': 'Baja',
+        'moderate': 'Moderada',
+        'high': 'Alta',
+        'very_high': 'Muy Alta',
+        'process': '🚀 Procesar Análisis',
+        'descriptive_stats': '📊 Estadísticas Descriptivas',
+        'confidence_interval': '🎯 Intervalo de Confianza (95%)',
+        'normality_test': '🧪 Prueba de Normalidad',
+        'summary_by_group': '🏃 Resumen por Atleta, Posición y Período',
+        'symmetric': 'Aproximadamente simétrica',
+        'moderate_skew': 'Moderadamente asimétrica',
+        'high_skew': 'Fuertemente asimétrica',
+        'leptokurtic': 'Leptocúrtica (colas pesadas)',
+        'platykurtic': 'Platicúrtica (colas ligeras)',
+        'mesokurtic': 'Mesocúrtica (normal)',
+        'strong_positive': 'Correlación fuerte positiva',
+        'moderate_positive': 'Correlación moderada positiva',
+        'weak_positive': 'Correlación débil positiva',
+        'very_weak_positive': 'Correlación muy débil positiva',
+        'very_weak_negative': 'Correlación muy débil negativa',
+        'weak_negative': 'Correlación débil negativa',
+        'moderate_negative': 'Correlación moderada negativa',
+        'strong_negative': 'Correlación fuerte negativa',
+        'iqr_title': '📌 ¿Qué es IQR?',
+        'iqr_explanation': 'IQR (Rango Intercuartil) es la diferencia entre el tercer cuartil (Q3) y el primer cuartil (Q1). Representa la amplitud del 50% central de los datos, siendo una medida robusta de dispersión.',
+        'step1': '👈 **Paso 1:** Cargue uno o más archivos CSV para comenzar',
+        'step2': '👈 **Paso 2:** Seleccione los filtros y haga clic en Procesar Análisis',
+        'file_format': '### 📋 Formato esperado del archivo:',
+        'col1_desc': '**Primera columna:** Identificación en formato `Nombre-Período-Minuto`',
+        'col2_desc': '**Segunda columna:** Posición del atleta',
+        'col3_desc': '**Demás columnas (3+):** Variables numéricas para análisis',
+        'components': '📌 Componentes',
+        'name_ex': 'Nombre: Mariano, Maria, Joao...',
+        'period_ex': 'Período: 1 TEMPO, SEGUNDO TEMPO...',
+        'minute_ex': 'Minuto: 00:00-01:00, 05:00-06:00...',
+        'position_ex': 'Posición: Atacante, Meio-campo...',
+        'tip': '💡 Consejo',
+        'tip_text': 'Puede seleccionar múltiples archivos CSV con la misma estructura.',
+        'multi_file_ex': '📁 Ejemplo con múltiples archivos',
+        'multi_file_text': '''
+            ### Cargando múltiples archivos:
+            1. Prepare sus archivos CSV con la **misma estructura** de columnas
+            2. Seleccione todos los archivos deseados
+            3. El sistema verificará compatibilidad y concatenará automáticamente
+        '''
     }
 }
 
@@ -864,13 +955,13 @@ def comparar_grupos(df, variavel, grupo1, grupo2):
         return None
 
 def criar_timeline_profissional(df, variavel, t):
-    """Timeline com tooltips ricos e marcadores de eventos"""
+    """Timeline com tooltips ricos e marcadores de eventos - VERSÃO CORRIGIDA"""
     fig = go.Figure()
     
     # Calcular média móvel (5 pontos)
     media_movevel = df[variavel].rolling(window=5, min_periods=1).mean()
     
-    # Linha principal
+    # Linha principal - SEM colorbar para evitar erro
     fig.add_trace(go.Scatter(
         x=df['Minuto'],
         y=df[variavel],
@@ -879,14 +970,8 @@ def criar_timeline_profissional(df, variavel, t):
         line=dict(color='#3b82f6', width=3),
         marker=dict(
             size=8,
-            color=df[variavel],
-            colorscale='Viridis',
-            showscale=True,
-            colorbar=dict(
-                title=variavel, 
-                tickfont=dict(color='white'),
-                titlefont=dict(color='white')
-            )
+            color='#3b82f6',  # Cor fixa em vez de gradiente
+            line=dict(color='white', width=1)
         ),
         hovertemplate='<b>Minuto:</b> %{x}<br>' +
                       '<b>Valor:</b> %{y:.2f}<br>' +
@@ -953,9 +1038,7 @@ def criar_tabela_destaque(df, colunas_destaque):
         if col in df.select_dtypes(include=[np.number]).columns:
             styled_df = styled_df.background_gradient(
                 subset=[col],
-                cmap='viridis',
-                vmin=df[col].min(),
-                vmax=df[col].max()
+                cmap='viridis'
             )
     
     # Destacar linha do melhor atleta (maior média)
@@ -1045,7 +1128,7 @@ def time_range_selector(t):
     
     with col1:
         periodo = st.selectbox(
-            t['period'],
+            "Período",
             ["Hoje", "Últimos 7 dias", "Últimos 30 dias", "Este mês", "Personalizado"],
             index=2,
             key="periodo_selector"
@@ -1098,10 +1181,14 @@ def atualizar_grupos():
 with st.sidebar:
     st.markdown("<h2 class='sidebar-title'>🌐 Idioma / Language</h2>", unsafe_allow_html=True)
     
+    # CORREÇÃO: Seletor de idioma com todas as 3 opções
+    idioma_opcoes = ['pt', 'en', 'es']
+    idioma_idx = idioma_opcoes.index(st.session_state.idioma) if st.session_state.idioma in idioma_opcoes else 0
+    
     idioma = st.selectbox(
         "", 
-        ['pt', 'en', 'es'], 
-        index=['pt', 'en', 'es'].index(st.session_state.idioma) if st.session_state.idioma in ['pt', 'en', 'es'] else 0,
+        idioma_opcoes,
+        index=idioma_idx,
         label_visibility="collapsed",
         key="idioma_selector"
     )
@@ -1360,7 +1447,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
         posicoes_selecionadas = st.session_state.posicoes_selecionadas
         periodos_selecionados = st.session_state.periodos_selecionados
         variavel_analise = st.session_state.variavel_selecionada
-        n_classes = st.session_state.n_classes if 'n_classes' in st.session_state else 5
+        n_classes = st.session_state.classes_slider if 'classes_slider' in st.session_state else 5
         
         df_filtrado = df_completo[
             df_completo['Nome'].isin(atletas_selecionados) & 
@@ -1631,7 +1718,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 st.markdown("---")
                 st.markdown(f"<h4>{t['tab_temporal']}</h4>", unsafe_allow_html=True)
                 
-                # Timeline profissional
+                # Timeline profissional - VERSÃO CORRIGIDA
                 fig_tempo = criar_timeline_profissional(df_tempo, variavel_analise, t)
                 st.plotly_chart(fig_tempo, use_container_width=True)
                 
