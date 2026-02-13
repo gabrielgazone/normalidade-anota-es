@@ -12,7 +12,7 @@ import time
 import warnings
 warnings.filterwarnings('ignore')
 
-# Configuração da página DEVE ser a primeira chamada do Streamlit
+# Configuração da página
 st.set_page_config(
     page_title="Sports Science Analytics Pro", 
     layout="wide", 
@@ -21,7 +21,7 @@ st.set_page_config(
 )
 
 # ============================================================================
-# INTERNACIONALIZAÇÃO (i18n) com Espanhol da América Latina
+# INTERNACIONALIZAÇÃO
 # ============================================================================
 
 translations = {
@@ -39,10 +39,6 @@ translations = {
         'tab_boxplots': '📦 Boxplots',
         'tab_correlation': '🔥 Correlações',
         'tab_comparison': '⚖️ Comparações',
-        'tab_fatigue': '⚡ Análise de Fadiga',
-        'tab_progression': '📈 Progressão Individual',
-        'tab_radar': '🕷️ Radar Chart',
-        'tab_report': '📋 Relatório',
         'positions': 'Posições',
         'periods': 'Períodos',
         'athletes': 'Atletas',
@@ -71,7 +67,6 @@ translations = {
         'intensity_zones': '🎚️ Zonas de Intensidade',
         'zone_method': 'Método de definição',
         'percentiles': 'Percentis',
-        'manual': 'Manual',
         'based_on_max': 'Baseado no Máximo',
         'very_low': 'Muito Baixa',
         'low': 'Baixa',
@@ -79,8 +74,6 @@ translations = {
         'high': 'Alta',
         'very_high': 'Muito Alta',
         'process': '🚀 Processar Análise',
-        'generate_report': '📄 Gerar Relatório HTML',
-        'download_report': '📥 Download Relatório',
         'descriptive_stats': '📊 Estatísticas Descritivas',
         'confidence_interval': '🎯 Intervalo de Confiança (95%)',
         'normality_test': '🧪 Teste de Normalidade',
@@ -100,27 +93,7 @@ translations = {
         'moderate_negative': 'Correlação moderada negativa',
         'strong_negative': 'Correlação forte negativa',
         'iqr_title': '📌 O que é IQR?',
-        'iqr_explanation': '''
-            <strong>IQR (Intervalo Interquartil)</strong> é a diferença entre o terceiro quartil (Q3) e o primeiro quartil (Q1). 
-            Ele representa a amplitude dos 50% centrais dos dados, sendo uma medida robusta de dispersão menos sensível a outliers.
-        ''',
-        'fatigue_analysis': '⚡ Análise de Fadiga',
-        'baseline': 'Linha Base',
-        'fatigue_threshold': 'Limiar Fadiga (-15%)',
-        'fatigue_periods': 'Períodos de Fadiga',
-        'avg_decline': 'Declínio Médio',
-        'max_decline': 'Declínio Máximo',
-        'fatigue_minutes': 'Minutos em Fadiga',
-        'fatigue_percentage': 'Percentual em Fadiga',
-        'individual_progression': '📈 Progressão Individual',
-        'select_athlete': 'Selecione o atleta',
-        'progression_rate': 'Taxa de Variação',
-        'trend_line': 'Linha de Tendência',
-        'radar_chart': '🕷️ Radar Chart',
-        'select_vars_radar': 'Selecione as variáveis para o radar',
-        'team_average': 'Média do Time',
-        'report_title': 'Relatório de Análise de Desempenho',
-        'report_date': 'Data do relatório',
+        'iqr_explanation': 'O IQR (Intervalo Interquartil) é a diferença entre o terceiro quartil (Q3) e o primeiro quartil (Q1). Representa a amplitude dos 50% centrais dos dados, sendo uma medida robusta de dispersão menos sensível a outliers.',
         'step1': '👈 **Passo 1:** Faça upload de um ou mais arquivos CSV para começar',
         'step2': '👈 **Passo 2:** Selecione os filtros e clique em Processar Análise',
         'file_format': '### 📋 Formato esperado do arquivo:',
@@ -156,10 +129,6 @@ translations = {
         'tab_boxplots': '📦 Boxplots',
         'tab_correlation': '🔥 Correlations',
         'tab_comparison': '⚖️ Comparisons',
-        'tab_fatigue': '⚡ Fatigue Analysis',
-        'tab_progression': '📈 Individual Progression',
-        'tab_radar': '🕷️ Radar Chart',
-        'tab_report': '📋 Report',
         'positions': 'Positions',
         'periods': 'Periods',
         'athletes': 'Athletes',
@@ -188,7 +157,6 @@ translations = {
         'intensity_zones': '🎚️ Intensity Zones',
         'zone_method': 'Definition method',
         'percentiles': 'Percentiles',
-        'manual': 'Manual',
         'based_on_max': 'Based on Maximum',
         'very_low': 'Very Low',
         'low': 'Low',
@@ -196,8 +164,6 @@ translations = {
         'high': 'High',
         'very_high': 'Very High',
         'process': '🚀 Process Analysis',
-        'generate_report': '📄 Generate HTML Report',
-        'download_report': '📥 Download Report',
         'descriptive_stats': '📊 Descriptive Statistics',
         'confidence_interval': '🎯 Confidence Interval (95%)',
         'normality_test': '🧪 Normality Test',
@@ -217,27 +183,7 @@ translations = {
         'moderate_negative': 'Moderate negative correlation',
         'strong_negative': 'Strong negative correlation',
         'iqr_title': '📌 What is IQR?',
-        'iqr_explanation': '''
-            <strong>IQR (Interquartile Range)</strong> is the difference between the third quartile (Q3) and the first quartile (Q1).
-            It represents the range of the middle 50% of the data, being a robust measure of dispersion.
-        ''',
-        'fatigue_analysis': '⚡ Fatigue Analysis',
-        'baseline': 'Baseline',
-        'fatigue_threshold': 'Fatigue Threshold (-15%)',
-        'fatigue_periods': 'Fatigue Periods',
-        'avg_decline': 'Average Decline',
-        'max_decline': 'Maximum Decline',
-        'fatigue_minutes': 'Minutes in Fatigue',
-        'fatigue_percentage': 'Fatigue Percentage',
-        'individual_progression': '📈 Individual Progression',
-        'select_athlete': 'Select athlete',
-        'progression_rate': 'Rate of Change',
-        'trend_line': 'Trend Line',
-        'radar_chart': '🕷️ Radar Chart',
-        'select_vars_radar': 'Select variables for radar',
-        'team_average': 'Team Average',
-        'report_title': 'Performance Analysis Report',
-        'report_date': 'Report date',
+        'iqr_explanation': 'IQR (Interquartile Range) is the difference between the third quartile (Q3) and the first quartile (Q1). It represents the range of the middle 50% of the data, being a robust measure of dispersion.',
         'step1': '👈 **Step 1:** Upload one or more CSV files to start',
         'step2': '👈 **Step 2:** Select filters and click Process Analysis',
         'file_format': '### 📋 Expected file format:',
@@ -273,10 +219,6 @@ translations = {
         'tab_boxplots': '📦 Boxplots',
         'tab_correlation': '🔥 Correlaciones',
         'tab_comparison': '⚖️ Comparaciones',
-        'tab_fatigue': '⚡ Análisis de Fatiga',
-        'tab_progression': '📈 Progresión Individual',
-        'tab_radar': '🕷️ Gráfico Radar',
-        'tab_report': '📋 Informe',
         'positions': 'Posiciones',
         'periods': 'Períodos',
         'athletes': 'Atletas',
@@ -305,7 +247,6 @@ translations = {
         'intensity_zones': '🎚️ Zonas de Intensidad',
         'zone_method': 'Método de definición',
         'percentiles': 'Percentiles',
-        'manual': 'Manual',
         'based_on_max': 'Basado en Máximo',
         'very_low': 'Muy Baja',
         'low': 'Baja',
@@ -313,8 +254,6 @@ translations = {
         'high': 'Alta',
         'very_high': 'Muy Alta',
         'process': '🚀 Procesar Análisis',
-        'generate_report': '📄 Generar Informe HTML',
-        'download_report': '📥 Descargar Informe',
         'descriptive_stats': '📊 Estadísticas Descriptivas',
         'confidence_interval': '🎯 Intervalo de Confianza (95%)',
         'normality_test': '🧪 Prueba de Normalidad',
@@ -334,27 +273,7 @@ translations = {
         'moderate_negative': 'Correlación moderada negativa',
         'strong_negative': 'Correlación fuerte negativa',
         'iqr_title': '📌 ¿Qué es IQR?',
-        'iqr_explanation': '''
-            <strong>IQR (Rango Intercuartil)</strong> es la diferencia entre el tercer cuartil (Q3) y el primer cuartil (Q1).
-            Representa la amplitud del 50% central de los datos, siendo una medida robusta de dispersión menos sensible a valores atípicos.
-        ''',
-        'fatigue_analysis': '⚡ Análisis de Fatiga',
-        'baseline': 'Línea Base',
-        'fatigue_threshold': 'Umbral de Fatiga (-15%)',
-        'fatigue_periods': 'Períodos de Fatiga',
-        'avg_decline': 'Declive Medio',
-        'max_decline': 'Declive Máximo',
-        'fatigue_minutes': 'Minutos en Fatiga',
-        'fatigue_percentage': 'Porcentaje de Fatiga',
-        'individual_progression': '📈 Progresión Individual',
-        'select_athlete': 'Seleccionar atleta',
-        'progression_rate': 'Tasa de Variación',
-        'trend_line': 'Línea de Tendencia',
-        'radar_chart': '🕷️ Gráfico Radar',
-        'select_vars_radar': 'Seleccionar variables para el radar',
-        'team_average': 'Promedio del Equipo',
-        'report_title': 'Informe de Análisis de Rendimiento',
-        'report_date': 'Fecha del informe',
+        'iqr_explanation': 'IQR (Rango Intercuartil) es la diferencia entre el tercer cuartil (Q3) y el primer cuartil (Q1). Representa la amplitud del 50% central de los datos, siendo una medida robusta de dispersión.',
         'step1': '👈 **Paso 1:** Cargue uno o más archivos CSV para comenzar',
         'step2': '👈 **Paso 2:** Seleccione los filtros y haga clic en Procesar Análisis',
         'file_format': '### 📋 Formato esperado del archivo:',
@@ -751,11 +670,10 @@ with col2:
     """, unsafe_allow_html=True)
 
 # ============================================================================
-# SESSION STATE - Inicialização segura
+# SESSION STATE
 # ============================================================================
 
 def init_session_state():
-    """Inicializa todas as variáveis de sessão de forma segura"""
     if 'df_completo' not in st.session_state:
         st.session_state.df_completo = None
     if 'variaveis_quantitativas' not in st.session_state:
@@ -782,6 +700,12 @@ def init_session_state():
         st.session_state.processar_click = False
     if 'dados_processados' not in st.session_state:
         st.session_state.dados_processados = False
+    if 'metodo_zona' not in st.session_state:
+        st.session_state.metodo_zona = 'percentis'
+    if 'grupo1' not in st.session_state:
+        st.session_state.grupo1 = None
+    if 'grupo2' not in st.session_state:
+        st.session_state.grupo2 = None
 
 init_session_state()
 
@@ -891,7 +815,7 @@ def extrair_minuto_do_extremo(df, coluna_valor, coluna_minuto, extremo='max'):
         except:
             return "N/A"
 
-def criar_zonas_intensidade(df, variavel, metodo='percentis', limites=None):
+def criar_zonas_intensidade(df, variavel, metodo='percentis'):
     if metodo == 'percentis':
         return {
             'Muito Baixa': df[variavel].quantile(0.2),
@@ -900,7 +824,7 @@ def criar_zonas_intensidade(df, variavel, metodo='percentis', limites=None):
             'Alta': df[variavel].quantile(0.8),
             'Muito Alta': df[variavel].quantile(1.0)
         }
-    elif metodo == 'maximo':
+    else:  # based_on_max
         max_val = df[variavel].max()
         return {
             'Muito Baixa': max_val * 0.2,
@@ -909,8 +833,6 @@ def criar_zonas_intensidade(df, variavel, metodo='percentis', limites=None):
             'Alta': max_val * 0.8,
             'Muito Alta': max_val
         }
-    else:
-        return limites
 
 def comparar_grupos(df, variavel, grupo1, grupo2):
     try:
@@ -944,154 +866,14 @@ def comparar_grupos(df, variavel, grupo1, grupo2):
     except:
         return None
 
-def analisar_fadiga(df, variavel, baseline_minutos=5):
-    try:
-        df = df.copy().sort_values('Minuto')
-        
-        minutos_unicos = df['Minuto'].unique()
-        if len(minutos_unicos) <= baseline_minutos:
-            baseline = df[variavel].mean()
-        else:
-            baseline_minutos_list = minutos_unicos[:baseline_minutos]
-            baseline = df[df['Minuto'].isin(baseline_minutos_list)][variavel].mean()
-        
-        df['Declinio'] = (df[variavel] - baseline) / baseline * 100
-        df['Fadiga'] = df['Declinio'] < -15
-        
-        stats_fadiga = {
-            'baseline': baseline,
-            'declinio_medio': df['Declinio'].mean(),
-            'declinio_maximo': df['Declinio'].min(),
-            'minutos_fadiga': df['Fadiga'].sum(),
-            'percentual_fadiga': df['Fadiga'].mean() * 100 if len(df) > 0 else 0
-        }
-        
-        return df, stats_fadiga
-    except:
-        return df, None
+def atualizar_metodo_zona():
+    """Callback para atualizar método de zona"""
+    st.session_state.metodo_zona = st.session_state.metodo_zona_radio
 
-def criar_radar_chart(df, atleta, variaveis, t):
-    try:
-        dados_atleta = df[df['Nome'] == atleta][variaveis].mean()
-        
-        min_vals = df[variaveis].min()
-        max_vals = df[variaveis].max()
-        dados_norm = 100 * (dados_atleta - min_vals) / (max_vals - min_vals + 1e-10)
-        
-        media_time = df[variaveis].mean()
-        media_norm = 100 * (media_time - min_vals) / (max_vals - min_vals + 1e-10)
-        
-        fig = go.Figure()
-        
-        fig.add_trace(go.Scatterpolar(
-            r=dados_norm.values,
-            theta=variaveis,
-            fill='toself',
-            name=atleta,
-            line_color='#3b82f6',
-            fillcolor='rgba(59, 130, 246, 0.3)'
-        ))
-        
-        fig.add_trace(go.Scatterpolar(
-            r=media_norm.values,
-            theta=variaveis,
-            fill='toself',
-            name=t['team_average'],
-            line_color='#ef4444',
-            fillcolor='rgba(239, 68, 68, 0.3)'
-        ))
-        
-        fig.update_layout(
-            polar=dict(
-                radialaxis=dict(
-                    visible=True,
-                    range=[0, 100],
-                    gridcolor='#334155'
-                ),
-                bgcolor='rgba(30, 41, 59, 0.8)'
-            ),
-            showlegend=True,
-            title=f"{t['radar_chart']} - {atleta}",
-            paper_bgcolor='rgba(0,0,0,0)',
-            font=dict(color='white', size=11)
-        )
-        
-        return fig
-    except:
-        return None
-
-def plot_progressao_atleta(df, atleta, variavel, t):
-    try:
-        df_atleta = df[df['Nome'] == atleta].sort_values('Minuto')
-        
-        if len(df_atleta) < 3:
-            return None
-        
-        fig = make_subplots(
-            rows=2, cols=1,
-            subplot_titles=(f"{t['individual_progression']} - {variavel}", t['progression_rate']),
-            vertical_spacing=0.15
-        )
-        
-        fig.add_trace(
-            go.Scatter(
-                x=df_atleta['Minuto'], 
-                y=df_atleta[variavel],
-                mode='lines+markers', 
-                name=variavel,
-                line=dict(color='#3b82f6', width=3),
-                marker=dict(color='#3b82f6', size=8)
-            ),
-            row=1, col=1
-        )
-        
-        z = np.polyfit(range(len(df_atleta)), df_atleta[variavel], 1)
-        tendencia = np.poly1d(z)(range(len(df_atleta)))
-        fig.add_trace(
-            go.Scatter(
-                x=df_atleta['Minuto'], 
-                y=tendencia,
-                mode='lines', 
-                name=t['trend_line'],
-                line=dict(color='#ef4444', dash='dash', width=2)
-            ),
-            row=1, col=1
-        )
-        
-        variacao = df_atleta[variavel].diff()
-        cores_variacao = ['#10b981' if v > 0 else '#ef4444' for v in variacao[1:]]
-        fig.add_trace(
-            go.Bar(
-                x=df_atleta['Minuto'][1:], 
-                y=variacao[1:],
-                name='Variação',
-                marker_color=cores_variacao,
-                showlegend=False
-            ),
-            row=2, col=1
-        )
-        
-        fig.add_hline(y=0, line_dash="dot", line_color="#94a3b8", row=2, col=1)
-        
-        fig.update_layout(
-            height=600,
-            showlegend=True,
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(30, 41, 59, 0.8)',
-            font=dict(color='white', size=11)
-        )
-        
-        fig.update_xaxes(gridcolor='#334155', tickfont=dict(color='white'), tickangle=-45)
-        fig.update_yaxes(gridcolor='#334155', tickfont=dict(color='white'))
-        
-        return fig
-    except:
-        return None
-
-def processar_click():
-    """Callback para o botão processar"""
-    st.session_state.processar_click = True
-    st.session_state.dados_processados = False
+def atualizar_grupos():
+    """Callback para atualizar grupos de comparação"""
+    st.session_state.grupo1 = st.session_state.grupo1_select
+    st.session_state.grupo2 = st.session_state.grupo2_select
 
 # ============================================================================
 # SIDEBAR
@@ -1100,7 +882,6 @@ def processar_click():
 with st.sidebar:
     st.markdown("<h2 class='sidebar-title'>🌐 Idioma / Language</h2>", unsafe_allow_html=True)
     
-    # Seletor de idioma com as três opções
     idioma = st.selectbox(
         "", 
         ['pt', 'en', 'es'], 
@@ -1109,7 +890,6 @@ with st.sidebar:
         key="idioma_selector"
     )
     
-    # Atualizar idioma apenas se mudou
     if idioma != st.session_state.idioma:
         st.session_state.idioma = idioma
         st.rerun()
@@ -1344,8 +1124,9 @@ with st.sidebar:
                          st.session_state.periodos_selecionados and 
                          st.session_state.atletas_selecionados)
         
-        if st.button(t['process'], use_container_width=True, disabled=not pode_processar, key="process_button", on_click=processar_click):
-            pass
+        if st.button(t['process'], use_container_width=True, disabled=not pode_processar, key="process_button"):
+            st.session_state.processar_click = True
+            st.rerun()
 
 # ============================================================================
 # ÁREA PRINCIPAL
@@ -1395,9 +1176,11 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
             st.markdown("---")
             
             tab_titles = [
-                t['tab_distribution'], t['tab_temporal'], t['tab_boxplots'], 
-                t['tab_correlation'], t['tab_comparison'], t['tab_fatigue'],
-                t['tab_progression'], t['tab_radar'], t['tab_report']
+                t['tab_distribution'], 
+                t['tab_temporal'], 
+                t['tab_boxplots'], 
+                t['tab_correlation'], 
+                t['tab_comparison']
             ]
             
             tabs = st.tabs(tab_titles)
@@ -1567,39 +1350,20 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 st.markdown("---")
                 st.markdown(f"<h4>{t['intensity_zones']}</h4>", unsafe_allow_html=True)
                 
-                col_z1, col_z2 = st.columns([1, 3])
+                # Radio button com apenas 2 opções e callback para atualização dinâmica
+                metodo_zona = st.radio(
+                    t['zone_method'],
+                    [t['percentiles'], t['based_on_max']],
+                    index=0 if st.session_state.metodo_zona == 'percentis' else 1,
+                    key="metodo_zona_radio",
+                    on_change=atualizar_metodo_zona
+                )
                 
-                with col_z1:
-                    metodo_zona = st.radio(
-                        t['zone_method'],
-                        [t['percentiles'], t['manual'], t['based_on_max']],
-                        index=0,
-                        key="metodo_zona_radio"
-                    )
+                # Converter para o valor interno
+                metodo_interno = 'percentis' if metodo_zona == t['percentiles'] else 'based_on_max'
                 
-                with col_z2:
-                    if metodo_zona == t['percentiles']:
-                        zonas = criar_zonas_intensidade(df_filtrado, variavel_analise, 'percentis')
-                    elif metodo_zona == t['based_on_max']:
-                        zonas = criar_zonas_intensidade(df_filtrado, variavel_analise, 'maximo')
-                    else:
-                        st.info("Modo manual - defina os limites:")
-                        col_l1, col_l2, col_l3, col_l4 = st.columns(4)
-                        with col_l1:
-                            l1 = st.number_input(t['very_low'], value=0.0, step=0.1, key="zona_l1")
-                        with col_l2:
-                            l2 = st.number_input(t['low'], value=25.0, step=0.1, key="zona_l2")
-                        with col_l3:
-                            l3 = st.number_input(t['moderate'], value=50.0, step=0.1, key="zona_l3")
-                        with col_l4:
-                            l4 = st.number_input(t['high'], value=75.0, step=0.1, key="zona_l4")
-                        zonas = {
-                            t['very_low']: l1,
-                            t['low']: l2,
-                            t['moderate']: l3,
-                            t['high']: l4,
-                            t['very_high']: df_filtrado[variavel_analise].max()
-                        }
+                # Calcular zonas com base no método selecionado
+                zonas = criar_zonas_intensidade(df_filtrado, variavel_analise, metodo_interno)
                 
                 if zonas:
                     cores_zonas = ['#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#10b981']
@@ -1607,8 +1371,11 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     cols_zone = st.columns(5)
                     for i, (zona, limite) in enumerate(zonas.items()):
                         with cols_zone[i]:
-                            count = (df_filtrado[variavel_analise] > (list(zonas.values())[i-1] if i > 0 else -np.inf)) & \
-                                    (df_filtrado[variavel_analise] <= limite)
+                            if i == 0:
+                                count = df_filtrado[variavel_analise] <= limite
+                            else:
+                                limite_anterior = list(zonas.values())[i-1]
+                                count = (df_filtrado[variavel_analise] > limite_anterior) & (df_filtrado[variavel_analise] <= limite)
                             n_obs = count.sum()
                             st.markdown(f"""
                             <div class="zone-card" style="border-left-color: {cores_zonas[i]};">
@@ -1713,7 +1480,6 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                         <p><strong>{t['q1']}:</strong> {q1:.3f}</p>
                         <p><strong>{t['q3']}:</strong> {q3:.3f}</p>
                         <p><strong>{t['iqr']}:</strong> {iqr:.3f}</p>
-                        <p><small>{t['iqr_explanation']}</small></p>
                     </div>
                     """, unsafe_allow_html=True)
                 
@@ -1841,9 +1607,9 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 st.markdown(f"<h4>{t['summary_by_group']}</h4>", unsafe_allow_html=True)
                 
                 resumo = []
-                for nome in atletas_selecionados[:10]:
-                    for posicao in posicoes_selecionadas[:5]:
-                        for periodo in periodos_selecionados[:5]:
+                for nome in atletas_selecionados:
+                    for posicao in posicoes_selecionadas:
+                        for periodo in periodos_selecionados:
                             dados = df_filtrado[
                                 (df_filtrado['Nome'] == nome) & 
                                 (df_filtrado['Posição'] == posicao) &
@@ -1886,6 +1652,9 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                         use_container_width=True,
                         hide_index=True
                     )
+                    
+                    # Adicionar explicação do IQR ao final da tabela
+                    st.caption(f"📌 {t['iqr_title']}: {t['iqr_explanation']}")
             
             # Aba 3: Boxplots
             with tabs[2]:
@@ -1924,19 +1693,14 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 
                 st.markdown(f"<h4>👥 {t['athlete']}</h4>", unsafe_allow_html=True)
                 
-                atletas_plot = atletas_selecionados[:10]
-                if len(atletas_selecionados) > 10:
-                    st.info(f"ℹ️ " + (f"Mostrando 10 de {len(atletas_selecionados)} atletas" if st.session_state.idioma == 'pt' else 
-                                    f"Showing 10 of {len(atletas_selecionados)} athletes" if st.session_state.idioma == 'en' else
-                                    f"Mostrando 10 de {len(atletas_selecionados)} atletas"))
-                
+                # Mostrar todos os atletas, com altura dinâmica
                 fig_box_atl = go.Figure()
-                for atleta in atletas_plot:
+                for atleta in atletas_selecionados:
                     dados_atl = df_filtrado[df_filtrado['Nome'] == atleta][variavel_analise]
                     if len(dados_atl) > 0:
                         fig_box_atl.add_trace(go.Box(
                             y=dados_atl,
-                            name=atleta[:15] + "..." if len(atleta) > 15 else atleta,
+                            name=atleta[:20] + "..." if len(atleta) > 20 else atleta,
                             boxmean='sd',
                             marker_color='#8b5cf6',
                             line_color='white',
@@ -1946,6 +1710,8 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                             opacity=0.8
                         ))
                 
+                altura_boxplot = max(400, len(atletas_selecionados) * 25)
+                
                 fig_box_atl.update_layout(
                     title=f"{t['athlete']} - {variavel_analise}",
                     plot_bgcolor='rgba(30, 41, 59, 0.8)',
@@ -1954,22 +1720,15 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     title_font=dict(color='#3b82f6', size=16),
                     yaxis_title=variavel_analise,
                     showlegend=False,
-                    height=400
+                    height=altura_boxplot
                 )
                 fig_box_atl.update_xaxes(gridcolor='#334155', tickfont=dict(color='white'), tickangle=-45)
                 fig_box_atl.update_yaxes(gridcolor='#334155', tickfont=dict(color='white'))
                 st.plotly_chart(fig_box_atl, use_container_width=True)
                 
                 with st.expander(f"📊 {t['descriptive_stats']} {t['athlete'].lower()}"):
-                    st.markdown(f"""
-                    <div style="background: rgba(30, 41, 59, 0.8); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
-                        <h5 style="color: #3b82f6;">{t['iqr_title']}</h5>
-                        <p style="color: #94a3b8;">{t['iqr_explanation']}</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
                     stats_atletas = []
-                    for atleta in atletas_selecionados[:20]:
+                    for atleta in atletas_selecionados:
                         dados_atl = df_filtrado[df_filtrado['Nome'] == atleta][variavel_analise]
                         if len(dados_atl) > 0:
                             q1_atl = dados_atl.quantile(0.25)
@@ -2019,6 +1778,9 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                             use_container_width=True,
                             hide_index=True
                         )
+                    
+                    # Adicionar explicação do IQR ao final
+                    st.caption(f"📌 {t['iqr_title']}: {t['iqr_explanation']}")
             
             # Aba 4: Correlações
             with tabs[3]:
@@ -2134,20 +1896,36 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     col_comp1, col_comp2 = st.columns(2)
                     
                     with col_comp1:
-                        grupo1 = st.selectbox(f"{t['position']} 1:", posicoes_selecionadas, index=0, key="grupo1_select")
+                        grupo1 = st.selectbox(
+                            f"{t['position']} 1:", 
+                            posicoes_selecionadas, 
+                            index=0, 
+                            key="grupo1_select",
+                            on_change=atualizar_grupos
+                        )
                     with col_comp2:
-                        grupo2 = st.selectbox(f"{t['position']} 2:", posicoes_selecionadas, index=min(1, len(posicoes_selecionadas)-1), key="grupo2_select")
+                        grupo2 = st.selectbox(
+                            f"{t['position']} 2:", 
+                            posicoes_selecionadas, 
+                            index=min(1, len(posicoes_selecionadas)-1), 
+                            key="grupo2_select",
+                            on_change=atualizar_grupos
+                        )
                     
-                    if grupo1 != grupo2:
-                        resultado = comparar_grupos(df_filtrado, variavel_analise, grupo1, grupo2)
+                    # Usar os valores atuais dos selects
+                    grupo1_atual = st.session_state.grupo1_select if 'grupo1_select' in st.session_state else grupo1
+                    grupo2_atual = st.session_state.grupo2_select if 'grupo2_select' in st.session_state else grupo2
+                    
+                    if grupo1_atual != grupo2_atual:
+                        resultado = comparar_grupos(df_filtrado, variavel_analise, grupo1_atual, grupo2_atual)
                         
                         if resultado:
                             st.markdown(f"""
                             <div class="metric-container">
                                 <h4>📊 {t['tab_comparison']}</h4>
                                 <hr style="border-color: #334155;">
-                                <p><strong>{t['position']} 1 ({grupo1}):</strong> {resultado['media_g1']:.2f} ± {resultado['std_g1']:.2f} (n={resultado['n_g1']})</p>
-                                <p><strong>{t['position']} 2 ({grupo2}):</strong> {resultado['media_g2']:.2f} ± {resultado['std_g2']:.2f} (n={resultado['n_g2']})</p>
+                                <p><strong>{t['position']} 1 ({grupo1_atual}):</strong> {resultado['media_g1']:.2f} ± {resultado['std_g1']:.2f} (n={resultado['n_g1']})</p>
+                                <p><strong>{t['position']} 2 ({grupo2_atual}):</strong> {resultado['media_g2']:.2f} ± {resultado['std_g2']:.2f} (n={resultado['n_g2']})</p>
                                 <p><strong>Teste:</strong> {resultado['teste']}</p>
                                 <p><strong>p-valor:</strong> {resultado['p_valor']:.4f}</p>
                                 <p><strong>Diferença:</strong> {resultado['media_g1'] - resultado['media_g2']:.2f}</p>
@@ -2157,12 +1935,12 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                             
                             fig_comp = go.Figure()
                             
-                            dados_comp1 = df_filtrado[df_filtrado['Posição'] == grupo1][variavel_analise]
-                            dados_comp2 = df_filtrado[df_filtrado['Posição'] == grupo2][variavel_analise]
+                            dados_comp1 = df_filtrado[df_filtrado['Posição'] == grupo1_atual][variavel_analise]
+                            dados_comp2 = df_filtrado[df_filtrado['Posição'] == grupo2_atual][variavel_analise]
                             
                             fig_comp.add_trace(go.Box(
                                 y=dados_comp1,
-                                name=grupo1,
+                                name=grupo1_atual,
                                 boxmean='sd',
                                 marker_color='#3b82f6',
                                 line_color='white'
@@ -2170,14 +1948,14 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                             
                             fig_comp.add_trace(go.Box(
                                 y=dados_comp2,
-                                name=grupo2,
+                                name=grupo2_atual,
                                 boxmean='sd',
                                 marker_color='#ef4444',
                                 line_color='white'
                             ))
                             
                             fig_comp.update_layout(
-                                title=f"{grupo1} vs {grupo2} - {variavel_analise}",
+                                title=f"{grupo1_atual} vs {grupo2_atual} - {variavel_analise}",
                                 plot_bgcolor='rgba(30, 41, 59, 0.8)',
                                 paper_bgcolor='rgba(0,0,0,0)',
                                 font=dict(color='white', size=11),
@@ -2200,249 +1978,6 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     st.info("ℹ️ " + ("Selecione pelo menos 2 posições" if st.session_state.idioma == 'pt' else 
                                    "Select at least 2 positions" if st.session_state.idioma == 'en' else
                                    "Seleccione al menos 2 posiciones"))
-            
-            # Aba 6: Análise de Fadiga
-            with tabs[5]:
-                st.markdown(f"<h3>{t['tab_fatigue']}</h3>", unsafe_allow_html=True)
-                
-                baseline_min = st.slider(f"{t['baseline']} (minutos iniciais):", 1, 10, 5, key="baseline_slider")
-                
-                df_fadiga, stats_fadiga = analisar_fadiga(df_filtrado, variavel_analise, baseline_min)
-                
-                if stats_fadiga is not None:
-                    col_f1, col_f2, col_f3, col_f4 = st.columns(4)
-                    
-                    with col_f1:
-                        time_metric_card(t['baseline'], f"{stats_fadiga['baseline']:.2f}", "", "#3b82f6")
-                    with col_f2:
-                        time_metric_card(t['avg_decline'], f"{stats_fadiga['declinio_medio']:.1f}%", "", "#f59e0b")
-                    with col_f3:
-                        time_metric_card(t['max_decline'], f"{stats_fadiga['declinio_maximo']:.1f}%", "", "#ef4444")
-                    with col_f4:
-                        warning_card(t['fatigue_minutes'], f"{stats_fadiga['minutos_fadiga']:.0f}", 
-                                   f"{stats_fadiga['percentual_fadiga']:.1f}% {t['fatigue_percentage'].lower()}", "⚡")
-                    
-                    fig_fadiga = make_subplots(
-                        rows=2, cols=1,
-                        subplot_titles=(f"{variavel_analise} com {t['baseline']}", t['fatigue_analysis']),
-                        vertical_spacing=0.15
-                    )
-                    
-                    fig_fadiga.add_trace(
-                        go.Scatter(
-                            x=df_fadiga['Minuto'],
-                            y=df_fadiga[variavel_analise],
-                            mode='lines+markers',
-                            name=variavel_analise,
-                            line=dict(color='#3b82f6', width=2),
-                            marker=dict(color=['#ef4444' if f else '#3b82f6' for f in df_fadiga['Fadiga']], size=8)
-                        ),
-                        row=1, col=1
-                    )
-                    fig_fadiga.add_hline(y=stats_fadiga['baseline'], line_dash="dash", 
-                                        line_color="#3b82f6", annotation_text=t['baseline'], row=1, col=1)
-                    
-                    fig_fadiga.add_trace(
-                        go.Bar(
-                            x=df_fadiga['Minuto'],
-                            y=df_fadiga['Declinio'],
-                            name='Declínio %',
-                            marker_color=['#ef4444' if f else '#3b82f6' for f in df_fadiga['Fadiga']]
-                        ),
-                        row=2, col=1
-                    )
-                    fig_fadiga.add_hline(y=-15, line_dash="dot", line_color="#ef4444",
-                                        annotation_text=t['fatigue_threshold'], row=2, col=1)
-                    
-                    fig_fadiga.update_layout(
-                        height=600,
-                        plot_bgcolor='rgba(30, 41, 59, 0.8)',
-                        paper_bgcolor='rgba(0,0,0,0)',
-                        font=dict(color='white', size=11),
-                        title_font=dict(color='#3b82f6', size=16),
-                        showlegend=False
-                    )
-                    fig_fadiga.update_xaxes(gridcolor='#334155', tickfont=dict(color='white'), tickangle=-45)
-                    fig_fadiga.update_yaxes(gridcolor='#334155', tickfont=dict(color='white'))
-                    
-                    st.plotly_chart(fig_fadiga, use_container_width=True)
-                    
-                    df_fadiga_periodos = df_fadiga[df_fadiga['Fadiga']][['Minuto', variavel_analise, 'Declinio']]
-                    if not df_fadiga_periodos.empty:
-                        st.markdown(f"<h4>{t['fatigue_periods']}</h4>", unsafe_allow_html=True)
-                        st.dataframe(df_fadiga_periodos, use_container_width=True)
-                else:
-                    st.warning("⚠️ " + ("Não foi possível analisar fadiga" if st.session_state.idioma == 'pt' else 
-                                      "Could not analyze fatigue" if st.session_state.idioma == 'en' else
-                                      "No se pudo analizar fatiga"))
-            
-            # Aba 7: Progressão Individual
-            with tabs[6]:
-                st.markdown(f"<h3>{t['tab_progression']}</h3>", unsafe_allow_html=True)
-                
-                atleta_prog = st.selectbox(t['select_athlete'], atletas_selecionados, key="atleta_prog_select")
-                
-                fig_prog = plot_progressao_atleta(df_filtrado, atleta_prog, variavel_analise, t)
-                
-                if fig_prog is not None:
-                    st.plotly_chart(fig_prog, use_container_width=True)
-                    
-                    dados_atleta_prog = df_filtrado[df_filtrado['Nome'] == atleta_prog][variavel_analise]
-                    st.markdown(f"""
-                    <div class="metric-container">
-                        <h4>📊 {atleta_prog}</h4>
-                        <hr style="border-color: #334155;">
-                        <p><strong>{t['mean']}:</strong> {dados_atleta_prog.mean():.2f}</p>
-                        <p><strong>{t['max']}:</strong> {dados_atleta_prog.max():.2f}</p>
-                        <p><strong>{t['min']}:</strong> {dados_atleta_prog.min():.2f}</p>
-                        <p><strong>{t['std']}:</strong> {dados_atleta_prog.std():.2f}</p>
-                        <p><strong>{t['cv']}:</strong> {calcular_cv(dados_atleta_prog.mean(), dados_atleta_prog.std()):.1f}%</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                else:
-                    st.warning("⚠️ " + ("Dados insuficientes para progressão" if st.session_state.idioma == 'pt' else 
-                                      "Insufficient data for progression" if st.session_state.idioma == 'en' else
-                                      "Datos insuficientes para progresión"))
-            
-            # Aba 8: Radar Chart
-            with tabs[7]:
-                st.markdown(f"<h3>{t['tab_radar']}</h3>", unsafe_allow_html=True)
-                
-                vars_radar = st.multiselect(
-                    t['select_vars_radar'],
-                    options=st.session_state.variaveis_quantitativas,
-                    default=st.session_state.variaveis_quantitativas[:min(4, len(st.session_state.variaveis_quantitativas))],
-                    key="vars_radar_multiselect"
-                )
-                
-                if len(vars_radar) >= 3:
-                    atleta_radar = st.selectbox(t['select_athlete'], atletas_selecionados, key="atleta_radar_select")
-                    
-                    fig_radar = criar_radar_chart(df_filtrado, atleta_radar, vars_radar, t)
-                    
-                    if fig_radar is not None:
-                        st.plotly_chart(fig_radar, use_container_width=True)
-                        
-                        st.markdown(f"<h4>📊 {t['tab_radar']}</h4>", unsafe_allow_html=True)
-                        
-                        dados_radar = df_filtrado.groupby('Nome')[vars_radar].mean().round(2)
-                        st.dataframe(dados_radar.style.highlight_max(color='#10b981').highlight_min(color='#ef4444'), use_container_width=True)
-                    else:
-                        st.warning("⚠️ " + ("Não foi possível criar radar chart" if st.session_state.idioma == 'pt' else 
-                                          "Could not create radar chart" if st.session_state.idioma == 'en' else
-                                          "No se pudo crear gráfico radar"))
-                else:
-                    st.info("ℹ️ " + ("Selecione pelo menos 3 variáveis" if st.session_state.idioma == 'pt' else 
-                                   "Select at least 3 variables" if st.session_state.idioma == 'en' else
-                                   "Seleccione al menos 3 variables"))
-            
-            # Aba 9: Relatório
-            with tabs[8]:
-                st.markdown(f"<h3>{t['tab_report']}</h3>", unsafe_allow_html=True)
-                
-                if st.button(t['generate_report'], use_container_width=True, key="generate_report_button"):
-                    with st.spinner("📄 " + ("Gerando relatório..." if st.session_state.idioma == 'pt' else 
-                                           "Generating report..." if st.session_state.idioma == 'en' else
-                                           "Generando informe...")):
-                        time.sleep(2)
-                        
-                        html_content = f"""
-                        <!DOCTYPE html>
-                        <html>
-                        <head>
-                            <title>{t['report_title']}</title>
-                            <style>
-                                body {{ font-family: 'Arial', sans-serif; background: #0f172a; color: #e2e8f0; padding: 30px; }}
-                                h1 {{ color: #3b82f6; text-align: center; }}
-                                h2 {{ color: #8b5cf6; border-bottom: 2px solid #3b82f6; padding-bottom: 10px; }}
-                                .metric {{ background: #1e293b; padding: 15px; border-radius: 10px; margin: 10px 0; border-left: 4px solid #3b82f6; }}
-                                .critical {{ border-left-color: #ef4444; }}
-                                table {{ width: 100%; border-collapse: collapse; margin: 20px 0; }}
-                                th {{ background: #3b82f6; color: white; padding: 10px; }}
-                                td {{ background: #1e293b; padding: 8px; border: 1px solid #334155; }}
-                                .footer {{ text-align: center; margin-top: 30px; color: #94a3b8; }}
-                            </style>
-                        </head>
-                        <body>
-                            <h1>{t['report_title']}</h1>
-                            <p style="text-align: center;">{t['report_date']}: {datetime.now().strftime('%d/%m/%Y %H:%M')}</p>
-                            
-                            <h2>📊 {t['title'].split('Pro')[0] if 'Pro' in t['title'] else 'Visão Geral'}</h2>
-                            <div class="metric">
-                                <p><strong>{t['variable']}:</strong> {variavel_analise}</p>
-                                <p><strong>{t['positions']}:</strong> {len(posicoes_selecionadas)}</p>
-                                <p><strong>{t['periods']}:</strong> {len(periodos_selecionados)}</p>
-                                <p><strong>{t['athletes']}:</strong> {len(atletas_selecionados)}</p>
-                                <p><strong>{t['observations']}:</strong> {len(df_filtrado)}</p>
-                            </div>
-                            
-                            <h2>📈 {t['descriptive_stats']}</h2>
-                            <div class="metric">
-                                <p><strong>{t['mean']}:</strong> {media:.3f}</p>
-                                <p><strong>{t['median']}:</strong> {mediana:.3f}</p>
-                                <p><strong>{t['std']}:</strong> {desvio:.3f}</p>
-                                <p><strong>{t['cv']}:</strong> {cv:.1f}%</p>
-                                <p><strong>{t['min']}:</strong> {df_filtrado[variavel_analise].min():.3f}</p>
-                                <p><strong>{t['max']}:</strong> {df_filtrado[variavel_analise].max():.3f}</p>
-                            </div>
-                            
-                            <h2>🎯 {t['confidence_interval']}</h2>
-                            <div class="metric">
-                                <p><strong>{t['mean']}:</strong> {media:.3f}</p>
-                                <p><strong>IC 95%:</strong> [{ic_inf:.3f}, {ic_sup:.3f}]</p>
-                            </div>
-                            
-                            <h2>⚡ {t['tab_fatigue']}</h2>
-                            <div class="metric critical">
-                                <p><strong>{t['critical_events']}:</strong> {eventos_acima_80}</p>
-                                <p><strong>{t['fatigue_percentage']}:</strong> {percentual_acima_80:.1f}%</p>
-                                <p><strong>{t['max_value']}:</strong> {valor_maximo:.2f} ({t['minute_of_max']}: {minuto_maximo})</p>
-                                <p><strong>{t['min_value']}:</strong> {valor_minimo:.2f} ({t['minute_of_min']}: {minuto_minimo})</p>
-                            </div>
-                            
-                            <h2>📋 {t['summary_by_group']}</h2>
-                            <table>
-                                <tr>
-                                    <th>{t['position']}</th>
-                                    <th>{t['athlete']}</th>
-                                    <th>{t['period']}</th>
-                                    <th>{t['mean']}</th>
-                                    <th>{t['max']}</th>
-                                    <th>{t['min']}</th>
-                                    <th>N</th>
-                                </tr>
-                        """
-                        
-                        for item in resumo[:20]:
-                            html_content += f"""
-                                <tr>
-                                    <td>{item['Posição']}</td>
-                                    <td>{item['Atleta']}</td>
-                                    <td>{item['Período']}</td>
-                                    <td>{item['Média']:.2f}</td>
-                                    <td>{item[f'Máx {variavel_analise}']:.2f}</td>
-                                    <td>{item[f'Mín {variavel_analise}']:.2f}</td>
-                                    <td>{item['Nº Amostras']}</td>
-                                </tr>
-                            """
-                        
-                        html_content += f"""
-                            </table>
-                            
-                            <div class="footer">
-                                <p>{t['report_title']} - {datetime.now().strftime('%d/%m/%Y %H:%M')}</p>
-                                <p>Sports Science Analytics Pro</p>
-                            </div>
-                        </body>
-                        </html>
-                        """
-                        
-                        b64 = base64.b64encode(html_content.encode()).decode()
-                        href = f'<a href="data:text/html;base64,{b64}" download="relatorio_{variavel_analise}_{datetime.now().strftime("%Y%m%d_%H%M")}.html">📥 {t["download_report"]}</a>'
-                        st.markdown(href, unsafe_allow_html=True)
-                        st.success("✅ " + ("Relatório gerado com sucesso!" if st.session_state.idioma == 'pt' else 
-                                         "Report generated successfully!" if st.session_state.idioma == 'en' else
-                                         "Informe generado con éxito!"))
             
             with st.expander("📋 " + ("Visualizar dados brutos filtrados" if st.session_state.idioma == 'pt' else 
                                      "View filtered raw data" if st.session_state.idioma == 'en' else
