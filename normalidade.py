@@ -466,13 +466,32 @@ def calcular_cv(media, desvio):
     return 0
 
 def extrair_minuto_do_maximo(df, coluna_valor, coluna_minuto):
-    """Extrai com segurança o minuto correspondente ao valor máximo"""
-    if df.empty:
-        return "N/A"
-    idx_max = df[coluna_valor].idxmax()
-    if pd.notna(idx_max):
+    """
+    Extrai com segurança o minuto correspondente ao valor máximo
+    Versão corrigida que evita problemas de indexação
+    """
+    try:
+        if df.empty or len(df) == 0:
+            return "N/A"
+        
+        # Encontrar o índice do valor máximo
+        idx_max = df[coluna_valor].idxmax()
+        
+        # Verificar se o índice é válido
+        if pd.isna(idx_max) or idx_max not in df.index:
+            # Método alternativo: resetar o índice e procurar
+            df_reset = df.reset_index()
+            idx_pos = df_reset[coluna_valor].idxmax()
+            return df_reset.loc[idx_pos, coluna_minuto]
+        
         return df.loc[idx_max, coluna_minuto]
-    return "N/A"
+    except:
+        # Em caso de erro, tentar método alternativo
+        try:
+            df_sorted = df.sort_values(coluna_valor, ascending=False)
+            return df_sorted.iloc[0][coluna_minuto]
+        except:
+            return "N/A"
 
 # --- SIDEBAR ---
 with st.sidebar:
@@ -727,12 +746,7 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                     
                     fig_hist.add_trace(go.Histogram(
                         x=dados_hist,
-                        xbins=dict(
-                            start=valor_min,
-                            end=valor_max,
-                            size=(valor_max - valor_min) / n_classes if n_classes > 0 else 1
-                        ),
-                        autobinx=False,
+                        nbinsx=n_classes,
                         name='Frequência',
                         marker_color='#3498db',
                         opacity=0.8,
@@ -1198,7 +1212,7 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                                 (df_filtrado['Posição'] == posicao) &
                                 (df_filtrado['Período'] == periodo)
                             ]
-                            if not dados.empty:
+                            if len(dados) > 0:
                                 media_grupo = dados[variavel_analise].mean()
                                 desvio_grupo = dados[variavel_analise].std()
                                 cv_grupo = calcular_cv(media_grupo, desvio_grupo)
@@ -1379,6 +1393,7 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                     )
                     
                     if len(vars_corr) >= 2:
+                        # Calcular matriz de correlação apenas com as colunas selecionadas
                         df_corr = df_filtrado[vars_corr].corr()
                         
                         # Heatmap de correlação
@@ -1394,7 +1409,8 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                             plot_bgcolor='#1a1a1a',
                             paper_bgcolor='#1a1a1a',
                             font=dict(color='white', size=11),
-                            title_font=dict(color='#3498db', size=16)
+                            title_font=dict(color='#3498db', size=16),
+                            height=500
                         )
                         fig_corr.update_xaxes(gridcolor='#333', tickfont=dict(color='white'))
                         fig_corr.update_yaxes(gridcolor='#333', tickfont=dict(color='white'))
@@ -1403,13 +1419,16 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                         # Tabela de correlação
                         st.markdown("<h4>📊 Tabela de Correlação</h4>", unsafe_allow_html=True)
                         
+                        # Criar uma cópia da matriz para exibição
+                        df_corr_display = df_corr.copy()
+                        
                         # Estilizar a tabela com cores
                         def style_correlation(val):
                             color = '#e74c3c' if abs(val) > 0.7 else '#f39c12' if abs(val) > 0.5 else '#3498db'
                             return f'color: {color}; font-weight: bold;'
                         
                         st.dataframe(
-                            df_corr.style.format('{:.3f}').applymap(style_correlation),
+                            df_corr_display.style.format('{:.3f}').applymap(style_correlation),
                             use_container_width=True
                         )
                         
@@ -1431,7 +1450,8 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                                 plot_bgcolor='#1a1a1a',
                                 paper_bgcolor='#1a1a1a',
                                 font=dict(color='white', size=11),
-                                title_font=dict(color='#3498db', size=16)
+                                title_font=dict(color='#3498db', size=16),
+                                height=500
                             )
                             fig_scatter.update_xaxes(gridcolor='#333', tickfont=dict(color='white'))
                             fig_scatter.update_yaxes(gridcolor='#333', tickfont=dict(color='white'))
