@@ -98,7 +98,7 @@ with st.sidebar:
                 try:
                     data = pd.read_csv(uploaded_file)
                     
-                    if data.shape[1] >= 3 and not data.empty:  # Agora precisa de pelo menos 3 colunas
+                    if data.shape[1] >= 3 and not data.empty:
                         dataframes.append(data)
                         arquivos_validos.append(uploaded_file.name)
                     else:
@@ -159,7 +159,7 @@ with st.sidebar:
                     if variaveis_quant:
                         df_completo = pd.DataFrame({
                             'Nome': nomes.reset_index(drop=True),
-                            'Posição': segunda_coluna.reset_index(drop=True),  # Nova coluna
+                            'Posição': segunda_coluna.reset_index(drop=True),
                             'Período': periodos.reset_index(drop=True),
                             'Minuto': minutos.reset_index(drop=True)
                         })
@@ -227,7 +227,7 @@ with st.sidebar:
         if not df_temp.empty:
             st.caption(f"📊 {len(df_temp)} obs | Média: {df_temp.mean():.2f} | DP: {df_temp.std():.2f}")
     
-    # --- NOVO FILTRO POR POSIÇÃO ---
+    # --- FILTRO POR POSIÇÃO ---
     if st.session_state.df_completo is not None and st.session_state.todos_posicoes:
         st.markdown("---")
         st.header("📍 Filtro por Posição")
@@ -373,7 +373,7 @@ with st.sidebar:
         key="ordem_temporal"
     )
     
-    # ORDEM PERSONALIZADA - VERSÃO 100% FUNCIONAL
+    # ORDEM PERSONALIZADA
     if ordem_opcao == "🎯 Ordem Personalizada" and st.session_state.periodos_selecionados:
         st.markdown("##### Defina a ordem dos períodos:")
         
@@ -434,7 +434,6 @@ with st.sidebar:
                     st.rerun()
                 else:
                     st.error("❌ Cada período deve aparecer exatamente uma vez!")
-    # ================================================================
     
     # --- BOTÃO PROCESSAR ---
     pode_processar = True
@@ -621,7 +620,7 @@ if process_button and st.session_state.df_completo is not None and st.session_st
             q3 = df_filtrado[variavel_analise].quantile(0.75)
             st.metric("Q3 (75%)", f"{q3:.2f}")
         
-        # --- INTERVALO DE CONFIANÇA PARA A MÉDIA (OPÇÃO 1) ---
+        # --- INTERVALO DE CONFIANÇA PARA A MÉDIA ---
         st.subheader("🎯 Intervalo de Confiança para a Média")
         
         # Cálculos do IC
@@ -743,7 +742,7 @@ if process_button and st.session_state.df_completo is not None and st.session_st
             except Exception as e:
                 st.error(f"❌ Erro no teste Shapiro-Wilk: {str(e)}")
         
-        # --- GRÁFICO DE LINHA DO TEMPO COM ORDENAÇÃO FLEXÍVEL E IC (OPÇÃO 2) ---
+        # --- GRÁFICO DE LINHA DO TEMPO COM ORDENAÇÃO FLEXÍVEL E IC ---
         st.subheader("⏱️ Evolução Temporal dos Valores com Intervalo de Confiança")
         
         # APLICAR ORDENAÇÃO CONFORME ESCOLHA DO USUÁRIO
@@ -848,6 +847,114 @@ if process_button and st.session_state.df_completo is not None and st.session_st
             "🟠 Linha pontilhada laranja: 80% do valor máximo | "
             f"**Ordenação:** {ordem_escolhida}"
         )
+        
+        # --- BOXPLOT POR ATLETA ---
+        st.subheader("📦 Boxplot por Atleta")
+        
+        # Verificar se há atletas suficientes
+        if len(atletas_selecionados) > 0:
+            # Preparar dados para o boxplot
+            dados_boxplot = [df_filtrado[df_filtrado['Nome'] == atleta][variavel_analise].dropna() 
+                            for atleta in atletas_selecionados]
+            
+            # Filtrar apenas atletas com dados
+            atletas_com_dados = []
+            dados_validos = []
+            for atleta, dados in zip(atletas_selecionados, dados_boxplot):
+                if len(dados) > 0:
+                    atletas_com_dados.append(atleta)
+                    dados_validos.append(dados)
+            
+            if len(dados_validos) > 0:
+                # Criar figura com altura proporcional ao número de atletas
+                fig_box, ax_box = plt.subplots(figsize=(12, max(6, len(atletas_com_dados) * 0.4)))
+                
+                # Criar boxplot
+                bp = ax_box.boxplot(dados_validos, 
+                                   patch_artist=True,
+                                   notch=True,  # Entalhe para IC da mediana
+                                   showmeans=True,
+                                   meanline=True,
+                                   meanprops={'color': 'red', 'linestyle': '--', 'linewidth': 2},
+                                   medianprops={'color': 'black', 'linewidth': 2},
+                                   whiskerprops={'color': 'gray', 'linewidth': 1.5},
+                                   capprops={'color': 'gray', 'linewidth': 1.5},
+                                   boxprops={'facecolor': 'lightblue', 'alpha': 0.7})
+                
+                # Configurar eixos
+                ax_box.set_xticklabels(atletas_com_dados, rotation=45, ha='right', fontsize=10)
+                ax_box.set_ylabel(variavel_analise, fontsize=12)
+                ax_box.set_xlabel("Atleta", fontsize=12)
+                ax_box.set_title(f"Distribuição de {variavel_analise} por Atleta", fontsize=14, fontweight='bold')
+                ax_box.grid(axis='y', alpha=0.3, linestyle='--')
+                
+                # Adicionar linha com a média global
+                media_global = df_filtrado[variavel_analise].mean()
+                ax_box.axhline(y=media_global, color='green', linestyle=':', linewidth=2, 
+                              label=f'Média Global: {media_global:.2f}')
+                
+                ax_box.legend()
+                
+                plt.tight_layout()
+                st.pyplot(fig_box)
+                plt.close(fig_box)
+                
+                # Legenda explicativa
+                st.caption(
+                    "📌 **Interpretação do Boxplot:**\n"
+                    "• Linha preta: mediana\n"
+                    "• Linha vermelha tracejada: média\n"
+                    "• Caixa: 1º ao 3º quartil (50% dos dados)\n"
+                    "• Bigodes: valores dentro de 1.5 * IQR\n"
+                    "• Círculos: outliers (valores além dos bigodes)\n"
+                    "• Entalhe: intervalo de confiança aproximado para a mediana\n"
+                    f"• Linha verde pontilhada: média global ({media_global:.2f})"
+                )
+                
+                # Tabela resumo por atleta
+                with st.expander("📊 Estatísticas detalhadas por atleta"):
+                    stats_atletas = []
+                    for atleta in atletas_com_dados:
+                        dados_atleta = df_filtrado[df_filtrado['Nome'] == atleta][variavel_analise]
+                        if len(dados_atleta) > 0:
+                            q1 = dados_atleta.quantile(0.25)
+                            q3 = dados_atleta.quantile(0.75)
+                            iqr = q3 - q1
+                            stats_atletas.append({
+                                'Atleta': atleta,
+                                'Média': dados_atleta.mean(),
+                                'Mediana': dados_atleta.median(),
+                                'Desvio Padrão': dados_atleta.std(),
+                                'Mínimo': dados_atleta.min(),
+                                'Q1': q1,
+                                'Q3': q3,
+                                'Máximo': dados_atleta.max(),
+                                'IQR': iqr,
+                                'Outliers': len(dados_atleta[(dados_atleta < q1 - 1.5*iqr) | (dados_atleta > q3 + 1.5*iqr)]),
+                                'N': len(dados_atleta)
+                            })
+                    
+                    df_stats_atletas = pd.DataFrame(stats_atletas)
+                    st.dataframe(
+                        df_stats_atletas.style.format({
+                            'Média': '{:.2f}',
+                            'Mediana': '{:.2f}',
+                            'Desvio Padrão': '{:.2f}',
+                            'Mínimo': '{:.2f}',
+                            'Q1': '{:.2f}',
+                            'Q3': '{:.2f}',
+                            'Máximo': '{:.2f}',
+                            'IQR': '{:.2f}',
+                            'Outliers': '{:.0f}',
+                            'N': '{:.0f}'
+                        }),
+                        use_container_width=True,
+                        hide_index=True
+                    )
+            else:
+                st.warning("⚠️ Nenhum dado disponível para criar boxplots")
+        else:
+            st.warning("⚠️ Selecione pelo menos um atleta para visualizar o boxplot")
         
         with st.expander("📋 Visualizar dados brutos filtrados"):
             st.dataframe(df_filtrado, use_container_width=True)
