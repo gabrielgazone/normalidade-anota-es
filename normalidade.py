@@ -706,6 +706,8 @@ def init_session_state():
         st.session_state.grupo1 = None
     if 'grupo2' not in st.session_state:
         st.session_state.grupo2 = None
+    if 'zona_key' not in st.session_state:
+        st.session_state.zona_key = 0  # <-- NOVA VARIÁVEL PARA FORÇAR ATUALIZAÇÃO
 
 init_session_state()
 
@@ -866,9 +868,20 @@ def comparar_grupos(df, variavel, grupo1, grupo2):
     except:
         return None
 
+# ============================================================================
+# CALLBACKS CORRIGIDOS - AGORA COM ATUALIZAÇÃO DINÂMICA
+# ============================================================================
+
 def atualizar_metodo_zona():
-    """Callback para atualizar método de zona"""
-    st.session_state.metodo_zona = st.session_state.metodo_zona_radio
+    """Callback para atualizar método de zona - AGORA FORÇA RERUN"""
+    metodo_selecionado = st.session_state.metodo_zona_radio
+    # Mapeia o texto para o valor interno
+    if metodo_selecionado == translations[st.session_state.idioma]['percentiles']:
+        st.session_state.metodo_zona = 'percentis'
+    else:
+        st.session_state.metodo_zona = 'based_on_max'
+    # Incrementa a chave para forçar recriação dos componentes
+    st.session_state.zona_key += 1
 
 def atualizar_grupos():
     """Callback para atualizar grupos de comparação"""
@@ -1350,7 +1363,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 st.markdown("---")
                 st.markdown(f"<h4>{t['intensity_zones']}</h4>", unsafe_allow_html=True)
                 
-                # Radio button com apenas 2 opções e callback para atualização dinâmica
+                # Radio button com callback - AGORA FUNCIONA DINAMICAMENTE
                 metodo_zona = st.radio(
                     t['zone_method'],
                     [t['percentiles'], t['based_on_max']],
@@ -1359,8 +1372,8 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     on_change=atualizar_metodo_zona
                 )
                 
-                # Converter para o valor interno
-                metodo_interno = 'percentis' if metodo_zona == t['percentiles'] else 'based_on_max'
+                # Usar o valor do session state com a chave de atualização
+                metodo_interno = st.session_state.metodo_zona
                 
                 # Calcular zonas com base no método selecionado
                 zonas = criar_zonas_intensidade(df_filtrado, variavel_analise, metodo_interno)
@@ -1368,6 +1381,8 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 if zonas:
                     cores_zonas = ['#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#10b981']
                     st.markdown("##### Limiares das Zonas:")
+                    
+                    # Usar a chave de atualização para forçar recriação dos cards
                     cols_zone = st.columns(5)
                     for i, (zona, limite) in enumerate(zonas.items()):
                         with cols_zone[i]:
@@ -1377,8 +1392,10 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                                 limite_anterior = list(zonas.values())[i-1]
                                 count = (df_filtrado[variavel_analise] > limite_anterior) & (df_filtrado[variavel_analise] <= limite)
                             n_obs = count.sum()
+                            
+                            # Adicionar key única baseada na zona_key para forçar atualização
                             st.markdown(f"""
-                            <div class="zone-card" style="border-left-color: {cores_zonas[i]};">
+                            <div class="zone-card" style="border-left-color: {cores_zonas[i]};" key="zona_{i}_{st.session_state.zona_key}">
                                 <div class="zone-name">{zona}</div>
                                 <div class="zone-value">{limite:.1f}</div>
                                 <div class="zone-count">{n_obs} obs ({n_obs/len(df_filtrado)*100:.0f}%)</div>
