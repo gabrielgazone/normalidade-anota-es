@@ -795,6 +795,12 @@ def init_session_state():
         st.session_state.n_classes = 5
     if 'upload_concluido' not in st.session_state:
         st.session_state.upload_concluido = False
+    if 'atleta1_comp' not in st.session_state:
+        st.session_state.atleta1_comp = None
+    if 'atleta2_comp' not in st.session_state:
+        st.session_state.atleta2_comp = None
+    if 'vars_comp' not in st.session_state:
+        st.session_state.vars_comp = []
 
 init_session_state()
 
@@ -1178,11 +1184,11 @@ def time_range_selector(t):
     return data_inicio, data_fim
 
 # ============================================================================
-# CALLBACKS CORRIGIDOS
+# CALLBACKS CORRIGIDOS - ATUALIZAÇÃO INSTANTÂNEA
 # ============================================================================
 
 def atualizar_metodo_zona():
-    """Callback para atualizar método de zona - AGORA FUNCIONAL"""
+    """Callback para atualizar método de zona - ATUALIZAÇÃO INSTANTÂNEA"""
     valor_radio = st.session_state.metodo_zona_radio
     if valor_radio in ["Percentis", "Percentiles"]:
         st.session_state.metodo_zona = 'percentis'
@@ -1191,13 +1197,21 @@ def atualizar_metodo_zona():
     st.session_state.zona_key += 1
 
 def atualizar_grupos():
-    """Callback para atualizar grupos de comparação"""
+    """Callback para atualizar grupos de comparação - ATUALIZAÇÃO INSTANTÂNEA"""
     st.session_state.grupo1 = st.session_state.grupo1_select
     st.session_state.grupo2 = st.session_state.grupo2_select
 
-def atualizar_comparacao_atletas():
-    """Callback para atualizar comparação de atletas"""
-    pass
+def atualizar_comparacao_atletas1():
+    """Callback para atualizar atleta 1 - ATUALIZAÇÃO INSTANTÂNEA"""
+    st.session_state.atleta1_comp = st.session_state.atleta1_comp_select
+
+def atualizar_comparacao_atletas2():
+    """Callback para atualizar atleta 2 - ATUALIZAÇÃO INSTANTÂNEA"""
+    st.session_state.atleta2_comp = st.session_state.atleta2_comp_select
+
+def atualizar_vars_comp():
+    """Callback para atualizar variáveis de comparação - ATUALIZAÇÃO INSTANTÂNEA"""
+    st.session_state.vars_comp = st.session_state.vars_comp_select
 
 # ============================================================================
 # SIDEBAR
@@ -1690,7 +1704,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     hide_index=True
                 )
             
-            # ABA 2: ESTATÍSTICAS & TEMPORAL
+            # ABA 2: ESTATÍSTICAS & TEMPORAL - CORREÇÃO 2
             with tabs[1]:
                 st.markdown(f"<h3>{t['tab_temporal']}</h3>", unsafe_allow_html=True)
                 
@@ -1721,7 +1735,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 st.markdown("---")
                 st.markdown(f"<h4>{t['intensity_zones']}</h4>", unsafe_allow_html=True)
                 
-                # CORREÇÃO 2: Radio button com callback funcional
+                # CORREÇÃO 2: Radio button com callback que atualiza instantaneamente
                 opcoes = [t['percentiles'], t['based_on_max']]
                 idx_atual = 0 if st.session_state.metodo_zona == 'percentis' else 1
                 
@@ -2225,7 +2239,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                                    "At least 2 variables are needed" if st.session_state.idioma == 'en' else
                                    "Se necesitan al menos 2 variables"))
             
-            # ABA 5: COMPARAÇÕES
+            # ABA 5: COMPARAÇÕES - CORREÇÃO 3
             with tabs[4]:
                 st.markdown(f"<h3>{t['tab_comparison']}</h3>", unsafe_allow_html=True)
                 
@@ -2251,7 +2265,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                             on_change=atualizar_grupos
                         )
                     
-                    # Usar os valores armazenados em session_state
+                    # Usar os valores armazenados em session_state (atualizados instantaneamente)
                     grupo1_atual = st.session_state.grupo1 if st.session_state.grupo1 is not None else grupo1
                     grupo2_atual = st.session_state.grupo2 if st.session_state.grupo2 is not None else grupo2
                     
@@ -2318,7 +2332,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                                    "Select at least 2 positions" if st.session_state.idioma == 'en' else
                                    "Seleccione al menos 2 posiciones"))
             
-            # ABA 6: EXECUTIVO
+            # ABA 6: EXECUTIVO - CORREÇÃO 4
             with tabs[5]:
                 st.markdown(f"<h3>{t['tab_executive']}</h3>", unsafe_allow_html=True)
                 
@@ -2331,29 +2345,33 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                             "Atleta 1", 
                             atletas_selecionados, 
                             index=0, 
-                            key="atleta1_comp",
-                            on_change=atualizar_comparacao_atletas
+                            key="atleta1_comp_select",
+                            on_change=atualizar_comparacao_atletas1
                         )
                     with col_atl2:
                         atleta2_comp = st.selectbox(
                             "Atleta 2", 
                             atletas_selecionados, 
                             index=min(1, len(atletas_selecionados)-1), 
-                            key="atleta2_comp",
-                            on_change=atualizar_comparacao_atletas
+                            key="atleta2_comp_select",
+                            on_change=atualizar_comparacao_atletas2
                         )
                     
-                    if atleta1_comp != atleta2_comp:
+                    # Usar valores do session state (atualizados instantaneamente)
+                    a1_atual = st.session_state.atleta1_comp if st.session_state.atleta1_comp is not None else atleta1_comp
+                    a2_atual = st.session_state.atleta2_comp if st.session_state.atleta2_comp is not None else atleta2_comp
+                    
+                    if a1_atual != a2_atual:
                         vars_comp = st.multiselect(
                             "Variáveis para comparar",
                             st.session_state.variaveis_quantitativas,
-                            default=st.session_state.variaveis_quantitativas[:3],
-                            key="vars_comp",
-                            on_change=atualizar_comparacao_atletas
+                            default=st.session_state.vars_comp if st.session_state.vars_comp else st.session_state.variaveis_quantitativas[:3],
+                            key="vars_comp_select",
+                            on_change=atualizar_vars_comp
                         )
                         
                         if len(vars_comp) >= 1:
-                            comparar_atletas(df_filtrado, atleta1_comp, atleta2_comp, vars_comp, t)
+                            comparar_atletas(df_filtrado, a1_atual, a2_atual, vars_comp, t)
                     else:
                         st.info("Selecione atletas diferentes para comparação")
                 else:
