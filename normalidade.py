@@ -455,6 +455,13 @@ st.markdown("""
         color: white;
         margin: 10px 0;
         border: 1px solid rgba(255, 255, 255, 0.1);
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.02); }
+        100% { transform: scale(1); }
     }
     
     .warning-card .label {
@@ -534,6 +541,7 @@ st.markdown("""
         color: white !important;
         font-size: 2.5rem;
         font-weight: 700;
+        text-shadow: 0 0 30px rgba(59, 130, 246, 0.5);
         background: linear-gradient(135deg, #3b82f6, #8b5cf6);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
@@ -660,7 +668,11 @@ st.markdown("""
         padding: 10px !important;
     }
     
-    /* Botões profissionais */
+    p, li, .caption, .stMarkdown {
+        color: #cbd5e1 !important;
+        line-height: 1.6;
+    }
+    
     .stButton > button {
         background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
         color: white;
@@ -779,8 +791,10 @@ def init_session_state():
         st.session_state.zona_key = 0
     if 'anotacoes' not in st.session_state:
         st.session_state.anotacoes = []
+    if 'n_classes' not in st.session_state:
+        st.session_state.n_classes = 5
     if 'upload_concluido' not in st.session_state:
-        st.session_state.upload_concluido = False  # NOVA FLAG PARA EVITAR LOOP
+        st.session_state.upload_concluido = False
 
 init_session_state()
 
@@ -962,7 +976,7 @@ def comparar_grupos(df, variavel, grupo1, grupo2):
         return None
 
 def criar_timeline_profissional(df, variavel, t):
-    """Timeline com tooltips ricos e marcadores de eventos"""
+    """Timeline com tooltips ricos e marcadores de eventos - VERSÃO CORRIGIDA"""
     fig = go.Figure()
     
     # Calcular média móvel (5 pontos)
@@ -1164,13 +1178,13 @@ def time_range_selector(t):
     return data_inicio, data_fim
 
 # ============================================================================
-# CALLBACKS
+# CALLBACKS CORRIGIDOS
 # ============================================================================
 
 def atualizar_metodo_zona():
-    """Callback para atualizar método de zona"""
-    metodo_selecionado = st.session_state.metodo_zona_radio
-    if metodo_selecionado == translations[st.session_state.idioma]['percentiles']:
+    """Callback para atualizar método de zona - AGORA FUNCIONAL"""
+    valor_radio = st.session_state.metodo_zona_radio
+    if valor_radio in ["Percentis", "Percentiles"]:
         st.session_state.metodo_zona = 'percentis'
     else:
         st.session_state.metodo_zona = 'based_on_max'
@@ -1183,7 +1197,7 @@ def atualizar_grupos():
 
 def atualizar_comparacao_atletas():
     """Callback para atualizar comparação de atletas"""
-    pass  # Não precisa de rerun, o próprio Streamlit atualiza
+    pass
 
 # ============================================================================
 # SIDEBAR
@@ -1220,7 +1234,7 @@ with st.sidebar:
         key="file_uploader"
     )
     
-    # CORREÇÃO: Processar upload apenas se houver arquivos novos e upload não foi concluído
+    # CORREÇÃO: Processar upload apenas uma vez
     if upload_files and len(upload_files) > 0 and not st.session_state.upload_concluido:
         with st.spinner('🔄 Processando...'):
             time.sleep(0.5)
@@ -1297,7 +1311,7 @@ with st.sidebar:
                                 st.session_state.periodos_selecionados = periodos_unicos.copy()
                                 st.session_state.ordem_personalizada = periodos_unicos.copy()
                                 st.session_state.upload_files_names = arquivos_validos
-                                st.session_state.upload_concluido = True  # MARCA COMO CONCLUÍDO
+                                st.session_state.upload_concluido = True
                                 
                                 if variaveis_quant and st.session_state.variavel_selecionada is None:
                                     st.session_state.variavel_selecionada = variaveis_quant[0]
@@ -1331,6 +1345,7 @@ with st.sidebar:
             if variavel_selecionada != st.session_state.variavel_selecionada:
                 st.session_state.variavel_selecionada = variavel_selecionada
                 st.session_state.dados_processados = False
+                st.rerun()
             
             df_temp = st.session_state.df_completo[variavel_selecionada].dropna()
             if not df_temp.empty:
@@ -1344,7 +1359,7 @@ with st.sidebar:
                 f"Selecionar todas as {t['position'].lower()}s" if st.session_state.idioma == 'pt' else
                 f"Select all {t['position'].lower()}s" if st.session_state.idioma == 'en' else
                 f"Seleccionar todas las {t['position'].lower()}s",
-                value=True,
+                value=True if len(st.session_state.posicoes_selecionadas) == len(st.session_state.todos_posicoes) else False,
                 key="todos_posicoes_check"
             )
             
@@ -1352,6 +1367,7 @@ with st.sidebar:
                 if st.session_state.posicoes_selecionadas != st.session_state.todos_posicoes:
                     st.session_state.posicoes_selecionadas = st.session_state.todos_posicoes.copy()
                     st.session_state.dados_processados = False
+                    st.rerun()
             else:
                 posicoes_sel = st.multiselect(
                     "",
@@ -1363,6 +1379,7 @@ with st.sidebar:
                 if posicoes_sel != st.session_state.posicoes_selecionadas:
                     st.session_state.posicoes_selecionadas = posicoes_sel
                     st.session_state.dados_processados = False
+                    st.rerun()
         
         if st.session_state.todos_periodos:
             st.markdown("---")
@@ -1372,7 +1389,7 @@ with st.sidebar:
                 f"Selecionar todos os {t['period'].lower()}s" if st.session_state.idioma == 'pt' else
                 f"Select all {t['period'].lower()}s" if st.session_state.idioma == 'en' else
                 f"Seleccionar todos los {t['period'].lower()}s",
-                value=True,
+                value=True if len(st.session_state.periodos_selecionados) == len(st.session_state.todos_periodos) else False,
                 key="todos_periodos_check"
             )
             
@@ -1381,6 +1398,7 @@ with st.sidebar:
                     st.session_state.periodos_selecionados = st.session_state.todos_periodos.copy()
                     st.session_state.ordem_personalizada = st.session_state.todos_periodos.copy()
                     st.session_state.dados_processados = False
+                    st.rerun()
             else:
                 periodos_sel = st.multiselect(
                     "",
@@ -1392,6 +1410,7 @@ with st.sidebar:
                 if periodos_sel != st.session_state.periodos_selecionados:
                     st.session_state.periodos_selecionados = periodos_sel
                     st.session_state.dados_processados = False
+                    st.rerun()
         
         if st.session_state.atletas_selecionados:
             st.markdown("---")
@@ -1409,7 +1428,7 @@ with st.sidebar:
                 f"Selecionar todos os {t['athlete'].lower()}s" if st.session_state.idioma == 'pt' else
                 f"Select all {t['athlete'].lower()}s" if st.session_state.idioma == 'en' else
                 f"Seleccionar todos los {t['athlete'].lower()}s",
-                value=True,
+                value=True if len(st.session_state.atletas_selecionados) == len(atletas_disponiveis) and len(atletas_disponiveis) > 0 else False,
                 key="todos_atletas_check"
             )
             
@@ -1417,6 +1436,7 @@ with st.sidebar:
                 if st.session_state.atletas_selecionados != atletas_disponiveis:
                     st.session_state.atletas_selecionados = atletas_disponiveis
                     st.session_state.dados_processados = False
+                    st.rerun()
             else:
                 atletas_sel = st.multiselect(
                     "",
@@ -1428,12 +1448,16 @@ with st.sidebar:
                 if atletas_sel != st.session_state.atletas_selecionados:
                     st.session_state.atletas_selecionados = atletas_sel
                     st.session_state.dados_processados = False
+                    st.rerun()
         
         st.markdown("---")
         st.markdown(f"<h2 class='sidebar-title'>⚙️ {t['config']}</h2>", unsafe_allow_html=True)
         
-        n_classes = st.slider(f"{t['config']}:", 3, 20, 5, key="classes_slider")
-        st.session_state.n_classes = n_classes
+        # CORREÇÃO 1: n_classes agora atualiza o session state e força rerun
+        n_classes = st.slider(f"{t['config']}:", 3, 20, st.session_state.n_classes, key="classes_slider")
+        if n_classes != st.session_state.n_classes:
+            st.session_state.n_classes = n_classes
+            st.rerun()
         
         st.markdown("---")
         pode_processar = (st.session_state.variavel_selecionada and 
@@ -1461,7 +1485,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
         posicoes_selecionadas = st.session_state.posicoes_selecionadas
         periodos_selecionados = st.session_state.periodos_selecionados
         variavel_analise = st.session_state.variavel_selecionada
-        n_classes = st.session_state.n_classes if 'n_classes' in st.session_state else 5
+        n_classes = st.session_state.n_classes
         
         df_filtrado = df_completo[
             df_completo['Nome'].isin(atletas_selecionados) & 
@@ -1532,7 +1556,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
             
             tabs = st.tabs(tab_titles)
             
-            # Aba 1: Distribuição
+            # ABA 1: DISTRIBUIÇÃO
             with tabs[0]:
                 st.markdown(f"<h3>{t['tab_distribution']}</h3>", unsafe_allow_html=True)
                 
@@ -1541,6 +1565,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 with col1:
                     dados_hist = df_filtrado[variavel_analise].dropna()
                     
+                    # CORREÇÃO 1: Histograma usando n_classes do session state
                     fig_hist = go.Figure()
                     fig_hist.add_trace(go.Histogram(
                         x=dados_hist,
@@ -1665,7 +1690,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     hide_index=True
                 )
             
-            # Aba 2: Estatísticas & Temporal
+            # ABA 2: ESTATÍSTICAS & TEMPORAL
             with tabs[1]:
                 st.markdown(f"<h3>{t['tab_temporal']}</h3>", unsafe_allow_html=True)
                 
@@ -1696,18 +1721,20 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 st.markdown("---")
                 st.markdown(f"<h4>{t['intensity_zones']}</h4>", unsafe_allow_html=True)
                 
-                # Radio button com callback
+                # CORREÇÃO 2: Radio button com callback funcional
+                opcoes = [t['percentiles'], t['based_on_max']]
+                idx_atual = 0 if st.session_state.metodo_zona == 'percentis' else 1
+                
                 metodo_zona = st.radio(
                     t['zone_method'],
-                    [t['percentiles'], t['based_on_max']],
-                    index=0 if st.session_state.metodo_zona == 'percentis' else 1,
+                    opcoes,
+                    index=idx_atual,
                     key="metodo_zona_radio",
                     on_change=atualizar_metodo_zona
                 )
                 
-                # Calcular zonas com base no método selecionado
-                metodo_interno = st.session_state.metodo_zona
-                zonas = criar_zonas_intensidade(df_filtrado, variavel_analise, metodo_interno)
+                # Usar o valor do session state (atualizado pelo callback)
+                zonas = criar_zonas_intensidade(df_filtrado, variavel_analise, st.session_state.metodo_zona)
                 
                 if zonas:
                     cores_zonas = ['#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#10b981']
@@ -1961,7 +1988,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     # Adicionar explicação do IQR ao final da tabela
                     st.caption(f"📌 {t['iqr_title']}: {t['iqr_explanation']}")
             
-            # Aba 3: Boxplots
+            # ABA 3: BOXPLOTS
             with tabs[2]:
                 st.markdown(f"<h3>{t['tab_boxplots']}</h3>", unsafe_allow_html=True)
                 
@@ -2032,6 +2059,13 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 st.plotly_chart(fig_box_atl, use_container_width=True)
                 
                 with st.expander(f"📊 {t['descriptive_stats']} {t['athlete'].lower()}"):
+                    st.markdown(f"""
+                    <div style="background: rgba(30, 41, 59, 0.8); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+                        <h5 style="color: #3b82f6;">{t['iqr_title']}</h5>
+                        <p style="color: #94a3b8;">{t['iqr_explanation']}</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
                     stats_atletas = []
                     for atleta in atletas_selecionados:
                         dados_atl = df_filtrado[df_filtrado['Nome'] == atleta][variavel_analise]
@@ -2087,7 +2121,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     # Adicionar explicação do IQR ao final
                     st.caption(f"📌 {t['iqr_title']}: {t['iqr_explanation']}")
             
-            # Aba 4: Correlações
+            # ABA 4: CORRELAÇÕES
             with tabs[3]:
                 st.markdown(f"<h3>{t['tab_correlation']}</h3>", unsafe_allow_html=True)
                 
@@ -2191,7 +2225,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                                    "At least 2 variables are needed" if st.session_state.idioma == 'en' else
                                    "Se necesitan al menos 2 variables"))
             
-            # Aba 5: Comparações
+            # ABA 5: COMPARAÇÕES
             with tabs[4]:
                 st.markdown(f"<h3>{t['tab_comparison']}</h3>", unsafe_allow_html=True)
                 
@@ -2217,11 +2251,11 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                             on_change=atualizar_grupos
                         )
                     
-                    # Usar os valores atuais dos selects
-                    grupo1_atual = st.session_state.grupo1_select if 'grupo1_select' in st.session_state else grupo1
-                    grupo2_atual = st.session_state.grupo2_select if 'grupo2_select' in st.session_state else grupo2
+                    # Usar os valores armazenados em session_state
+                    grupo1_atual = st.session_state.grupo1 if st.session_state.grupo1 is not None else grupo1
+                    grupo2_atual = st.session_state.grupo2 if st.session_state.grupo2 is not None else grupo2
                     
-                    if grupo1_atual != grupo2_atual:
+                    if grupo1_atual and grupo2_atual and grupo1_atual != grupo2_atual:
                         resultado = comparar_grupos(df_filtrado, variavel_analise, grupo1_atual, grupo2_atual)
                         
                         if resultado:
@@ -2284,7 +2318,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                                    "Select at least 2 positions" if st.session_state.idioma == 'en' else
                                    "Seleccione al menos 2 posiciones"))
             
-            # Aba 6: Executivo
+            # ABA 6: EXECUTIVO
             with tabs[5]:
                 st.markdown(f"<h3>{t['tab_executive']}</h3>", unsafe_allow_html=True)
                 
