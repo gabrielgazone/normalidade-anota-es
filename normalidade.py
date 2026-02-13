@@ -61,7 +61,9 @@ translations = {
         'skewness': 'Assimetria',
         'kurtosis': 'Curtose',
         'max_value': 'VALOR MÁXIMO',
+        'min_value': 'VALOR MÍNIMO',
         'minute_of_max': 'Minuto do Máx',
+        'minute_of_min': 'Minuto do Mín',
         'threshold_80': 'LIMIAR 80%',
         'critical_events': 'EVENTOS CRÍTICOS',
         'above_threshold': 'acima do limiar de 80%',
@@ -176,7 +178,9 @@ translations = {
         'skewness': 'Skewness',
         'kurtosis': 'Kurtosis',
         'max_value': 'MAXIMUM VALUE',
+        'min_value': 'MINIMUM VALUE',
         'minute_of_max': 'Max Minute',
+        'minute_of_min': 'Min Minute',
         'threshold_80': '80% THRESHOLD',
         'critical_events': 'CRITICAL EVENTS',
         'above_threshold': 'above 80% threshold',
@@ -654,6 +658,10 @@ if 'upload_files_names' not in st.session_state:
     st.session_state.upload_files_names = []
 if 'idioma' not in st.session_state:
     st.session_state.idioma = 'pt'
+if 'process_button' not in st.session_state:
+    st.session_state.process_button = False
+if 'atualizacao_forcada' not in st.session_state:
+    st.session_state.atualizacao_forcada = 0
 
 # ============================================================================
 # FUNÇÕES AUXILIARES
@@ -739,21 +747,24 @@ def calcular_cv(media, desvio):
         return (desvio / media) * 100
     return 0
 
-def extrair_minuto_do_maximo(df, coluna_valor, coluna_minuto):
+def extrair_minuto_do_extremo(df, coluna_valor, coluna_minuto, extremo='max'):
     try:
         if df.empty or len(df) == 0:
             return "N/A"
         
         df_reset = df.reset_index(drop=True)
-        idx_max = df_reset[coluna_valor].idxmax()
+        if extremo == 'max':
+            idx_extremo = df_reset[coluna_valor].idxmax()
+        else:
+            idx_extremo = df_reset[coluna_valor].idxmin()
         
-        if pd.notna(idx_max) and idx_max < len(df_reset):
-            return df_reset.loc[idx_max, coluna_minuto]
+        if pd.notna(idx_extremo) and idx_extremo < len(df_reset):
+            return df_reset.loc[idx_extremo, coluna_minuto]
         
         return "N/A"
     except:
         try:
-            df_sorted = df.sort_values(coluna_valor, ascending=False)
+            df_sorted = df.sort_values(coluna_valor, ascending=(extremo=='min'))
             return df_sorted.iloc[0][coluna_minuto]
         except:
             return "N/A"
@@ -955,13 +966,18 @@ def plot_progressao_atleta(df, atleta, variavel, t):
     except:
         return None
 
+def atualizar_selecoes():
+    """Callback para forçar atualização das seleções"""
+    st.session_state.atualizacao_forcada += 1
+
 # ============================================================================
 # SIDEBAR
 # ============================================================================
 
 with st.sidebar:
     st.markdown("<h2 class='sidebar-title'>🌐 Idioma / Language</h2>", unsafe_allow_html=True)
-    idioma = st.selectbox("", ['pt', 'en'], index=['pt', 'en'].index(st.session_state.idioma) if st.session_state.idioma in ['pt', 'en'] else 0, label_visibility="collapsed")
+    idioma = st.selectbox("", ['pt', 'en'], index=['pt', 'en'].index(st.session_state.idioma) if st.session_state.idioma in ['pt', 'en'] else 0, 
+                         label_visibility="collapsed", key="idioma_selector", on_change=atualizar_selecoes)
     st.session_state.idioma = idioma
     t = translations[idioma]
     
@@ -972,7 +988,9 @@ with st.sidebar:
         "",
         type=['csv'],
         accept_multiple_files=True,
-        help=t['tip_text']
+        help=t['tip_text'],
+        key="file_uploader",
+        on_change=atualizar_selecoes
     )
     
     if upload_files:
@@ -1054,6 +1072,7 @@ with st.sidebar:
                                     st.session_state.variavel_selecionada = variaveis_quant[0]
                                 
                                 st.success(f"✅ {len(arquivos_validos)} " + ("arquivo(s) carregado(s)" if idioma == 'pt' else "file(s) loaded"))
+                                atualizar_selecoes()
             except Exception as e:
                 st.error(f"❌ Erro: {str(e)}")
     
@@ -1071,7 +1090,9 @@ with st.sidebar:
                 "",
                 options=st.session_state.variaveis_quantitativas,
                 index=current_index,
-                label_visibility="collapsed"
+                label_visibility="collapsed",
+                key="variavel_selector",
+                on_change=atualizar_selecoes
             )
             st.session_state.variavel_selecionada = variavel_selecionada
             
@@ -1083,32 +1104,40 @@ with st.sidebar:
             st.markdown("---")
             st.markdown(f"<h2 class='sidebar-title'>📍 {t['position']}</h2>", unsafe_allow_html=True)
             
-            selecionar_todos = st.checkbox(f"Selecionar todas as {t['position'].lower()}s" if idioma == 'pt' else f"Select all {t['position'].lower()}s", value=True)
+            selecionar_todos = st.checkbox(f"Selecionar todas as {t['position'].lower()}s" if idioma == 'pt' else f"Select all {t['position'].lower()}s", 
+                                          value=True, key="todos_posicoes_check", on_change=atualizar_selecoes)
             if selecionar_todos:
                 st.session_state.posicoes_selecionadas = st.session_state.todos_posicoes.copy()
             else:
-                st.session_state.posicoes_selecionadas = st.multiselect(
+                posicoes_sel = st.multiselect(
                     "",
                     options=st.session_state.todos_posicoes,
                     default=st.session_state.posicoes_selecionadas,
-                    label_visibility="collapsed"
+                    label_visibility="collapsed",
+                    key="posicoes_selector",
+                    on_change=atualizar_selecoes
                 )
+                st.session_state.posicoes_selecionadas = posicoes_sel
         
         if st.session_state.todos_periodos:
             st.markdown("---")
             st.markdown(f"<h2 class='sidebar-title'>📅 {t['period']}</h2>", unsafe_allow_html=True)
             
-            selecionar_todos = st.checkbox(f"Selecionar todos os {t['period'].lower()}s" if idioma == 'pt' else f"Select all {t['period'].lower()}s", value=True)
+            selecionar_todos = st.checkbox(f"Selecionar todos os {t['period'].lower()}s" if idioma == 'pt' else f"Select all {t['period'].lower()}s", 
+                                          value=True, key="todos_periodos_check", on_change=atualizar_selecoes)
             if selecionar_todos:
                 st.session_state.periodos_selecionados = st.session_state.todos_periodos.copy()
                 st.session_state.ordem_personalizada = st.session_state.todos_periodos.copy()
             else:
-                st.session_state.periodos_selecionados = st.multiselect(
+                periodos_sel = st.multiselect(
                     "",
                     options=st.session_state.todos_periodos,
                     default=st.session_state.periodos_selecionados,
-                    label_visibility="collapsed"
+                    label_visibility="collapsed",
+                    key="periodos_selector",
+                    on_change=atualizar_selecoes
                 )
+                st.session_state.periodos_selecionados = periodos_sel
         
         if st.session_state.atletas_selecionados:
             st.markdown("---")
@@ -1122,21 +1151,25 @@ with st.sidebar:
             
             atletas_disponiveis = sorted(df_temp['Nome'].unique())
             
-            selecionar_todos = st.checkbox(f"Selecionar todos os {t['athlete'].lower()}s" if idioma == 'pt' else f"Select all {t['athlete'].lower()}s", value=True)
+            selecionar_todos = st.checkbox(f"Selecionar todos os {t['athlete'].lower()}s" if idioma == 'pt' else f"Select all {t['athlete'].lower()}s", 
+                                          value=True, key="todos_atletas_check", on_change=atualizar_selecoes)
             if selecionar_todos:
                 st.session_state.atletas_selecionados = atletas_disponiveis
             else:
-                st.session_state.atletas_selecionados = st.multiselect(
+                atletas_sel = st.multiselect(
                     "",
                     options=atletas_disponiveis,
                     default=[a for a in st.session_state.atletas_selecionados if a in atletas_disponiveis],
-                    label_visibility="collapsed"
+                    label_visibility="collapsed",
+                    key="atletas_selector",
+                    on_change=atualizar_selecoes
                 )
+                st.session_state.atletas_selecionados = atletas_sel
         
         st.markdown("---")
         st.markdown(f"<h2 class='sidebar-title'>⚙️ {t['config']}</h2>", unsafe_allow_html=True)
         
-        n_classes = st.slider(f"{t['config']}:", 3, 20, 5)
+        n_classes = st.slider(f"{t['config']}:", 3, 20, 5, key="classes_slider", on_change=atualizar_selecoes)
         
         st.markdown("---")
         pode_processar = (st.session_state.variavel_selecionada and 
@@ -1144,7 +1177,7 @@ with st.sidebar:
                          st.session_state.periodos_selecionados and 
                          st.session_state.atletas_selecionados)
         
-        if st.button(t['process'], use_container_width=True, disabled=not pode_processar):
+        if st.button(t['process'], use_container_width=True, disabled=not pode_processar, key="process_button"):
             st.session_state.process_button = True
             st.rerun()
 
@@ -1337,21 +1370,26 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                 df_tempo = df_filtrado.sort_values('Minuto').reset_index(drop=True)
                 
                 valor_maximo = df_tempo[variavel_analise].max()
-                minuto_maximo = extrair_minuto_do_maximo(df_tempo, variavel_analise, 'Minuto')
+                valor_minimo = df_tempo[variavel_analise].min()
+                minuto_maximo = extrair_minuto_do_extremo(df_tempo, variavel_analise, 'Minuto', 'max')
+                minuto_minimo = extrair_minuto_do_extremo(df_tempo, variavel_analise, 'Minuto', 'min')
                 media_tempo = df_tempo[variavel_analise].mean()
                 limiar_80 = valor_maximo * 0.8
                 
                 eventos_acima_80 = (df_tempo[variavel_analise] > limiar_80).sum()
                 percentual_acima_80 = (eventos_acima_80 / len(df_tempo)) * 100 if len(df_tempo) > 0 else 0
                 
-                cols_t = st.columns(4)
+                # Agora com 5 cards (adicionado valor mínimo)
+                cols_t = st.columns(5)
                 with cols_t[0]:
                     time_metric_card(t['max_value'], f"{valor_maximo:.2f}", f"{t['minute_of_max']}: {minuto_maximo}", "#ef4444")
                 with cols_t[1]:
-                    time_metric_card(t['mean'], f"{media_tempo:.2f}", t['mean'], "#3b82f6")
+                    time_metric_card(t['min_value'], f"{valor_minimo:.2f}", f"{t['minute_of_min']}: {minuto_minimo}", "#10b981")
                 with cols_t[2]:
-                    time_metric_card(t['threshold_80'], f"{limiar_80:.2f}", f"80% do máx ({valor_maximo:.2f})", "#f59e0b")
+                    time_metric_card(t['mean'], f"{media_tempo:.2f}", t['mean'], "#3b82f6")
                 with cols_t[3]:
+                    time_metric_card(t['threshold_80'], f"{limiar_80:.2f}", f"80% do máx ({valor_maximo:.2f})", "#f59e0b")
+                with cols_t[4]:
                     warning_card(t['critical_events'], f"{eventos_acima_80}", f"{percentual_acima_80:.1f}% {t['above_threshold']}", "⚠️")
                 
                 st.markdown("---")
@@ -1363,7 +1401,8 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                     metodo_zona = st.radio(
                         t['zone_method'],
                         [t['percentiles'], t['manual'], t['based_on_max']],
-                        index=0
+                        index=0,
+                        key="metodo_zona_radio"
                     )
                 
                 with col_z2:
@@ -1375,13 +1414,13 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                         st.info("Modo manual - defina os limites:")
                         col_l1, col_l2, col_l3, col_l4 = st.columns(4)
                         with col_l1:
-                            l1 = st.number_input(t['very_low'], value=0.0, step=0.1)
+                            l1 = st.number_input(t['very_low'], value=0.0, step=0.1, key="zona_l1")
                         with col_l2:
-                            l2 = st.number_input(t['low'], value=25.0, step=0.1)
+                            l2 = st.number_input(t['low'], value=25.0, step=0.1, key="zona_l2")
                         with col_l3:
-                            l3 = st.number_input(t['moderate'], value=50.0, step=0.1)
+                            l3 = st.number_input(t['moderate'], value=50.0, step=0.1, key="zona_l3")
                         with col_l4:
-                            l4 = st.number_input(t['high'], value=75.0, step=0.1)
+                            l4 = st.number_input(t['high'], value=75.0, step=0.1, key="zona_l4")
                         zonas = {
                             t['very_low']: l1,
                             t['low']: l2,
@@ -1439,6 +1478,8 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                                    annotation_text=f"{t['threshold_80']}: {limiar_80:.2f}", annotation_position="right")
                 fig_tempo.add_hline(y=valor_maximo, line_dash="solid", line_color="#ef4444", line_width=2,
                                    annotation_text=f"{t['max_value']}: {valor_maximo:.2f}", annotation_position="right")
+                fig_tempo.add_hline(y=valor_minimo, line_dash="solid", line_color="#10b981", line_width=2,
+                                   annotation_text=f"{t['min_value']}: {valor_minimo:.2f}", annotation_position="left")
                 
                 fig_tempo.update_layout(
                     title=f"{t['tab_temporal']} - {variavel_analise}",
@@ -1633,7 +1674,9 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                                 desvio_grupo = dados[variavel_analise].std()
                                 cv_grupo = calcular_cv(media_grupo, desvio_grupo)
                                 valor_max_grupo = dados[variavel_analise].max()
-                                minuto_max_grupo = extrair_minuto_do_maximo(dados, variavel_analise, 'Minuto')
+                                valor_min_grupo = dados[variavel_analise].min()
+                                minuto_max_grupo = extrair_minuto_do_extremo(dados, variavel_analise, 'Minuto', 'max')
+                                minuto_min_grupo = extrair_minuto_do_extremo(dados, variavel_analise, 'Minuto', 'min')
                                 
                                 resumo.append({
                                     'Atleta': nome,
@@ -1641,8 +1684,9 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                                     'Período': periodo,
                                     f'Máx {variavel_analise}': valor_max_grupo,
                                     'Minuto do Máx': minuto_max_grupo,
-                                    f'Mín {variavel_analise}': dados[variavel_analise].min(),
-                                    'Amplitude': valor_max_grupo - dados[variavel_analise].min(),
+                                    f'Mín {variavel_analise}': valor_min_grupo,
+                                    'Minuto do Mín': minuto_min_grupo,
+                                    'Amplitude': valor_max_grupo - valor_min_grupo,
                                     'Média': media_grupo,
                                     'CV (%)': cv_grupo,
                                     'Nº Amostras': len(dados)
@@ -1753,7 +1797,9 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                             desvio_atl = dados_atl.std()
                             cv_atl = calcular_cv(media_atl, desvio_atl)
                             valor_max_atl = dados_atl.max()
-                            minuto_max_atl = extrair_minuto_do_maximo(dados_atl, variavel_analise, 'Minuto')
+                            valor_min_atl = dados_atl.min()
+                            minuto_max_atl = extrair_minuto_do_extremo(dados_atl, variavel_analise, 'Minuto', 'max')
+                            minuto_min_atl = extrair_minuto_do_extremo(dados_atl, variavel_analise, 'Minuto', 'min')
                             
                             stats_atletas.append({
                                 'Atleta': atleta,
@@ -1761,7 +1807,8 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                                 'Mediana': dados_atl.median(),
                                 'DP': desvio_atl,
                                 'CV (%)': cv_atl,
-                                'Mín': dados_atl.min(),
+                                'Mín': valor_min_atl,
+                                'Minuto Mín': minuto_min_atl,
                                 'Q1': q1_atl,
                                 'Q3': q3_atl,
                                 'Máx': valor_max_atl,
@@ -1799,7 +1846,8 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                     vars_corr = st.multiselect(
                         t['tab_correlation'].replace('🔥', '').strip(),
                         options=st.session_state.variaveis_quantitativas,
-                        default=st.session_state.variaveis_quantitativas[:min(5, len(st.session_state.variaveis_quantitativas))]
+                        default=st.session_state.variaveis_quantitativas[:min(5, len(st.session_state.variaveis_quantitativas))],
+                        key="vars_corr_multiselect"
                     )
                     
                     if len(vars_corr) >= 2:
@@ -1900,9 +1948,9 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                     col_comp1, col_comp2 = st.columns(2)
                     
                     with col_comp1:
-                        grupo1 = st.selectbox(f"{t['position']} 1:", posicoes_selecionadas, index=0)
+                        grupo1 = st.selectbox(f"{t['position']} 1:", posicoes_selecionadas, index=0, key="grupo1_select")
                     with col_comp2:
-                        grupo2 = st.selectbox(f"{t['position']} 2:", posicoes_selecionadas, index=min(1, len(posicoes_selecionadas)-1))
+                        grupo2 = st.selectbox(f"{t['position']} 2:", posicoes_selecionadas, index=min(1, len(posicoes_selecionadas)-1), key="grupo2_select")
                     
                     if grupo1 != grupo2:
                         resultado = comparar_grupos(df_filtrado, variavel_analise, grupo1, grupo2)
@@ -1965,7 +2013,7 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
             with tabs[5]:
                 st.markdown(f"<h3>{t['tab_fatigue']}</h3>", unsafe_allow_html=True)
                 
-                baseline_min = st.slider(f"{t['baseline']} (minutos iniciais):", 1, 10, 5)
+                baseline_min = st.slider(f"{t['baseline']} (minutos iniciais):", 1, 10, 5, key="baseline_slider")
                 
                 df_fadiga, stats_fadiga = analisar_fadiga(df_filtrado, variavel_analise, baseline_min)
                 
@@ -2038,7 +2086,7 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
             with tabs[6]:
                 st.markdown(f"<h3>{t['tab_progression']}</h3>", unsafe_allow_html=True)
                 
-                atleta_prog = st.selectbox(t['select_athlete'], atletas_selecionados)
+                atleta_prog = st.selectbox(t['select_athlete'], atletas_selecionados, key="atleta_prog_select")
                 
                 fig_prog = plot_progressao_atleta(df_filtrado, atleta_prog, variavel_analise, t)
                 
@@ -2067,11 +2115,12 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                 vars_radar = st.multiselect(
                     t['select_vars_radar'],
                     options=st.session_state.variaveis_quantitativas,
-                    default=st.session_state.variaveis_quantitativas[:min(4, len(st.session_state.variaveis_quantitativas))]
+                    default=st.session_state.variaveis_quantitativas[:min(4, len(st.session_state.variaveis_quantitativas))],
+                    key="vars_radar_multiselect"
                 )
                 
                 if len(vars_radar) >= 3:
-                    atleta_radar = st.selectbox(t['select_athlete'], atletas_selecionados, key="radar_athlete")
+                    atleta_radar = st.selectbox(t['select_athlete'], atletas_selecionados, key="atleta_radar_select")
                     
                     fig_radar = criar_radar_chart(df_filtrado, atleta_radar, vars_radar, t)
                     
@@ -2091,7 +2140,7 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
             with tabs[8]:
                 st.markdown(f"<h3>{t['tab_report']}</h3>", unsafe_allow_html=True)
                 
-                if st.button(t['generate_report'], use_container_width=True):
+                if st.button(t['generate_report'], use_container_width=True, key="generate_report_button"):
                     with st.spinner("📄 " + ("Gerando relatório..." if idioma == 'pt' else "Generating report...")):
                         time.sleep(2)
                         
@@ -2146,6 +2195,7 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                                 <p><strong>{t['critical_events']}:</strong> {eventos_acima_80}</p>
                                 <p><strong>{t['fatigue_percentage']}:</strong> {percentual_acima_80:.1f}%</p>
                                 <p><strong>{t['max_value']}:</strong> {valor_maximo:.2f} ({t['minute_of_max']}: {minuto_maximo})</p>
+                                <p><strong>{t['min_value']}:</strong> {valor_minimo:.2f} ({t['minute_of_min']}: {minuto_minimo})</p>
                             </div>
                             
                             <h2>📋 {t['summary_by_group']}</h2>
@@ -2156,6 +2206,7 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                                     <th>{t['period']}</th>
                                     <th>{t['mean']}</th>
                                     <th>{t['max']}</th>
+                                    <th>{t['min']}</th>
                                     <th>N</th>
                                 </tr>
                         """
@@ -2168,6 +2219,7 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                                     <td>{item['Período']}</td>
                                     <td>{item['Média']:.2f}</td>
                                     <td>{item[f'Máx {variavel_analise}']:.2f}</td>
+                                    <td>{item[f'Mín {variavel_analise}']:.2f}</td>
                                     <td>{item['Nº Amostras']}</td>
                                 </tr>
                             """
