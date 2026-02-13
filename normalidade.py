@@ -18,7 +18,40 @@ st.set_page_config(
 )
 
 # ============================================================================
-# TRADUÇÕES
+# CACHE-BUSTING PROFISSIONAL - RESOLVE O ERRO DE MÓDULOS JS
+# ============================================================================
+st.markdown("""
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<script>
+    // Força o navegador a buscar a versão mais recente dos arquivos
+    if ('caches' in window) {
+        caches.keys().then(function(names) {
+            for (let name of names) {
+                if (name.includes('streamlit')) {
+                    caches.delete(name);
+                }
+            }
+        });
+    }
+    // Adiciona timestamp para evitar cache
+    const links = document.querySelectorAll('link[rel="stylesheet"], script[src]');
+    links.forEach(link => {
+        if (link.href) link.href += (link.href.includes('?') ? '&' : '?') + 'v=' + Date.now();
+        if (link.src) link.src += (link.src.includes('?') ? '&' : '?') + 'v=' + Date.now();
+    });
+    console.log('Cache limpo, versão atualizada carregada.');
+</script>
+""", unsafe_allow_html=True)
+
+# ============================================================================
+# VERSÃO DO APP
+# ============================================================================
+APP_VERSION = "3.0.0"
+
+# ============================================================================
+# TRADUÇÕES COMPLETAS
 # ============================================================================
 
 translations = {
@@ -551,7 +584,7 @@ st.markdown("""
 
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
-    st.markdown("""
+    st.markdown(f"""
     <div style="text-align: center; padding: 20px 0;">
         <h1>🏃 Sports Science Analytics Pro</h1>
         <p style="color: #94a3b8; font-size: 1.2rem; margin-top: 10px;">
@@ -562,6 +595,7 @@ with col2:
             <span style="background: #8b5cf6; color: white; padding: 5px 15px; border-radius: 50px; font-size: 0.9rem;">📊 Statistical</span>
             <span style="background: #10b981; color: white; padding: 5px 15px; border-radius: 50px; font-size: 0.9rem;">🎯 Precision</span>
         </div>
+        <p style="color: #64748b; font-size: 0.8rem; margin-top: 10px;">Versão: {APP_VERSION}</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -569,42 +603,70 @@ with col2:
 # SESSION STATE - Inicialização completa
 # ============================================================================
 
-if 'df_completo' not in st.session_state:
-    st.session_state.df_completo = None
-if 'variaveis_quantitativas' not in st.session_state:
-    st.session_state.variaveis_quantitativas = []
-if 'variavel_selecionada' not in st.session_state:
-    st.session_state.variavel_selecionada = None
-if 'atletas_selecionados' not in st.session_state:
-    st.session_state.atletas_selecionados = []
-if 'posicoes_selecionadas' not in st.session_state:
-    st.session_state.posicoes_selecionadas = []
-if 'todos_posicoes' not in st.session_state:
-    st.session_state.todos_posicoes = []
-if 'periodos_selecionados' not in st.session_state:
-    st.session_state.periodos_selecionados = []
-if 'todos_periodos' not in st.session_state:
-    st.session_state.todos_periodos = []
-if 'upload_files_names' not in st.session_state:
-    st.session_state.upload_files_names = []
-if 'idioma' not in st.session_state:
-    st.session_state.idioma = 'pt'
-if 'processar_click' not in st.session_state:
-    st.session_state.processar_click = False
-if 'dados_processados' not in st.session_state:
-    st.session_state.dados_processados = False
-if 'metodo_zona' not in st.session_state:
-    st.session_state.metodo_zona = 'percentis'
-if 'grupo1' not in st.session_state:
-    st.session_state.grupo1 = None
-if 'grupo2' not in st.session_state:
-    st.session_state.grupo2 = None
-if 'n_classes' not in st.session_state:
-    st.session_state.n_classes = 5
+def init_session_state():
+    if 'df_completo' not in st.session_state:
+        st.session_state.df_completo = None
+    if 'variaveis_quantitativas' not in st.session_state:
+        st.session_state.variaveis_quantitativas = []
+    if 'variavel_selecionada' not in st.session_state:
+        st.session_state.variavel_selecionada = None
+    if 'atletas_selecionados' not in st.session_state:
+        st.session_state.atletas_selecionados = []
+    if 'posicoes_selecionadas' not in st.session_state:
+        st.session_state.posicoes_selecionadas = []
+    if 'todos_posicoes' not in st.session_state:
+        st.session_state.todos_posicoes = []
+    if 'periodos_selecionados' not in st.session_state:
+        st.session_state.periodos_selecionados = []
+    if 'todos_periodos' not in st.session_state:
+        st.session_state.todos_periodos = []
+    if 'ordem_personalizada' not in st.session_state:
+        st.session_state.ordem_personalizada = []
+    if 'upload_files_names' not in st.session_state:
+        st.session_state.upload_files_names = []
+    if 'idioma' not in st.session_state:
+        st.session_state.idioma = 'pt'
+    if 'processar_click' not in st.session_state:
+        st.session_state.processar_click = False
+    if 'dados_processados' not in st.session_state:
+        st.session_state.dados_processados = False
+    if 'metodo_zona' not in st.session_state:
+        st.session_state.metodo_zona = 'percentis'
+    if 'grupo1' not in st.session_state:
+        st.session_state.grupo1 = None
+    if 'grupo2' not in st.session_state:
+        st.session_state.grupo2 = None
+    if 'n_classes' not in st.session_state:
+        st.session_state.n_classes = 5
+    if 'app_version' not in st.session_state:
+        st.session_state.app_version = APP_VERSION
+
+init_session_state()
 
 # ============================================================================
 # FUNÇÕES AUXILIARES
 # ============================================================================
+
+def interpretar_teste(p_valor, nome_teste, t):
+    if p_valor < 0.0001:
+        p_text = f"{p_valor:.2e}"
+    else:
+        p_text = f"{p_valor:.5f}"
+    
+    if p_valor > 0.05:
+        status = f"✅ {t['normality_test'].split('🧪')[1] if '🧪' in t['normality_test'] else 'Dados normais'}"
+        cor = "#10b981"
+    else:
+        status = f"⚠️ {t['normality_test'].split('🧪')[1] if '🧪' in t['normality_test'] else 'Dados não normais'}"
+        cor = "#ef4444"
+    
+    st.markdown(f"""
+    <div style="background: rgba(30, 41, 59, 0.8); border-radius: 12px; padding: 20px; border-left: 5px solid {cor}; backdrop-filter: blur(10px);">
+        <h4 style="color: white; margin: 0 0 10px 0;">{status}</h4>
+        <p style="color: #94a3b8; margin: 5px 0;"><strong>Teste:</strong> {nome_teste}</p>
+        <p style="color: #94a3b8; margin: 5px 0;"><strong>p-valor:</strong> <span style="color: {cor};">{p_text}</span></p>
+    </div>
+    """, unsafe_allow_html=True)
 
 def extrair_periodo(texto):
     """Extrai o período entre o nome e o minuto"""
@@ -680,7 +742,11 @@ def extrair_minuto_do_extremo(df, coluna_valor, coluna_minuto, extremo='max'):
             return df_reset.loc[idx_extremo, coluna_minuto]
         return "N/A"
     except:
-        return "N/A"
+        try:
+            df_sorted = df.sort_values(coluna_valor, ascending=(extremo=='min'))
+            return df_sorted.iloc[0][coluna_minuto]
+        except:
+            return "N/A"
 
 def criar_zonas_intensidade(df, variavel, metodo='percentis'):
     """Cria zonas de intensidade baseadas em percentis ou no máximo"""
@@ -730,6 +796,153 @@ def comparar_grupos(df, variavel, grupo1, grupo2):
         }
     except Exception as e:
         return None
+
+def plot_progressao_atleta(df, atleta, variavel, t):
+    """Plota a progressão de um atleta específico"""
+    try:
+        df_atleta = df[df['Nome'] == atleta].sort_values('Minuto')
+        
+        if len(df_atleta) < 3:
+            return None
+        
+        fig = make_subplots(
+            rows=2, cols=1,
+            subplot_titles=(f"{t['individual_progression']} - {variavel}", t['progression_rate']),
+            vertical_spacing=0.15
+        )
+        
+        fig.add_trace(
+            go.Scatter(
+                x=df_atleta['Minuto'], 
+                y=df_atleta[variavel],
+                mode='lines+markers', 
+                name=variavel,
+                line=dict(color='#3b82f6', width=3),
+                marker=dict(color='#3b82f6', size=8)
+            ),
+            row=1, col=1
+        )
+        
+        z = np.polyfit(range(len(df_atleta)), df_atleta[variavel], 1)
+        tendencia = np.poly1d(z)(range(len(df_atleta)))
+        fig.add_trace(
+            go.Scatter(
+                x=df_atleta['Minuto'], 
+                y=tendencia,
+                mode='lines', 
+                name=t['trend_line'],
+                line=dict(color='#ef4444', dash='dash', width=2)
+            ),
+            row=1, col=1
+        )
+        
+        variacao = df_atleta[variavel].diff()
+        cores_variacao = ['#10b981' if v > 0 else '#ef4444' for v in variacao[1:]]
+        fig.add_trace(
+            go.Bar(
+                x=df_atleta['Minuto'][1:], 
+                y=variacao[1:],
+                name='Variação',
+                marker_color=cores_variacao,
+                showlegend=False
+            ),
+            row=2, col=1
+        )
+        
+        fig.add_hline(y=0, line_dash="dot", line_color="#94a3b8", row=2, col=1)
+        
+        fig.update_layout(
+            height=600,
+            showlegend=True,
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(30, 41, 59, 0.8)',
+            font=dict(color='white', size=11)
+        )
+        
+        fig.update_xaxes(gridcolor='#334155', tickfont=dict(color='white'), tickangle=-45)
+        fig.update_yaxes(gridcolor='#334155', tickfont=dict(color='white'))
+        
+        return fig
+    except:
+        return None
+
+def criar_radar_chart(df, atleta, variaveis, t):
+    """Cria gráfico de radar para um atleta específico"""
+    try:
+        dados_atleta = df[df['Nome'] == atleta][variaveis].mean()
+        
+        min_vals = df[variaveis].min()
+        max_vals = df[variaveis].max()
+        dados_norm = 100 * (dados_atleta - min_vals) / (max_vals - min_vals + 1e-10)
+        
+        media_time = df[variaveis].mean()
+        media_norm = 100 * (media_time - min_vals) / (max_vals - min_vals + 1e-10)
+        
+        fig = go.Figure()
+        
+        fig.add_trace(go.Scatterpolar(
+            r=dados_norm.values,
+            theta=variaveis,
+            fill='toself',
+            name=atleta,
+            line_color='#3b82f6',
+            fillcolor='rgba(59, 130, 246, 0.3)'
+        ))
+        
+        fig.add_trace(go.Scatterpolar(
+            r=media_norm.values,
+            theta=variaveis,
+            fill='toself',
+            name=t['team_average'],
+            line_color='#ef4444',
+            fillcolor='rgba(239, 68, 68, 0.3)'
+        ))
+        
+        fig.update_layout(
+            polar=dict(
+                radialaxis=dict(
+                    visible=True,
+                    range=[0, 100],
+                    gridcolor='#334155'
+                ),
+                bgcolor='rgba(30, 41, 59, 0.8)'
+            ),
+            showlegend=True,
+            title=f"{t['radar_chart']} - {atleta}",
+            paper_bgcolor='rgba(0,0,0,0)',
+            font=dict(color='white', size=11)
+        )
+        
+        return fig
+    except:
+        return None
+
+def analisar_fadiga(df, variavel, baseline_minutos=5):
+    """Analisa sinais de fadiga baseado na variável"""
+    try:
+        df = df.copy().sort_values('Minuto')
+        
+        minutos_unicos = df['Minuto'].unique()
+        if len(minutos_unicos) <= baseline_minutos:
+            baseline = df[variavel].mean()
+        else:
+            baseline_minutos_list = minutos_unicos[:baseline_minutos]
+            baseline = df[df['Minuto'].isin(baseline_minutos_list)][variavel].mean()
+        
+        df['Declinio'] = (df[variavel] - baseline) / baseline * 100
+        df['Fadiga'] = df['Declinio'] < -15
+        
+        stats_fadiga = {
+            'baseline': baseline,
+            'declinio_medio': df['Declinio'].mean(),
+            'declinio_maximo': df['Declinio'].min(),
+            'minutos_fadiga': df['Fadiga'].sum(),
+            'percentual_fadiga': df['Fadiga'].mean() * 100 if len(df) > 0 else 0
+        }
+        
+        return df, stats_fadiga
+    except:
+        return df, None
 
 # ============================================================================
 # CALLBACKS
@@ -852,6 +1065,7 @@ with st.sidebar:
                                 st.session_state.posicoes_selecionadas = posicoes_unicas.copy()
                                 st.session_state.todos_periodos = periodos_unicos
                                 st.session_state.periodos_selecionados = periodos_unicos.copy()
+                                st.session_state.ordem_personalizada = periodos_unicos.copy()
                                 st.session_state.upload_files_names = arquivos_validos
                                 
                                 if variaveis_quant and st.session_state.variavel_selecionada is None:
@@ -1114,6 +1328,10 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     
                     z = np.polyfit(quantis_teoricos, quantis_observados, 1)
                     linha_ref = np.poly1d(z)
+                    residuos = quantis_observados - linha_ref(quantis_teoricos)
+                    ss_res = np.sum(residuos**2)
+                    ss_tot = np.sum((quantis_observados - np.mean(quantis_observados))**2)
+                    r2 = 1 - (ss_res / ss_tot) if ss_tot != 0 else 0
                     
                     fig_qq = go.Figure()
                     fig_qq.add_trace(go.Scatter(
@@ -1127,7 +1345,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                         x=quantis_teoricos,
                         y=linha_ref(quantis_teoricos),
                         mode='lines',
-                        name='Referência',
+                        name=f'Referência (R² = {r2:.3f})',
                         line=dict(color='#ef4444', width=2)
                     ))
                     
@@ -1584,6 +1802,13 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 st.plotly_chart(fig_box_atl, use_container_width=True)
                 
                 with st.expander(f"📊 {t['descriptive_stats']} {t['athlete'].lower()}"):
+                    st.markdown(f"""
+                    <div style="background: rgba(30, 41, 59, 0.8); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+                        <h5 style="color: #3b82f6;">{t['iqr_title']}</h5>
+                        <p style="color: #94a3b8;">{t['iqr_explanation']}</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
                     stats_atletas = []
                     for atleta in atletas_selecionados:
                         dados_atl = df_filtrado[df_filtrado['Nome'] == atleta][variavel_analise]
