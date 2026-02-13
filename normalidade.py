@@ -465,6 +465,15 @@ def calcular_cv(media, desvio):
         return (desvio / media) * 100
     return 0
 
+def extrair_minuto_do_maximo(df, coluna_valor, coluna_minuto):
+    """Extrai com segurança o minuto correspondente ao valor máximo"""
+    if df.empty:
+        return "N/A"
+    idx_max = df[coluna_valor].idxmax()
+    if pd.notna(idx_max):
+        return df.loc[idx_max, coluna_minuto]
+    return "N/A"
+
 # --- SIDEBAR ---
 with st.sidebar:
     st.markdown("<h2 class='sidebar-title'>📂 Upload dos Dados</h2>", unsafe_allow_html=True)
@@ -713,7 +722,6 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                     # Calcular os bins corretamente
                     valor_min = dados_hist.min()
                     valor_max = dados_hist.max()
-                    bin_edges = np.linspace(valor_min, valor_max, n_classes + 1)
                     
                     fig_hist = go.Figure()
                     
@@ -722,10 +730,9 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                         xbins=dict(
                             start=valor_min,
                             end=valor_max,
-                            size=(valor_max - valor_min) / n_classes
+                            size=(valor_max - valor_min) / n_classes if n_classes > 0 else 1
                         ),
                         autobinx=False,
-                        nbinsx=n_classes,
                         name='Frequência',
                         marker_color='#3498db',
                         opacity=0.8,
@@ -781,7 +788,7 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                     residuos = quantis_observados - linha_ref(quantis_teoricos)
                     ss_res = np.sum(residuos**2)
                     ss_tot = np.sum((quantis_observados - np.mean(quantis_observados))**2)
-                    r2 = 1 - (ss_res / ss_tot)
+                    r2 = 1 - (ss_res / ss_tot) if ss_tot != 0 else 0
                     
                     fig_qq = go.Figure()
                     
@@ -857,13 +864,13 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                 df_tempo = df_filtrado.sort_values('Minuto').reset_index(drop=True)
                 
                 valor_maximo = df_tempo[variavel_analise].max()
-                minuto_maximo = df_tempo.loc[df_tempo[variavel_analise].idxmax(), 'Minuto']
+                minuto_maximo = extrair_minuto_do_maximo(df_tempo, variavel_analise, 'Minuto')
                 media_tempo = df_tempo[variavel_analise].mean()
                 limiar_80 = valor_maximo * 0.8
                 
                 # Contar eventos acima do limiar
                 eventos_acima_80 = (df_tempo[variavel_analise] > limiar_80).sum()
-                percentual_acima_80 = (eventos_acima_80 / len(df_tempo)) * 100
+                percentual_acima_80 = (eventos_acima_80 / len(df_tempo)) * 100 if len(df_tempo) > 0 else 0
                 
                 # Cards com métricas temporais (agora com 4 colunas)
                 col_t1, col_t2, col_t3, col_t4 = st.columns(4)
@@ -1196,7 +1203,7 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                                 desvio_grupo = dados[variavel_analise].std()
                                 cv_grupo = calcular_cv(media_grupo, desvio_grupo)
                                 valor_max_grupo = dados[variavel_analise].max()
-                                minuto_max_grupo = dados.loc[dados[variavel_analise].idxmax(), 'Minuto']
+                                minuto_max_grupo = extrair_minuto_do_maximo(dados, variavel_analise, 'Minuto')
                                 
                                 resumo.append({
                                     'Atleta': nome,
@@ -1246,7 +1253,7 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                             jitter=0.3,
                             pointpos=-1.8,
                             opacity=0.8,
-                            hovertemplate='Posição: %{x}<br>Valor: %{y:.2f}<br>Mediana: %{median:.2f}<br>IQR: %{q3:%{q1:.2f}<extra></extra>'
+                            hovertemplate='Posição: %{x}<br>Valor: %{y:.2f}<br>Mediana: %{median:.2f}<extra></extra>'
                         ))
                 
                 fig_box_pos.update_layout(
@@ -1323,7 +1330,7 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                             desvio_atl = dados_atl.std()
                             cv_atl = calcular_cv(media_atl, desvio_atl)
                             valor_max_atl = dados_atl.max()
-                            minuto_max_atl = dados_atl.loc[dados_atl.idxmax(), 'Minuto']
+                            minuto_max_atl = extrair_minuto_do_maximo(dados_atl, variavel_analise, 'Minuto')
                             
                             stats_atletas.append({
                                 'Atleta': atleta,
