@@ -16,6 +16,10 @@ if 'variavel_selecionada' not in st.session_state:
     st.session_state.variavel_selecionada = None
 if 'atletas_selecionados' not in st.session_state:
     st.session_state.atletas_selecionados = []
+if 'posicoes_selecionadas' not in st.session_state:
+    st.session_state.posicoes_selecionadas = []
+if 'todos_posicoes' not in st.session_state:
+    st.session_state.todos_posicoes = []
 if 'periodos_selecionados' not in st.session_state:
     st.session_state.periodos_selecionados = []
 if 'todos_periodos' not in st.session_state:
@@ -79,7 +83,7 @@ with st.sidebar:
         "Escolha os arquivos CSV:", 
         type=['csv'],
         accept_multiple_files=True,
-        help="Selecione um ou mais arquivos CSV com a mesma estrutura. Formato: Primeira coluna = Identificação (Nome-Período-Minuto), Demais colunas = Variáveis numéricas"
+        help="Selecione um ou mais arquivos CSV com a mesma estrutura. Formato: Primeira coluna = Identificação (Nome-Período-Minuto), Segunda coluna = Posição, Demais colunas = Variáveis numéricas"
     )
     
     # Processar arquivos quando enviados
@@ -94,11 +98,11 @@ with st.sidebar:
                 try:
                     data = pd.read_csv(uploaded_file)
                     
-                    if data.shape[1] >= 2 and not data.empty:
+                    if data.shape[1] >= 3 and not data.empty:  # Agora precisa de pelo menos 3 colunas
                         dataframes.append(data)
                         arquivos_validos.append(uploaded_file.name)
                     else:
-                        arquivos_invalidos.append(f"{uploaded_file.name} (menos de 2 colunas ou vazio)")
+                        arquivos_invalidos.append(f"{uploaded_file.name} (menos de 3 colunas ou vazio)")
                 except Exception as e:
                     arquivos_invalidos.append(f"{uploaded_file.name} (erro: {str(e)})")
             
@@ -129,19 +133,22 @@ with st.sidebar:
                     st.info("ℹ️ Foram encontradas linhas duplicadas na identificação. Mantendo todas as ocorrências.")
                 
                 # Continuar com o processamento normal
-                if data.shape[1] >= 2 and not data.empty:
+                if data.shape[1] >= 3 and not data.empty:
                     primeira_coluna = data.iloc[:, 0].astype(str)
+                    segunda_coluna = data.iloc[:, 1].astype(str)  # Posição
                     
                     nomes = primeira_coluna.str.split('-').str[0].str.strip()
                     minutos = primeira_coluna.str[-13:].str.strip()
                     periodos = primeira_coluna.apply(extrair_periodo)
                     
                     periodos_unicos = sorted([p for p in periodos.unique() if p and p.strip() != ""])
+                    posicoes_unicas = sorted([p for p in segunda_coluna.unique() if p and p.strip() != ""])
                     
                     variaveis_quant = []
                     dados_quantitativos = {}
                     
-                    for col_idx in range(1, data.shape[1]):
+                    # Agora as variáveis numéricas começam da terceira coluna (índice 2)
+                    for col_idx in range(2, data.shape[1]):
                         nome_var = data.columns[col_idx]
                         valores = pd.to_numeric(data.iloc[:, col_idx], errors='coerce')
                         
@@ -152,6 +159,7 @@ with st.sidebar:
                     if variaveis_quant:
                         df_completo = pd.DataFrame({
                             'Nome': nomes.reset_index(drop=True),
+                            'Posição': segunda_coluna.reset_index(drop=True),  # Nova coluna
                             'Período': periodos.reset_index(drop=True),
                             'Minuto': minutos.reset_index(drop=True)
                         })
@@ -165,6 +173,8 @@ with st.sidebar:
                             st.session_state.df_completo = df_completo
                             st.session_state.variaveis_quantitativas = variaveis_quant
                             st.session_state.atletas_selecionados = sorted(df_completo['Nome'].unique())
+                            st.session_state.todos_posicoes = posicoes_unicas
+                            st.session_state.posicoes_selecionadas = posicoes_unicas.copy()
                             st.session_state.todos_periodos = periodos_unicos
                             st.session_state.periodos_selecionados = periodos_unicos.copy()
                             st.session_state.ordem_personalizada = periodos_unicos.copy()
@@ -175,7 +185,7 @@ with st.sidebar:
                             
                             # Mensagem de sucesso com informação dos arquivos
                             st.success(f"✅ {len(upload_files)} arquivo(s) processado(s)! {len(arquivos_validos)} válido(s), {len(arquivos_invalidos)} inválido(s)")
-                            st.info(f"📊 Total: {len(variaveis_quant)} variáveis, {len(periodos_unicos)} períodos, {len(df_completo)} observações")
+                            st.info(f"📊 Total: {len(variaveis_quant)} variáveis, {len(posicoes_unicas)} posições, {len(periodos_unicos)} períodos, {len(df_completo)} observações")
                             
                             if arquivos_invalidos:
                                 with st.expander("⚠️ Arquivos ignorados:"):
@@ -184,8 +194,10 @@ with st.sidebar:
                             
                             if periodos_unicos:
                                 st.caption(f"📌 Períodos: {', '.join(periodos_unicos[:5])}{'...' if len(periodos_unicos) > 5 else ''}")
+                            if posicoes_unicas:
+                                st.caption(f"📍 Posições: {', '.join(posicoes_unicas[:5])}{'...' if len(posicoes_unicas) > 5 else ''}")
                     else:
-                        st.error("❌ Nenhuma variável numérica válida encontrada nas colunas 2+")
+                        st.error("❌ Nenhuma variável numérica válida encontrada nas colunas 3+")
                 else:
                     st.error("❌ Dados concatenados inválidos")
             else:
@@ -214,6 +226,40 @@ with st.sidebar:
         df_temp = st.session_state.df_completo[variavel_selecionada].dropna()
         if not df_temp.empty:
             st.caption(f"📊 {len(df_temp)} obs | Média: {df_temp.mean():.2f} | DP: {df_temp.std():.2f}")
+    
+    # --- NOVO FILTRO POR POSIÇÃO ---
+    if st.session_state.df_completo is not None and st.session_state.todos_posicoes:
+        st.markdown("---")
+        st.header("📍 Filtro por Posição")
+        
+        lista_posicoes = st.session_state.todos_posicoes
+        
+        if not st.session_state.posicoes_selecionadas and lista_posicoes:
+            st.session_state.posicoes_selecionadas = lista_posicoes.copy()
+        
+        selecionar_todos_posicoes = st.checkbox(
+            "Selecionar todas as posições",
+            value=len(st.session_state.posicoes_selecionadas) == len(lista_posicoes) if lista_posicoes else True,
+            key="selecionar_todos_posicoes"
+        )
+        
+        if selecionar_todos_posicoes:
+            st.session_state.posicoes_selecionadas = lista_posicoes.copy()
+            st.info(f"✅ {len(lista_posicoes)} posições selecionadas")
+        else:
+            posicoes_sel = st.multiselect(
+                "Selecione as posições:",
+                options=lista_posicoes,
+                default=st.session_state.posicoes_selecionadas if st.session_state.posicoes_selecionadas else lista_posicoes[:1],
+                key="multiselect_posicoes"
+            )
+            
+            if posicoes_sel:
+                st.session_state.posicoes_selecionadas = posicoes_sel
+                st.caption(f"✅ {len(posicoes_sel)} posições selecionadas")
+            else:
+                st.session_state.posicoes_selecionadas = []
+                st.warning("⚠️ Selecione pelo menos uma posição")
     
     # --- FILTRO POR PERÍODO ---
     if st.session_state.df_completo is not None and st.session_state.todos_periodos:
@@ -257,6 +303,10 @@ with st.sidebar:
         st.header("🔍 Filtro por Atleta")
         
         df_temp_atletas = st.session_state.df_completo.copy()
+        
+        # Aplicar filtros de posição e período para atualizar lista de atletas
+        if st.session_state.posicoes_selecionadas:
+            df_temp_atletas = df_temp_atletas[df_temp_atletas['Posição'].isin(st.session_state.posicoes_selecionadas)]
         
         if st.session_state.periodos_selecionados:
             df_temp_atletas = df_temp_atletas[df_temp_atletas['Período'].isin(st.session_state.periodos_selecionados)]
@@ -394,6 +444,10 @@ with st.sidebar:
             st.error("❌ Selecione uma variável para análise")
             pode_processar = False
         
+        if 'posicoes_selecionadas' not in st.session_state or not st.session_state.posicoes_selecionadas:
+            st.error("❌ Selecione pelo menos uma posição")
+            pode_processar = False
+        
         if 'periodos_selecionados' not in st.session_state or not st.session_state.periodos_selecionados:
             st.error("❌ Selecione pelo menos um período")
             pode_processar = False
@@ -412,15 +466,17 @@ with st.sidebar:
     )
 
 # --- ÁREA PRINCIPAL ---
-if process_button and st.session_state.df_completo is not None and st.session_state.atletas_selecionados and st.session_state.periodos_selecionados and st.session_state.variavel_selecionada:
+if process_button and st.session_state.df_completo is not None and st.session_state.atletas_selecionados and st.session_state.posicoes_selecionadas and st.session_state.periodos_selecionados and st.session_state.variavel_selecionada:
     
     df_completo = st.session_state.df_completo
     atletas_selecionados = st.session_state.atletas_selecionados
+    posicoes_selecionadas = st.session_state.posicoes_selecionadas
     periodos_selecionados = st.session_state.periodos_selecionados
     variavel_analise = st.session_state.variavel_selecionada
     
     df_filtrado = df_completo[
         df_completo['Nome'].isin(atletas_selecionados) & 
+        df_completo['Posição'].isin(posicoes_selecionadas) &
         df_completo['Período'].isin(periodos_selecionados)
     ].copy()
     
@@ -438,14 +494,18 @@ if process_button and st.session_state.df_completo is not None and st.session_st
                 for arquivo in st.session_state.upload_files_names:
                     st.write(f"- {arquivo}")
         
-        col_f1, col_f2, col_f3 = st.columns(3)
+        col_f1, col_f2, col_f3, col_f4 = st.columns(4)
         with col_f1:
+            st.metric("Posições", f"{len(posicoes_selecionadas)}")
+            if len(posicoes_selecionadas) <= 3:
+                st.caption(f"{', '.join(posicoes_selecionadas)}")
+        with col_f2:
             st.metric("Períodos", f"{len(periodos_selecionados)}")
             if len(periodos_selecionados) <= 3:
                 st.caption(f"{', '.join(periodos_selecionados)}")
-        with col_f2:
-            st.metric("Atletas", f"{len(atletas_selecionados)}")
         with col_f3:
+            st.metric("Atletas", f"{len(atletas_selecionados)}")
+        with col_f4:
             st.metric("Observações", f"{len(df_filtrado)}")
         
         # --- GRÁFICOS ---
@@ -561,44 +621,47 @@ if process_button and st.session_state.df_completo is not None and st.session_st
             q3 = df_filtrado[variavel_analise].quantile(0.75)
             st.metric("Q3 (75%)", f"{q3:.2f}")
         
-        # --- TABELA RESUMO POR ATLETA E PERÍODO ---
-        st.subheader("🏃 Resumo por Atleta e Período")
+        # --- TABELA RESUMO POR ATLETA, POSIÇÃO E PERÍODO ---
+        st.subheader("🏃 Resumo por Atleta, Posição e Período")
         
         resumo_atletas_periodos = []
         
         for nome in atletas_selecionados:
-            for periodo in periodos_selecionados:
-                dados_atleta_periodo = df_filtrado[
-                    (df_filtrado['Nome'] == nome) & 
-                    (df_filtrado['Período'] == periodo)
-                ]
-                
-                if not dados_atleta_periodo.empty:
-                    idx_max = dados_atleta_periodo[variavel_analise].idxmax()
-                    valor_max = dados_atleta_periodo.loc[idx_max, variavel_analise]
-                    minuto_max = dados_atleta_periodo.loc[idx_max, 'Minuto']
+            for posicao in posicoes_selecionadas:
+                for periodo in periodos_selecionados:
+                    dados_atleta_periodo = df_filtrado[
+                        (df_filtrado['Nome'] == nome) & 
+                        (df_filtrado['Posição'] == posicao) &
+                        (df_filtrado['Período'] == periodo)
+                    ]
                     
-                    idx_min = dados_atleta_periodo[variavel_analise].idxmin()
-                    valor_min = dados_atleta_periodo.loc[idx_min, variavel_analise]
-                    minuto_min = dados_atleta_periodo.loc[idx_min, 'Minuto']
-                    
-                    amplitude = valor_max - valor_min
-                    
-                    resumo_atletas_periodos.append({
-                        'Atleta': nome,
-                        'Período': periodo,
-                        f'Máx {variavel_analise}': valor_max,
-                        'Minuto do Máx': minuto_max,
-                        f'Mín {variavel_analise}': valor_min,
-                        'Minuto do Mín': minuto_min,
-                        'Amplitude': amplitude,
-                        'Média': dados_atleta_periodo[variavel_analise].mean(),
-                        'Nº Amostras': len(dados_atleta_periodo)
-                    })
+                    if not dados_atleta_periodo.empty:
+                        idx_max = dados_atleta_periodo[variavel_analise].idxmax()
+                        valor_max = dados_atleta_periodo.loc[idx_max, variavel_analise]
+                        minuto_max = dados_atleta_periodo.loc[idx_max, 'Minuto']
+                        
+                        idx_min = dados_atleta_periodo[variavel_analise].idxmin()
+                        valor_min = dados_atleta_periodo.loc[idx_min, variavel_analise]
+                        minuto_min = dados_atleta_periodo.loc[idx_min, 'Minuto']
+                        
+                        amplitude = valor_max - valor_min
+                        
+                        resumo_atletas_periodos.append({
+                            'Atleta': nome,
+                            'Posição': posicao,
+                            'Período': periodo,
+                            f'Máx {variavel_analise}': valor_max,
+                            'Minuto do Máx': minuto_max,
+                            f'Mín {variavel_analise}': valor_min,
+                            'Minuto do Mín': minuto_min,
+                            'Amplitude': amplitude,
+                            'Média': dados_atleta_periodo[variavel_analise].mean(),
+                            'Nº Amostras': len(dados_atleta_periodo)
+                        })
         
         if resumo_atletas_periodos:
             df_resumo = pd.DataFrame(resumo_atletas_periodos)
-            df_resumo = df_resumo.sort_values(['Atleta', 'Período']).reset_index(drop=True)
+            df_resumo = df_resumo.sort_values(['Atleta', 'Posição', 'Período']).reset_index(drop=True)
             
             st.dataframe(
                 df_resumo.style.format({
@@ -740,15 +803,16 @@ elif not process_button:
         ### 📋 Formato esperado do arquivo:
         
         **Primeira coluna:** Identificação no formato `Nome-Período-Minuto`  
-        **Demais colunas:** Variáveis numéricas para análise
+        **Segunda coluna:** Posição do atleta (ex: Atacante, Meio-campo, Zagueiro, Goleiro)  
+        **Demais colunas (3+):** Variáveis numéricas para análise
         
         **Exemplo:**
         ```
-        Nome-Período-Minuto; Distancia Total; Velocidade Maxima; Acc Max
-        Mariano-1 TEMPO 00:00-01:00,250,23,3.6
-        Maria-SEGUNDO TEMPO 05:00-06:00,127,29,4.2
-        Pele-2 TEMPO 44:00-45:00,200,33,4.9
-        Marta-PRIMEIRO TEMPO 11:00-12:00,90,27,3.1
+        Nome-Período-Minuto;Posição;Distancia Total;Velocidade Maxima;Acc Max
+        Mariano-1 TEMPO 00:00-01:00;Atacante;250;23;3.6
+        Maria-SEGUNDO TEMPO 05:00-06:00;Meio-campo;127;29;4.2
+        Pele-2 TEMPO 44:00-45:00;Zagueiro;200;33;4.9
+        Marta-PRIMEIRO TEMPO 11:00-12:00;Atacante;90;27;3.1
         ```
         
         **Componentes da primeira coluna:**
@@ -775,7 +839,7 @@ elif not process_button:
             **Importante:** Todos os arquivos devem ter exatamente as mesmas colunas (mesmo nome e ordem).
             """)
     else:
-        st.info("👈 **Passo 2:** Selecione a variável, períodos, atletas e clique em 'Processar Análise'")
+        st.info("👈 **Passo 2:** Selecione a variável, posições, períodos, atletas e clique em 'Processar Análise'")
         
         with st.expander("📋 Preview dos dados carregados"):
             # Mostrar informação dos arquivos
@@ -788,5 +852,7 @@ elif not process_button:
             st.dataframe(st.session_state.df_completo.head(10), use_container_width=True)
             st.caption(f"**Total de observações:** {len(st.session_state.df_completo)}")
             st.caption(f"**Variáveis disponíveis:** {', '.join(st.session_state.variaveis_quantitativas)}")
+            if st.session_state.todos_posicoes:
+                st.caption(f"**Posições disponíveis:** {', '.join(st.session_state.todos_posicoes)}")
             if st.session_state.todos_periodos:
                 st.caption(f"**Períodos disponíveis:** {', '.join(st.session_state.todos_periodos)}")
