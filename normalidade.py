@@ -146,6 +146,42 @@ st.markdown("""
         font-size: 0.9rem;
     }
     
+    /* Card especial para eventos acima do limiar */
+    .warning-card {
+        background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: 0 10px 20px rgba(231, 76, 60, 0.3);
+        text-align: center;
+        color: white;
+        margin: 20px 0;
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.02); }
+        100% { transform: scale(1); }
+    }
+    
+    .warning-card .label {
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        opacity: 0.9;
+    }
+    
+    .warning-card .value {
+        font-size: 3rem;
+        font-weight: 700;
+        margin: 10px 0;
+    }
+    
+    .warning-card .sub-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+    }
+    
     /* Títulos principais */
     h1 {
         color: white !important;
@@ -410,6 +446,16 @@ def time_metric_card(label, valor, sub_label="", cor="#3498db"):
         <div class="label">{label}</div>
         <div class="value">{valor}</div>
         <div class="sub-value">{sub_label}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+def warning_card(titulo, valor, subtitulo, icone="⚠️"):
+    """Cria um card de alerta para eventos críticos"""
+    st.markdown(f"""
+    <div class="warning-card fade-in">
+        <div class="label">{icone} {titulo}</div>
+        <div class="value">{valor}</div>
+        <div class="sub-label">{subtitulo}</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -807,7 +853,149 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
             with tab2:
                 st.markdown("<h3>📈 Estatísticas e Evolução Temporal</h3>", unsafe_allow_html=True)
                 
-                # Estatísticas descritivas com CV
+                # Calcular métricas temporais globais
+                df_tempo = df_filtrado.sort_values('Minuto').reset_index(drop=True)
+                
+                valor_maximo = df_tempo[variavel_analise].max()
+                minuto_maximo = df_tempo.loc[df_tempo[variavel_analise].idxmax(), 'Minuto']
+                media_tempo = df_tempo[variavel_analise].mean()
+                limiar_80 = valor_maximo * 0.8
+                
+                # Contar eventos acima do limiar
+                eventos_acima_80 = (df_tempo[variavel_analise] > limiar_80).sum()
+                percentual_acima_80 = (eventos_acima_80 / len(df_tempo)) * 100
+                
+                # Cards com métricas temporais (agora com 4 colunas)
+                col_t1, col_t2, col_t3, col_t4 = st.columns(4)
+                
+                with col_t1:
+                    time_metric_card(
+                        "📈 VALOR MÁXIMO",
+                        f"{valor_maximo:.2f}",
+                        f"Minuto: {minuto_maximo}",
+                        "#e74c3c"
+                    )
+                
+                with col_t2:
+                    time_metric_card(
+                        "📊 MÉDIA",
+                        f"{media_tempo:.2f}",
+                        "Valor médio",
+                        "#3498db"
+                    )
+                
+                with col_t3:
+                    time_metric_card(
+                        "🎯 LIMIAR 80%",
+                        f"{limiar_80:.2f}",
+                        f"80% do máximo ({valor_maximo:.2f})",
+                        "#f39c12"
+                    )
+                
+                with col_t4:
+                    warning_card(
+                        "EVENTOS CRÍTICOS",
+                        f"{eventos_acima_80}",
+                        f"{percentual_acima_80:.1f}% das observações acima do limiar de 80%",
+                        "⚠️"
+                    )
+                
+                # Gráfico temporal com cores condicionais
+                fig_tempo = go.Figure()
+                
+                # Criar lista de cores baseada no limiar de 80%
+                cores_pontos = ['#e74c3c' if v > limiar_80 else '#3498db' for v in df_tempo[variavel_analise]]
+                
+                # Adicionar linha conectando os pontos
+                fig_tempo.add_trace(go.Scatter(
+                    x=df_tempo['Minuto'],
+                    y=df_tempo[variavel_analise],
+                    mode='lines',
+                    line=dict(color='#888', width=1, dash='dot'),
+                    showlegend=False,
+                    hoverinfo='skip'
+                ))
+                
+                # Adicionar pontos coloridos
+                fig_tempo.add_trace(go.Scatter(
+                    x=df_tempo['Minuto'],
+                    y=df_tempo[variavel_analise],
+                    mode='markers',
+                    marker=dict(
+                        color=cores_pontos,
+                        size=10,
+                        line=dict(color='white', width=1)
+                    ),
+                    showlegend=False,
+                    hovertemplate='Minuto: %{x}<br>Valor: %{y:.2f}<br>' + 
+                                 'Status: %{text}<extra></extra>',
+                    text=['⚠️ ACIMA DO LIMIAR' if v > limiar_80 else '✅ ABAIXO DO LIMIAR' 
+                          for v in df_tempo[variavel_analise]]
+                ))
+                
+                # Linhas de referência
+                fig_tempo.add_hline(
+                    y=media_tempo,
+                    line_dash="dash",
+                    line_color="#3498db",
+                    line_width=2,
+                    annotation_text=f"Média: {media_tempo:.2f}",
+                    annotation_position="left",
+                    annotation_font_color="white"
+                )
+                
+                fig_tempo.add_hline(
+                    y=limiar_80,
+                    line_dash="dot",
+                    line_color="#f39c12",
+                    line_width=2,
+                    annotation_text=f"80% do Máx: {limiar_80:.2f}",
+                    annotation_position="right",
+                    annotation_font_color="white"
+                )
+                
+                fig_tempo.add_hline(
+                    y=valor_maximo,
+                    line_dash="solid",
+                    line_color="#e74c3c",
+                    line_width=2,
+                    annotation_text=f"Máx: {valor_maximo:.2f}",
+                    annotation_position="right",
+                    annotation_font_color="white"
+                )
+                
+                fig_tempo.update_layout(
+                    title=f"Evolução Temporal - {variavel_analise}",
+                    plot_bgcolor='#1a1a1a',
+                    paper_bgcolor='#1a1a1a',
+                    font=dict(color='white', size=11),
+                    title_font=dict(color='#3498db', size=16),
+                    xaxis_title="Minuto",
+                    yaxis_title=variavel_analise,
+                    hovermode='closest',
+                    hoverlabel=dict(bgcolor="#1a1a1a", font_size=12)
+                )
+                fig_tempo.update_xaxes(gridcolor='#333', tickfont=dict(color='white'), tickangle=-45)
+                fig_tempo.update_yaxes(gridcolor='#333', tickfont=dict(color='white'))
+                
+                st.plotly_chart(fig_tempo, use_container_width=True)
+                
+                # Legenda explicativa
+                st.markdown("""
+                <div style="background: #1a1a1a; padding: 10px; border-radius: 5px; margin-top: 10px;">
+                    <p style="color: #ccc; margin: 0;">
+                        <span style="color: #e74c3c;">🔴 Pontos vermelhos:</span> Valores acima de 80% do máximo 
+                        | <span style="color: #3498db;">🔵 Pontos azuis:</span> Valores abaixo de 80% do máximo
+                        | <span style="color: #f39c12;">🟡 Linha amarela:</span> Limiar de 80%
+                        | <span style="color: #e74c3c;">🔴 Linha vermelha:</span> Valor máximo
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # Estatísticas descritivas
+                st.markdown("---")
+                st.markdown("<h4>📊 Estatísticas Descritivas</h4>", unsafe_allow_html=True)
+                
                 col1, col2, col3 = st.columns(3)
                 
                 with col1:
@@ -852,6 +1040,8 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                         <hr style="border-color: #333;">
                         <p><strong>Q1 (25%):</strong> {q1:.3f}</p>
                         <p><strong>Q3 (75%):</strong> {q3:.3f}</p>
+                        <p><strong>IQR (Intervalo Interquartil):</strong> {iqr:.3f}</p>
+                        <p><small>O IQR representa a amplitude dos 50% centrais dos dados, sendo uma medida robusta de dispersão menos sensível a outliers.</small></p>
                         <p><strong>Amplitude Total:</strong> {amplitude_total:.3f}</p>
                     </div>
                     """, unsafe_allow_html=True)
@@ -988,137 +1178,7 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                     except Exception as e:
                         st.error(f"❌ Erro no teste Shapiro-Wilk: {str(e)}")
                 
-                # Gráfico Temporal com métricas e cores
-                st.markdown("---")
-                st.markdown("<h4>⏱️ Evolução Temporal</h4>", unsafe_allow_html=True)
-                
-                # Calcular métricas temporais
-                df_tempo = df_filtrado.sort_values('Minuto').reset_index(drop=True)
-                
-                valor_maximo = df_tempo[variavel_analise].max()
-                media_tempo = df_tempo[variavel_analise].mean()
-                limiar_80 = valor_maximo * 0.8
-                
-                # Cards com métricas temporais
-                col_t1, col_t2, col_t3 = st.columns(3)
-                
-                with col_t1:
-                    time_metric_card(
-                        "📈 VALOR MÁXIMO",
-                        f"{valor_maximo:.2f}",
-                        "Pico máximo da variável",
-                        "#e74c3c"
-                    )
-                
-                with col_t2:
-                    time_metric_card(
-                        "📊 MÉDIA",
-                        f"{media_tempo:.2f}",
-                        "Valor médio",
-                        "#3498db"
-                    )
-                
-                with col_t3:
-                    time_metric_card(
-                        "🎯 LIMIAR 80%",
-                        f"{limiar_80:.2f}",
-                        f"80% do máximo ({valor_maximo:.2f})",
-                        "#f39c12"
-                    )
-                
-                # Gráfico temporal com cores condicionais
-                fig_tempo = go.Figure()
-                
-                # Criar lista de cores baseada no limiar de 80%
-                cores_pontos = ['#e74c3c' if v > limiar_80 else '#3498db' for v in df_tempo[variavel_analise]]
-                
-                # Adicionar linha conectando os pontos
-                fig_tempo.add_trace(go.Scatter(
-                    x=df_tempo['Minuto'],
-                    y=df_tempo[variavel_analise],
-                    mode='lines',
-                    line=dict(color='#888', width=1, dash='dot'),
-                    showlegend=False,
-                    hoverinfo='skip'
-                ))
-                
-                # Adicionar pontos coloridos
-                fig_tempo.add_trace(go.Scatter(
-                    x=df_tempo['Minuto'],
-                    y=df_tempo[variavel_analise],
-                    mode='markers',
-                    marker=dict(
-                        color=cores_pontos,
-                        size=10,
-                        line=dict(color='white', width=1)
-                    ),
-                    showlegend=False,
-                    hovertemplate='Minuto: %{x}<br>Valor: %{y:.2f}<br>' + 
-                                 'Status: %{text}<extra></extra>',
-                    text=['⚠️ ACIMA DO LIMIAR' if v > limiar_80 else '✅ ABAIXO DO LIMIAR' 
-                          for v in df_tempo[variavel_analise]]
-                ))
-                
-                # Linhas de referência
-                fig_tempo.add_hline(
-                    y=media_tempo,
-                    line_dash="dash",
-                    line_color="#3498db",
-                    line_width=2,
-                    annotation_text=f"Média: {media_tempo:.2f}",
-                    annotation_position="left",
-                    annotation_font_color="white"
-                )
-                
-                fig_tempo.add_hline(
-                    y=limiar_80,
-                    line_dash="dot",
-                    line_color="#f39c12",
-                    line_width=2,
-                    annotation_text=f"80% do Máx: {limiar_80:.2f}",
-                    annotation_position="right",
-                    annotation_font_color="white"
-                )
-                
-                fig_tempo.add_hline(
-                    y=valor_maximo,
-                    line_dash="solid",
-                    line_color="#e74c3c",
-                    line_width=2,
-                    annotation_text=f"Máx: {valor_maximo:.2f}",
-                    annotation_position="right",
-                    annotation_font_color="white"
-                )
-                
-                fig_tempo.update_layout(
-                    title=f"Evolução Temporal - {variavel_analise}",
-                    plot_bgcolor='#1a1a1a',
-                    paper_bgcolor='#1a1a1a',
-                    font=dict(color='white', size=11),
-                    title_font=dict(color='#3498db', size=16),
-                    xaxis_title="Minuto",
-                    yaxis_title=variavel_analise,
-                    hovermode='closest',
-                    hoverlabel=dict(bgcolor="#1a1a1a", font_size=12)
-                )
-                fig_tempo.update_xaxes(gridcolor='#333', tickfont=dict(color='white'), tickangle=-45)
-                fig_tempo.update_yaxes(gridcolor='#333', tickfont=dict(color='white'))
-                
-                st.plotly_chart(fig_tempo, use_container_width=True)
-                
-                # Legenda explicativa
-                st.markdown("""
-                <div style="background: #1a1a1a; padding: 10px; border-radius: 5px; margin-top: 10px;">
-                    <p style="color: #ccc; margin: 0;">
-                        <span style="color: #e74c3c;">🔴 Pontos vermelhos:</span> Valores acima de 80% do máximo 
-                        | <span style="color: #3498db;">🔵 Pontos azuis:</span> Valores abaixo de 80% do máximo
-                        | <span style="color: #f39c12;">🟡 Linha amarela:</span> Limiar de 80%
-                        | <span style="color: #e74c3c;">🔴 Linha vermelha:</span> Valor máximo
-                    </p>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                # Resumo por Atleta, Posição e Período (sem % acima de 80%)
+                # Resumo por Atleta, Posição e Período com minuto do máximo
                 st.markdown("---")
                 st.markdown("<h4>🏃 Resumo por Atleta, Posição e Período</h4>", unsafe_allow_html=True)
                 
@@ -1135,14 +1195,17 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                                 media_grupo = dados[variavel_analise].mean()
                                 desvio_grupo = dados[variavel_analise].std()
                                 cv_grupo = calcular_cv(media_grupo, desvio_grupo)
+                                valor_max_grupo = dados[variavel_analise].max()
+                                minuto_max_grupo = dados.loc[dados[variavel_analise].idxmax(), 'Minuto']
                                 
                                 resumo.append({
                                     'Atleta': nome,
                                     'Posição': posicao,
                                     'Período': periodo,
-                                    f'Máx {variavel_analise}': dados[variavel_analise].max(),
+                                    f'Máx {variavel_analise}': valor_max_grupo,
+                                    'Minuto do Máx': minuto_max_grupo,
                                     f'Mín {variavel_analise}': dados[variavel_analise].min(),
-                                    'Amplitude': dados[variavel_analise].max() - dados[variavel_analise].min(),
+                                    'Amplitude': valor_max_grupo - dados[variavel_analise].min(),
                                     'Média': media_grupo,
                                     'CV (%)': cv_grupo,
                                     'Nº Amostras': len(dados)
@@ -1183,7 +1246,7 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                             jitter=0.3,
                             pointpos=-1.8,
                             opacity=0.8,
-                            hovertemplate='Posição: %{x}<br>Valor: %{y:.2f}<br>Mediana: %{median:.2f}<extra></extra>'
+                            hovertemplate='Posição: %{x}<br>Valor: %{y:.2f}<br>Mediana: %{median:.2f}<br>IQR: %{q3:%{q1:.2f}<extra></extra>'
                         ))
                 
                 fig_box_pos.update_layout(
@@ -1236,8 +1299,19 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                 fig_box_atl.update_yaxes(gridcolor='#333', tickfont=dict(color='white'))
                 st.plotly_chart(fig_box_atl, use_container_width=True)
                 
-                # Estatísticas por atleta
+                # Estatísticas por atleta com explicação do IQR
                 with st.expander("📊 Estatísticas detalhadas por atleta"):
+                    st.markdown("""
+                    <div style="background: #1a1a1a; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                        <h5 style="color: #3498db;">📌 O que é IQR?</h5>
+                        <p style="color: #ccc;">
+                            <strong>IQR (Intervalo Interquartil)</strong> é a diferença entre o terceiro quartil (Q3) e o primeiro quartil (Q1). 
+                            Ele representa a amplitude dos 50% centrais dos dados, sendo uma medida robusta de dispersão menos sensível a outliers.
+                            Um IQR maior indica maior variabilidade nos dados.
+                        </p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
                     stats_atletas = []
                     for atleta in atletas_selecionados[:20]:
                         dados_atl = df_filtrado[df_filtrado['Nome'] == atleta][variavel_analise]
@@ -1248,6 +1322,8 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                             media_atl = dados_atl.mean()
                             desvio_atl = dados_atl.std()
                             cv_atl = calcular_cv(media_atl, desvio_atl)
+                            valor_max_atl = dados_atl.max()
+                            minuto_max_atl = dados_atl.loc[dados_atl.idxmax(), 'Minuto']
                             
                             stats_atletas.append({
                                 'Atleta': atleta,
@@ -1258,7 +1334,8 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                                 'Mínimo': dados_atl.min(),
                                 'Q1': q1,
                                 'Q3': q3,
-                                'Máximo': dados_atl.max(),
+                                'Máximo': valor_max_atl,
+                                'Minuto do Máx': minuto_max_atl,
                                 'IQR': iqr,
                                 'Outliers': len(dados_atl[(dados_atl < q1 - 1.5*iqr) | (dados_atl > q3 + 1.5*iqr)]),
                                 'N': len(dados_atl)
