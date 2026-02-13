@@ -24,6 +24,8 @@ if 'process_button_disabled' not in st.session_state:
     st.session_state.process_button_disabled = True
 if 'ordem_personalizada' not in st.session_state:
     st.session_state.ordem_personalizada = []
+if 'upload_files_names' not in st.session_state:
+    st.session_state.upload_files_names = []
 
 # --- FUNÇÕES AUXILIARES ---
 def interpretar_teste(p_valor, nome_teste):
@@ -55,75 +57,142 @@ def extrair_periodo(texto):
     except:
         return ""
 
+def verificar_estruturas_arquivos(dataframes):
+    """Verifica se todos os dataframes têm a mesma estrutura de colunas"""
+    if not dataframes:
+        return False, []
+    
+    # Pegar a estrutura do primeiro dataframe
+    primeira_estrutura = dataframes[0].columns.tolist()
+    
+    # Verificar cada dataframe
+    for i, df in enumerate(dataframes[1:], 1):
+        if df.columns.tolist() != primeira_estrutura:
+            return False, primeira_estrutura
+    
+    return True, primeira_estrutura
+
 # --- SIDEBAR ---
 with st.sidebar:
     st.header("📂 Upload dos Dados")
-    upload_file = st.file_uploader(
-        "Escolha o arquivo CSV:", 
+    upload_files = st.file_uploader(
+        "Escolha os arquivos CSV:", 
         type=['csv'],
-        accept_multiple_files=False,
-        help="Formato: Primeira coluna = Identificação (Nome-Período-Minuto), Demais colunas = Variáveis numéricas"
+        accept_multiple_files=True,
+        help="Selecione um ou mais arquivos CSV com a mesma estrutura. Formato: Primeira coluna = Identificação (Nome-Período-Minuto), Demais colunas = Variáveis numéricas"
     )
     
-    # Processar arquivo quando enviado
-    if upload_file is not None:
+    # Processar arquivos quando enviados
+    if upload_files:
         try:
-            data = pd.read_csv(upload_file)
+            dataframes = []
+            arquivos_validos = []
+            arquivos_invalidos = []
             
-            if data.shape[1] >= 2 and not data.empty:
-                primeira_coluna = data.iloc[:, 0].astype(str)
-                
-                nomes = primeira_coluna.str.split('-').str[0].str.strip()
-                minutos = primeira_coluna.str[-13:].str.strip()
-                periodos = primeira_coluna.apply(extrair_periodo)
-                
-                periodos_unicos = sorted([p for p in periodos.unique() if p and p.strip() != ""])
-                
-                variaveis_quant = []
-                dados_quantitativos = {}
-                
-                for col_idx in range(1, data.shape[1]):
-                    nome_var = data.columns[col_idx]
-                    valores = pd.to_numeric(data.iloc[:, col_idx], errors='coerce')
+            # Primeira passada: ler todos os arquivos
+            for uploaded_file in upload_files:
+                try:
+                    data = pd.read_csv(uploaded_file)
                     
-                    if not valores.dropna().empty:
-                        variaveis_quant.append(nome_var)
-                        dados_quantitativos[nome_var] = valores.reset_index(drop=True)
+                    if data.shape[1] >= 2 and not data.empty:
+                        dataframes.append(data)
+                        arquivos_validos.append(uploaded_file.name)
+                    else:
+                        arquivos_invalidos.append(f"{uploaded_file.name} (menos de 2 colunas ou vazio)")
+                except Exception as e:
+                    arquivos_invalidos.append(f"{uploaded_file.name} (erro: {str(e)})")
+            
+            if dataframes:
+                # Verificar se todos os dataframes têm a mesma estrutura
+                estruturas_ok, estrutura_referencia = verificar_estruturas_arquivos(dataframes)
                 
-                if variaveis_quant:
-                    df_completo = pd.DataFrame({
-                        'Nome': nomes.reset_index(drop=True),
-                        'Período': periodos.reset_index(drop=True),
-                        'Minuto': minutos.reset_index(drop=True)
-                    })
+                if not estruturas_ok:
+                    st.error("❌ INCOMPATIBILIDADE DE ESTRUTURA: Os arquivos não têm as mesmas colunas!")
+                    st.write("**Estrutura esperada (do primeiro arquivo):**")
+                    st.write(estrutura_referencia)
+                    st.write("**Verifique se todos os arquivos têm exatamente as mesmas colunas.**")
                     
-                    for var_nome, var_valores in dados_quantitativos.items():
-                        df_completo[var_nome] = var_valores
+                    # Mostrar quais arquivos têm estruturas diferentes
+                    st.write("---")
+                    st.write("📋 **Estrutura de cada arquivo:**")
+                    for i, df in enumerate(dataframes):
+                        with st.expander(f"📄 {arquivos_validos[i]}"):
+                            st.write(df.columns.tolist())
                     
-                    df_completo = df_completo[df_completo['Nome'].str.len() > 0]
+                    st.stop()
+                
+                # Concatenar todos os dataframes
+                data = pd.concat(dataframes, ignore_index=True)
+                
+                # Verificar duplicatas na primeira coluna (opcional)
+                if data.iloc[:, 0].duplicated().any():
+                    st.info("ℹ️ Foram encontradas linhas duplicadas na identificação. Mantendo todas as ocorrências.")
+                
+                # Continuar com o processamento normal
+                if data.shape[1] >= 2 and not data.empty:
+                    primeira_coluna = data.iloc[:, 0].astype(str)
                     
-                    if not df_completo.empty:
-                        st.session_state.df_completo = df_completo
-                        st.session_state.variaveis_quantitativas = variaveis_quant
-                        st.session_state.atletas_selecionados = sorted(df_completo['Nome'].unique())
-                        st.session_state.todos_periodos = periodos_unicos
-                        st.session_state.periodos_selecionados = periodos_unicos.copy()
-                        st.session_state.ordem_personalizada = periodos_unicos.copy()
+                    nomes = primeira_coluna.str.split('-').str[0].str.strip()
+                    minutos = primeira_coluna.str[-13:].str.strip()
+                    periodos = primeira_coluna.apply(extrair_periodo)
+                    
+                    periodos_unicos = sorted([p for p in periodos.unique() if p and p.strip() != ""])
+                    
+                    variaveis_quant = []
+                    dados_quantitativos = {}
+                    
+                    for col_idx in range(1, data.shape[1]):
+                        nome_var = data.columns[col_idx]
+                        valores = pd.to_numeric(data.iloc[:, col_idx], errors='coerce')
                         
-                        if variaveis_quant and st.session_state.variavel_selecionada is None:
-                            st.session_state.variavel_selecionada = variaveis_quant[0]
+                        if not valores.dropna().empty:
+                            variaveis_quant.append(nome_var)
+                            dados_quantitativos[nome_var] = valores.reset_index(drop=True)
+                    
+                    if variaveis_quant:
+                        df_completo = pd.DataFrame({
+                            'Nome': nomes.reset_index(drop=True),
+                            'Período': periodos.reset_index(drop=True),
+                            'Minuto': minutos.reset_index(drop=True)
+                        })
                         
-                        st.success(f"✅ Arquivo carregado! {len(variaveis_quant)} variáveis, {len(periodos_unicos)} períodos.")
+                        for var_nome, var_valores in dados_quantitativos.items():
+                            df_completo[var_nome] = var_valores
                         
-                        if periodos_unicos:
-                            st.info(f"📌 Períodos: {', '.join(periodos_unicos[:3])}{'...' if len(periodos_unicos) > 3 else ''}")
+                        df_completo = df_completo[df_completo['Nome'].str.len() > 0]
+                        
+                        if not df_completo.empty:
+                            st.session_state.df_completo = df_completo
+                            st.session_state.variaveis_quantitativas = variaveis_quant
+                            st.session_state.atletas_selecionados = sorted(df_completo['Nome'].unique())
+                            st.session_state.todos_periodos = periodos_unicos
+                            st.session_state.periodos_selecionados = periodos_unicos.copy()
+                            st.session_state.ordem_personalizada = periodos_unicos.copy()
+                            st.session_state.upload_files_names = arquivos_validos
+                            
+                            if variaveis_quant and st.session_state.variavel_selecionada is None:
+                                st.session_state.variavel_selecionada = variaveis_quant[0]
+                            
+                            # Mensagem de sucesso com informação dos arquivos
+                            st.success(f"✅ {len(upload_files)} arquivo(s) processado(s)! {len(arquivos_validos)} válido(s), {len(arquivos_invalidos)} inválido(s)")
+                            st.info(f"📊 Total: {len(variaveis_quant)} variáveis, {len(periodos_unicos)} períodos, {len(df_completo)} observações")
+                            
+                            if arquivos_invalidos:
+                                with st.expander("⚠️ Arquivos ignorados:"):
+                                    for arq in arquivos_invalidos:
+                                        st.write(f"- {arq}")
+                            
+                            if periodos_unicos:
+                                st.caption(f"📌 Períodos: {', '.join(periodos_unicos[:5])}{'...' if len(periodos_unicos) > 5 else ''}")
+                    else:
+                        st.error("❌ Nenhuma variável numérica válida encontrada nas colunas 2+")
                 else:
-                    st.error("❌ Nenhuma variável numérica válida encontrada nas colunas 2+")
+                    st.error("❌ Dados concatenados inválidos")
             else:
-                st.error("❌ Arquivo deve ter pelo menos 2 colunas")
+                st.error("❌ Nenhum arquivo válido foi carregado")
                 
         except Exception as e:
-            st.error(f"❌ Erro ao ler arquivo: {str(e)}")
+            st.error(f"❌ Erro ao ler arquivos: {str(e)}")
     
     # --- SELEÇÃO DE VARIÁVEL ---
     if st.session_state.df_completo is not None and st.session_state.variaveis_quantitativas:
@@ -361,6 +430,13 @@ if process_button and st.session_state.df_completo is not None and st.session_st
         st.warning("⚠️ Nenhum dado encontrado para os filtros selecionados")
     else:
         st.header(f"📊 Análise de Normalidade: **{variavel_analise}**")
+        
+        # Informação sobre os arquivos carregados
+        if st.session_state.upload_files_names:
+            with st.expander("📁 Arquivos fonte dos dados"):
+                st.write(f"**{len(st.session_state.upload_files_names)} arquivo(s) carregado(s):**")
+                for arquivo in st.session_state.upload_files_names:
+                    st.write(f"- {arquivo}")
         
         col_f1, col_f2, col_f3 = st.columns(3)
         with col_f1:
@@ -659,7 +735,7 @@ if process_button and st.session_state.df_completo is not None and st.session_st
 
 elif not process_button:
     if st.session_state.df_completo is None:
-        st.info("👈 **Passo 1:** Faça upload de um arquivo CSV para começar")
+        st.info("👈 **Passo 1:** Faça upload de um ou mais arquivos CSV para começar")
         st.markdown("""
         ### 📋 Formato esperado do arquivo:
         
@@ -679,12 +755,38 @@ elif not process_button:
         - **Nome:** Primeira parte antes do primeiro hífen "-"
         - **Período:** Texto entre o "nome" e o 14º último caractere
         - **Minuto:** Últimos 13 caracteres
+        
+        **💡 Dica:** Você pode selecionar múltiplos arquivos CSV com a **mesma estrutura** de colunas. O sistema verificará automaticamente se as estruturas são compatíveis.
         """)
+        
+        # Mostrar exemplo de múltiplos arquivos
+        with st.expander("📁 Exemplo de uso com múltiplos arquivos"):
+            st.markdown("""
+            ### Carregando múltiplos arquivos:
+            
+            1. Prepare seus arquivos CSV com a **mesma estrutura** de colunas
+            2. Selecione todos os arquivos desejados no seletor de arquivos (use Ctrl ou Shift para selecionar múltiplos)
+            3. O sistema irá:
+               - Verificar se todos têm a mesma estrutura de colunas
+               - Concatenar os dados automaticamente
+               - Manter a informação de quais arquivos foram carregados
+               - Mostrar estatísticas consolidadas
+            
+            **Importante:** Todos os arquivos devem ter exatamente as mesmas colunas (mesmo nome e ordem).
+            """)
     else:
         st.info("👈 **Passo 2:** Selecione a variável, períodos, atletas e clique em 'Processar Análise'")
         
         with st.expander("📋 Preview dos dados carregados"):
+            # Mostrar informação dos arquivos
+            if st.session_state.upload_files_names:
+                st.caption(f"**Arquivos carregados ({len(st.session_state.upload_files_names)}):**")
+                for arquivo in st.session_state.upload_files_names:
+                    st.write(f"- {arquivo}")
+                st.markdown("---")
+            
             st.dataframe(st.session_state.df_completo.head(10), use_container_width=True)
+            st.caption(f"**Total de observações:** {len(st.session_state.df_completo)}")
             st.caption(f"**Variáveis disponíveis:** {', '.join(st.session_state.variaveis_quantitativas)}")
             if st.session_state.todos_periodos:
                 st.caption(f"**Períodos disponíveis:** {', '.join(st.session_state.todos_periodos)}")
