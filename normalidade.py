@@ -9,144 +9,294 @@ import time
 
 st.set_page_config(page_title="Teste de Normalidade dos Dados", layout="wide", initial_sidebar_state="expanded")
 
-# Tema corporativo com CSS
+# Tema dark moderno com CSS
 st.markdown("""
 <style>
-    /* Tema corporativo - cores legíveis */
+    /* Tema dark moderno */
     .stApp {
-        background: #ffffff;
+        background: #0a0a0a;
+        background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
     }
     
-    /* Cards com gradiente corporativo */
+    /* Sidebar - fundo preto com texto branco */
+    .css-1d391kg, .css-1wrcr25 {
+        background: #000000 !important;
+        border-right: 1px solid #333333;
+    }
+    
+    /* Títulos na sidebar */
+    .sidebar-title {
+        color: white !important;
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 15px;
+        padding-bottom: 5px;
+        border-bottom: 2px solid #3498db;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    /* Texto na sidebar */
+    .css-1d391kg p, .css-1d391kg label, .css-1d391kg .stMarkdown, 
+    .css-1d391kg .stSelectbox label, .css-1d391kg .stMultiselect label {
+        color: #ffffff !important;
+    }
+    
+    /* Inputs na sidebar */
+    .css-1d391kg .stSelectbox, .css-1d391kg .stMultiselect {
+        background: #1a1a1a;
+        border-radius: 6px;
+        border: 1px solid #333333;
+        color: white;
+    }
+    
+    .css-1d391kg .stSelectbox div, .css-1d391kg .stMultiselect div {
+        color: white !important;
+    }
+    
+    /* Slider na sidebar */
+    .css-1d391kg .stSlider label {
+        color: white !important;
+    }
+    
+    /* Botão na sidebar */
+    .css-1d391kg .stButton > button {
+        background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+        color: white;
+        border: none;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    /* Cards com gradiente */
     .metric-card {
-        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.5);
         text-align: center;
         color: white !important;
-        transition: transform 0.2s ease;
-        border: 1px solid rgba(255,255,255,0.1);
-    }
-    .metric-card h3, .metric-card h2 {
-        color: white !important;
-    }
-    .metric-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 12px rgba(30, 60, 114, 0.2);
+        transition: all 0.3s ease;
+        border: 1px solid #333;
+        position: relative;
+        overflow: hidden;
     }
     
-    /* Títulos - cor escura para contraste */
+    .metric-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+        transition: left 0.5s ease;
+    }
+    
+    .metric-card:hover::before {
+        left: 100%;
+    }
+    
+    .metric-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(52, 152, 219, 0.3);
+        border-color: #3498db;
+    }
+    
+    .metric-card h3 {
+        color: #3498db !important;
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-bottom: 10px;
+    }
+    
+    .metric-card h2 {
+        color: white !important;
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 10px 0;
+    }
+    
+    /* Títulos principais */
     h1 {
-        color: #1e3c72 !important;
-        font-family: 'Arial', sans-serif;
-        font-weight: 600;
+        color: white !important;
+        font-size: 2.5rem;
+        font-weight: 700;
+        text-shadow: 0 0 20px rgba(52, 152, 219, 0.5);
+        background: linear-gradient(135deg, #3498db, #9b59b6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-align: center;
+        margin-bottom: 20px;
     }
+    
     h2 {
-        color: #1e3c72 !important;
-        font-family: 'Arial', sans-serif;
-        font-weight: 500;
+        color: white !important;
+        font-size: 2rem;
+        font-weight: 600;
+        border-bottom: 2px solid #3498db;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
     }
+    
     h3 {
-        color: #1e3c72 !important;
-        font-family: 'Arial', sans-serif;
+        color: #3498db !important;
+        font-size: 1.5rem;
         font-weight: 500;
     }
+    
     h4 {
-        color: #1e3c72 !important;
+        color: #9b59b6 !important;
+        font-size: 1.2rem;
+        font-weight: 500;
     }
     
     /* Abas personalizadas */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
-        background: #f8f9fa;
-        padding: 8px;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        gap: 10px;
+        background: #1a1a1a;
+        padding: 10px;
+        border-radius: 50px;
+        border: 1px solid #333;
     }
+    
     .stTabs [data-baseweb="tab"] {
-        border-radius: 6px;
-        padding: 8px 16px;
-        font-weight: 500;
-        color: #1e3c72 !important;
+        border-radius: 50px;
+        padding: 10px 25px;
+        font-weight: 600;
+        color: #888 !important;
+        transition: all 0.3s ease;
     }
+    
     .stTabs [aria-selected="true"] {
-        background: #1e3c72 !important;
+        background: linear-gradient(135deg, #3498db 0%, #9b59b6 100%) !important;
         color: white !important;
+        box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
     }
     
     /* Expander */
     .streamlit-expanderHeader {
-        background: #f8f9fa;
-        border-radius: 6px;
-        border: 1px solid #e9ecef;
-        color: #1e3c72 !important;
+        background: #1a1a1a !important;
+        border-radius: 10px !important;
+        border: 1px solid #333 !important;
+        color: white !important;
+        font-weight: 600;
     }
     
-    /* Botões */
-    .stButton > button {
-        background: #1e3c72;
-        color: white;
-        border: none;
-        border-radius: 6px;
-        padding: 8px 20px;
-        font-weight: 500;
-        transition: all 0.2s ease;
-    }
-    .stButton > button:hover {
-        background: #2a5298;
-        box-shadow: 0 4px 8px rgba(42, 82, 152, 0.3);
+    .streamlit-expanderContent {
+        background: #1a1a1a;
+        border-radius: 0 0 10px 10px;
+        border: 1px solid #333;
+        border-top: none;
     }
     
-    /* Sidebar */
-    .css-1d391kg {
-        background: #f8f9fa;
-        border-right: 1px solid #e9ecef;
-    }
-    
-    /* Métricas container */
+    /* Containers de métricas */
     .metric-container {
-        background: white;
-        border-radius: 8px;
-        padding: 15px;
-        border: 1px solid #e9ecef;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        background: #1a1a1a;
+        border-radius: 15px;
+        padding: 20px;
+        border: 1px solid #333;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        transition: all 0.3s ease;
     }
-    .metric-container h4, .metric-container p {
-        color: #1e3c72 !important;
+    
+    .metric-container:hover {
+        border-color: #3498db;
+        box-shadow: 0 10px 25px rgba(52, 152, 219, 0.2);
+    }
+    
+    .metric-container h4 {
+        color: #3498db !important;
+        margin-bottom: 15px;
+        font-size: 1.1rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .metric-container p {
+        color: white !important;
+        margin: 10px 0;
+        font-size: 1rem;
+    }
+    
+    .metric-container strong {
+        color: #9b59b6;
     }
     
     /* Dataframe */
     .dataframe {
-        background: white;
-        border-radius: 8px;
-        border: 1px solid #e9ecef;
+        background: #1a1a1a !important;
+        border-radius: 10px !important;
+        border: 1px solid #333 !important;
+        color: white !important;
+    }
+    
+    .dataframe th {
+        background: #2d2d2d !important;
+        color: #3498db !important;
+        font-weight: 600;
+    }
+    
+    .dataframe td {
+        background: #1a1a1a !important;
+        color: white !important;
+        border-color: #333 !important;
     }
     
     /* Texto geral */
     p, li, .caption, .stMarkdown {
-        color: #1e3c72 !important;
+        color: #cccccc !important;
     }
     
-    /* Links e texto informativo */
+    /* Info boxes */
     .stInfo, .stWarning, .stError {
-        color: #1e3c72 !important;
+        background: #1a1a1a !important;
+        border-left-color: #3498db !important;
+        color: white !important;
+        border-radius: 10px;
     }
     
-    /* Input labels */
-    .stSelectbox label, .stMultiselect label, .stSlider label {
-        color: #1e3c72 !important;
+    /* Ícones */
+    .icon-container {
+        font-size: 2rem;
+        margin-bottom: 10px;
     }
     
-    /* Métricas do Plotly */
-    .js-plotly-plot .plotly .gtitle {
-        fill: #1e3c72 !important;
+    /* Linhas divisórias */
+    hr {
+        border-color: #333 !important;
+        margin: 20px 0;
+    }
+    
+    /* Tooltips */
+    .tooltip-icon {
+        color: #3498db;
+        cursor: help;
+    }
+    
+    /* Animações de entrada */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .fade-in {
+        animation: fadeIn 0.5s ease-out;
     }
 </style>
 """, unsafe_allow_html=True)
 
-st.title("📊 **Teste de Normalidade dos Dados - Múltiplas Variáveis**")
-st.markdown("<p style='color: #1e3c72; font-size: 1.1rem;'>Análise estatística profissional com visualizações interativas</p>", unsafe_allow_html=True)
+# Header com ícone
+col1, col2, col3 = st.columns([1, 2, 1])
+with col2:
+    st.markdown("""
+    <div style="text-align: center; padding: 20px;">
+        <h1>📊 Análise de Normalidade</h1>
+        <p style="color: #888; font-size: 1.2rem;">Dashboard Profissional para Análise Estatística</p>
+    </div>
+    """, unsafe_allow_html=True)
 
 # Inicializar session state
 if 'df_completo' not in st.session_state:
@@ -179,18 +329,17 @@ def interpretar_teste(p_valor, nome_teste):
         p_text = f"{p_valor:.5f}"
     
     if p_valor > 0.05:
-        status = "✅ Não existem evidências suficientes para rejeitar a hipótese de normalidade dos dados"
+        status = "✅ Dados seguem distribuição normal"
         cor = "#27ae60"
     else:
-        status = "⚠️ Existem evidências suficientes para rejeitar a hipótese de normalidade dos dados"
+        status = "⚠️ Dados não seguem distribuição normal"
         cor = "#e74c3c"
     
     st.markdown(f"""
-    <div style="background: white; border-radius: 8px; padding: 20px; border-left: 5px solid {cor}; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-        <h4 style="color: #1e3c72; margin: 0 0 10px 0;">Resultado do Teste</h4>
-        <p style="color: #1e3c72; margin: 5px 0;"><strong>Teste utilizado:</strong> {nome_teste}</p>
-        <p style="color: #1e3c72; margin: 5px 0;"><strong>Valor de p:</strong> <span style="color: {cor};">{p_text}</span></p>
-        <p style="color: #1e3c72; margin: 5px 0;">{status}</p>
+    <div style="background: #1a1a1a; border-radius: 10px; padding: 20px; border-left: 5px solid {cor}; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
+        <h4 style="color: white; margin: 0 0 10px 0;">{status}</h4>
+        <p style="color: #ccc; margin: 5px 0;"><strong>Teste:</strong> {nome_teste}</p>
+        <p style="color: #ccc; margin: 5px 0;"><strong>Valor de p:</strong> <span style="color: {cor};">{p_text}</span></p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -226,21 +375,28 @@ def verificar_estruturas_arquivos(dataframes):
 def metric_card(titulo, valor, icone, cor_gradiente):
     """Cria um card de métrica estilizado"""
     st.markdown(f"""
-    <div class="metric-card" style="background: {cor_gradiente};">
-        <h3 style="margin: 0; font-size: 1rem; font-weight: normal; opacity: 0.9; color: white !important;">{icone} {titulo}</h3>
-        <h2 style="margin: 10px 0; font-size: 2rem; font-weight: bold; color: white !important;">{valor}</h2>
+    <div class="metric-card fade-in">
+        <div class="icon-container">{icone}</div>
+        <h3>{titulo}</h3>
+        <h2>{valor}</h2>
     </div>
     """, unsafe_allow_html=True)
 
+def calcular_cv(media, desvio):
+    """Calcula o coeficiente de variação"""
+    if media != 0:
+        return (desvio / media) * 100
+    return 0
+
 # --- SIDEBAR ---
 with st.sidebar:
-    st.markdown("<h2 style='color: #1e3c72; text-align: center;'>📂 Upload dos Dados</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 class='sidebar-title'>📂 Upload dos Dados</h2>", unsafe_allow_html=True)
     
     upload_files = st.file_uploader(
-        "Escolha os arquivos CSV:", 
+        "",
         type=['csv'],
         accept_multiple_files=True,
-        help="Selecione um ou mais arquivos CSV com a mesma estrutura. Formato: Primeira coluna = Identificação (Nome-Período-Minuto), Segunda coluna = Posição, Demais colunas = Variáveis numéricas"
+        help="Selecione um ou mais arquivos CSV com a mesma estrutura"
     )
     
     if upload_files:
@@ -330,42 +486,44 @@ with st.sidebar:
         
         # Seleção de Variável
         if st.session_state.variaveis_quantitativas:
-            st.markdown("<h3 style='color: #1e3c72;'>📈 Seleção da Variável</h3>", unsafe_allow_html=True)
+            st.markdown("<h2 class='sidebar-title'>📈 Variável</h2>", unsafe_allow_html=True)
             
             current_index = 0
             if st.session_state.variavel_selecionada in st.session_state.variaveis_quantitativas:
                 current_index = st.session_state.variaveis_quantitativas.index(st.session_state.variavel_selecionada)
             
             variavel_selecionada = st.selectbox(
-                "Escolha a variável para análise:",
+                "",
                 options=st.session_state.variaveis_quantitativas,
-                index=current_index
+                index=current_index,
+                label_visibility="collapsed"
             )
             st.session_state.variavel_selecionada = variavel_selecionada
             
             df_temp = st.session_state.df_completo[variavel_selecionada].dropna()
             if not df_temp.empty:
-                st.caption(f"📊 {len(df_temp)} obs | Média: {df_temp.mean():.2f} | DP: {df_temp.std():.2f}")
+                st.caption(f"📊 {len(df_temp)} obs | Média: {df_temp.mean():.2f}")
         
         # Filtro por Posição
         if st.session_state.todos_posicoes:
             st.markdown("---")
-            st.markdown("<h3 style='color: #1e3c72;'>📍 Filtro por Posição</h3>", unsafe_allow_html=True)
+            st.markdown("<h2 class='sidebar-title'>📍 Posição</h2>", unsafe_allow_html=True)
             
             selecionar_todos = st.checkbox("Selecionar todas as posições", value=True)
             if selecionar_todos:
                 st.session_state.posicoes_selecionadas = st.session_state.todos_posicoes.copy()
             else:
                 st.session_state.posicoes_selecionadas = st.multiselect(
-                    "Selecione as posições:",
+                    "",
                     options=st.session_state.todos_posicoes,
-                    default=st.session_state.posicoes_selecionadas
+                    default=st.session_state.posicoes_selecionadas,
+                    label_visibility="collapsed"
                 )
         
         # Filtro por Período
         if st.session_state.todos_periodos:
             st.markdown("---")
-            st.markdown("<h3 style='color: #1e3c72;'>📅 Filtro por Período</h3>", unsafe_allow_html=True)
+            st.markdown("<h2 class='sidebar-title'>📅 Período</h2>", unsafe_allow_html=True)
             
             selecionar_todos = st.checkbox("Selecionar todos os períodos", value=True)
             if selecionar_todos:
@@ -373,17 +531,17 @@ with st.sidebar:
                 st.session_state.ordem_personalizada = st.session_state.todos_periodos.copy()
             else:
                 st.session_state.periodos_selecionados = st.multiselect(
-                    "Selecione os períodos:",
+                    "",
                     options=st.session_state.todos_periodos,
-                    default=st.session_state.periodos_selecionados
+                    default=st.session_state.periodos_selecionados,
+                    label_visibility="collapsed"
                 )
         
-        # Filtro por Atleta (considera posição)
+        # Filtro por Atleta
         if st.session_state.atletas_selecionados:
             st.markdown("---")
-            st.markdown("<h3 style='color: #1e3c72;'>🔍 Filtro por Atleta</h3>", unsafe_allow_html=True)
+            st.markdown("<h2 class='sidebar-title'>👤 Atleta</h2>", unsafe_allow_html=True)
             
-            # Filtrar atletas pela posição selecionada
             df_temp = st.session_state.df_completo.copy()
             if st.session_state.posicoes_selecionadas:
                 df_temp = df_temp[df_temp['Posição'].isin(st.session_state.posicoes_selecionadas)]
@@ -397,16 +555,17 @@ with st.sidebar:
                 st.session_state.atletas_selecionados = atletas_disponiveis
             else:
                 st.session_state.atletas_selecionados = st.multiselect(
-                    "Selecione os atletas:",
+                    "",
                     options=atletas_disponiveis,
-                    default=[a for a in st.session_state.atletas_selecionados if a in atletas_disponiveis]
+                    default=[a for a in st.session_state.atletas_selecionados if a in atletas_disponiveis],
+                    label_visibility="collapsed"
                 )
         
         # Configurações
         st.markdown("---")
-        st.markdown("<h3 style='color: #1e3c72;'>⚙️ Configurações</h3>", unsafe_allow_html=True)
+        st.markdown("<h2 class='sidebar-title'>⚙️ Configurações</h2>", unsafe_allow_html=True)
         
-        n_classes = st.slider("Número de classes (faixas) no histograma:", 3, 20, 5)
+        n_classes = st.slider("Número de classes:", 3, 20, 5)
         
         # Botão Processar
         st.markdown("---")
@@ -415,14 +574,14 @@ with st.sidebar:
                          st.session_state.periodos_selecionados and 
                          st.session_state.atletas_selecionados)
         
-        if st.button("🔄 Processar Análise", use_container_width=True, disabled=not pode_processar):
+        if st.button("🚀 Processar Análise", use_container_width=True, disabled=not pode_processar):
             st.session_state.process_button = True
             st.rerun()
 
 # --- ÁREA PRINCIPAL ---
 if st.session_state.get('process_button', False) and st.session_state.df_completo is not None:
     
-    with st.spinner('Gerando análises...'):
+    with st.spinner('🔄 Gerando análises...'):
         time.sleep(0.5)
         
         df_completo = st.session_state.df_completo
@@ -443,34 +602,35 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
             st.warning("⚠️ Nenhum dado encontrado para os filtros selecionados")
         else:
             # Métricas principais
-            st.markdown("<h2 style='color: #1e3c72; text-align: center;'>📊 Visão Geral</h2>", unsafe_allow_html=True)
+            st.markdown("<h2>📊 Visão Geral</h2>", unsafe_allow_html=True)
             
             col1, col2, col3, col4 = st.columns(4)
             with col1:
-                metric_card("Posições", len(posicoes_selecionadas), "📍", "linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)")
+                metric_card("Posições", len(posicoes_selecionadas), "📍", "linear-gradient(135deg, #3498db, #2980b9)")
             with col2:
-                metric_card("Períodos", len(periodos_selecionados), "📅", "linear-gradient(135deg, #2a5298 0%, #1e3c72 100%)")
+                metric_card("Períodos", len(periodos_selecionados), "📅", "linear-gradient(135deg, #9b59b6, #8e44ad)")
             with col3:
-                metric_card("Atletas", len(atletas_selecionados), "👥", "linear-gradient(135deg, #2c3e50 0%, #3498db 100%)")
+                metric_card("Atletas", len(atletas_selecionados), "👥", "linear-gradient(135deg, #e74c3c, #c0392b)")
             with col4:
-                metric_card("Observações", len(df_filtrado), "📊", "linear-gradient(135deg, #3498db 0%, #2c3e50 100%)")
+                metric_card("Observações", len(df_filtrado), "📊", "linear-gradient(135deg, #f39c12, #d35400)")
             
             st.markdown("---")
             
             # Organizar em abas
-            tab1, tab2, tab3 = st.tabs([
+            tab1, tab2, tab3, tab4 = st.tabs([
                 "📊 Distribuição", 
                 "📈 Estatísticas & Temporal", 
-                "📦 Boxplots"
+                "📦 Boxplots",
+                "🔥 Correlações"
             ])
             
             with tab1:
-                st.markdown("<h3 style='color: #1e3c72; text-align: center;'>Análise de Distribuição</h3>", unsafe_allow_html=True)
+                st.markdown("<h3>📊 Análise de Distribuição</h3>", unsafe_allow_html=True)
                 
                 col1, col2 = st.columns(2)
                 
                 with col1:
-                    # Histograma formal
+                    # Histograma
                     dados_hist = df_filtrado[variavel_analise].dropna()
                     
                     fig_hist = go.Figure()
@@ -479,7 +639,7 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                         x=dados_hist,
                         nbinsx=n_classes,
                         name='Frequência',
-                        marker_color='#1e3c72',
+                        marker_color='#3498db',
                         opacity=0.8,
                         hovertemplate='Faixa: %{x}<br>Frequência: %{y}<extra></extra>'
                     ))
@@ -491,32 +651,34 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                         line_color="#e74c3c",
                         line_width=2,
                         annotation_text=f"Média: {media_hist:.2f}",
-                        annotation_position="top"
+                        annotation_position="top",
+                        annotation_font_color="white"
                     )
                     
                     mediana_hist = dados_hist.median()
                     fig_hist.add_vline(
                         x=mediana_hist,
                         line_dash="dot",
-                        line_color="#3498db",
+                        line_color="#f39c12",
                         line_width=2,
                         annotation_text=f"Mediana: {mediana_hist:.2f}",
-                        annotation_position="bottom"
+                        annotation_position="bottom",
+                        annotation_font_color="white"
                     )
                     
                     fig_hist.update_layout(
                         title=f"Histograma - {variavel_analise}",
-                        plot_bgcolor='white',
-                        paper_bgcolor='white',
-                        font=dict(color='#1e3c72', size=11),
-                        title_font=dict(color='#1e3c72', size=14),
+                        plot_bgcolor='#1a1a1a',
+                        paper_bgcolor='#1a1a1a',
+                        font=dict(color='white', size=11),
+                        title_font=dict(color='#3498db', size=16),
                         xaxis_title=variavel_analise,
                         yaxis_title="Frequência",
                         showlegend=False,
                         bargap=0.1
                     )
-                    fig_hist.update_xaxes(gridcolor='#e9ecef', tickfont=dict(color='#1e3c72'))
-                    fig_hist.update_yaxes(gridcolor='#e9ecef', tickfont=dict(color='#1e3c72'))
+                    fig_hist.update_xaxes(gridcolor='#333', tickfont=dict(color='white'))
+                    fig_hist.update_yaxes(gridcolor='#333', tickfont=dict(color='white'))
                     
                     st.plotly_chart(fig_hist, use_container_width=True)
                 
@@ -540,7 +702,7 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                         y=quantis_observados,
                         mode='markers',
                         name='Dados',
-                        marker=dict(color='#1e3c72', size=6, opacity=0.7),
+                        marker=dict(color='#3498db', size=8, opacity=0.7),
                         hovertemplate='Teórico: %{x:.2f}<br>Observado: %{y:.2f}<extra></extra>'
                     ))
                     
@@ -554,21 +716,21 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                     
                     fig_qq.update_layout(
                         title=f"QQ Plot - {variavel_analise}",
-                        plot_bgcolor='white',
-                        paper_bgcolor='white',
-                        font=dict(color='#1e3c72', size=11),
-                        title_font=dict(color='#1e3c72', size=14),
+                        plot_bgcolor='#1a1a1a',
+                        paper_bgcolor='#1a1a1a',
+                        font=dict(color='white', size=11),
+                        title_font=dict(color='#3498db', size=16),
                         xaxis_title="Quantis Teóricos",
                         yaxis_title="Quantis Observados"
                     )
-                    fig_qq.update_xaxes(gridcolor='#e9ecef', tickfont=dict(color='#1e3c72'))
-                    fig_qq.update_yaxes(gridcolor='#e9ecef', tickfont=dict(color='#1e3c72'))
+                    fig_qq.update_xaxes(gridcolor='#333', tickfont=dict(color='white'))
+                    fig_qq.update_yaxes(gridcolor='#333', tickfont=dict(color='white'))
                     
                     st.plotly_chart(fig_qq, use_container_width=True)
                 
                 # Tabela de Frequência
                 st.markdown("---")
-                st.markdown("<h4 style='color: #1e3c72; text-align: center;'>Tabela de Frequência</h4>", unsafe_allow_html=True)
+                st.markdown("<h4>📋 Tabela de Frequência</h4>", unsafe_allow_html=True)
                 
                 minimo = df_filtrado[variavel_analise].min()
                 maximo = df_filtrado[variavel_analise].max()
@@ -601,9 +763,9 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                 )
             
             with tab2:
-                st.markdown("<h3 style='color: #1e3c72; text-align: center;'>Estatísticas e Evolução Temporal</h3>", unsafe_allow_html=True)
+                st.markdown("<h3>📈 Estatísticas e Evolução Temporal</h3>", unsafe_allow_html=True)
                 
-                # Estatísticas descritivas
+                # Estatísticas descritivas com CV
                 col1, col2, col3 = st.columns(3)
                 
                 with col1:
@@ -613,8 +775,8 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                     
                     st.markdown(f"""
                     <div class="metric-container">
-                        <h4 style="color: #1e3c72; margin: 0;">📊 Medidas de Tendência</h4>
-                        <hr style="margin: 10px 0; border-color: #e9ecef;">
+                        <h4>📊 Medidas de Tendência</h4>
+                        <hr style="border-color: #333;">
                         <p><strong>Média:</strong> {media:.3f}</p>
                         <p><strong>Mediana:</strong> {mediana:.3f}</p>
                         <p><strong>Moda:</strong> {moda}</p>
@@ -624,15 +786,15 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                 with col2:
                     desvio = df_filtrado[variavel_analise].std()
                     variancia = df_filtrado[variavel_analise].var()
-                    cv = (desvio / media) * 100 if media != 0 else 0
+                    cv = calcular_cv(media, desvio)
                     
                     st.markdown(f"""
                     <div class="metric-container">
-                        <h4 style="color: #1e3c72; margin: 0;">📈 Medidas de Dispersão</h4>
-                        <hr style="margin: 10px 0; border-color: #e9ecef;">
+                        <h4>📈 Medidas de Dispersão</h4>
+                        <hr style="border-color: #333;">
                         <p><strong>Desvio Padrão:</strong> {desvio:.3f}</p>
                         <p><strong>Variância:</strong> {variancia:.3f}</p>
-                        <p><strong>CV:</strong> {cv:.1f}%</p>
+                        <p><strong>Coeficiente de Variação:</strong> {cv:.1f}%</p>
                     </div>
                     """, unsafe_allow_html=True)
                 
@@ -644,8 +806,8 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                     
                     st.markdown(f"""
                     <div class="metric-container">
-                        <h4 style="color: #1e3c72; margin: 0;">📐 Quartis e Amplitude</h4>
-                        <hr style="margin: 10px 0; border-color: #e9ecef;">
+                        <h4>📐 Quartis e Amplitude</h4>
+                        <hr style="border-color: #333;">
                         <p><strong>Q1 (25%):</strong> {q1:.3f}</p>
                         <p><strong>Q3 (75%):</strong> {q3:.3f}</p>
                         <p><strong>Amplitude Total:</strong> {amplitude_total:.3f}</p>
@@ -667,8 +829,8 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                     
                     st.markdown(f"""
                     <div class="metric-container">
-                        <h4 style="color: #1e3c72; margin: 0;">📏 Assimetria</h4>
-                        <hr style="margin: 10px 0; border-color: #e9ecef;">
+                        <h4>📏 Assimetria</h4>
+                        <hr style="border-color: #333;">
                         <p><strong>Valor:</strong> {assimetria:.3f}</p>
                         <p><strong>Interpretação:</strong> {interpretacao_ass}</p>
                     </div>
@@ -686,8 +848,8 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                     
                     st.markdown(f"""
                     <div class="metric-container">
-                        <h4 style="color: #1e3c72; margin: 0;">📐 Curtose</h4>
-                        <hr style="margin: 10px 0; border-color: #e9ecef;">
+                        <h4>📐 Curtose</h4>
+                        <hr style="border-color: #333;">
                         <p><strong>Valor:</strong> {curtose:.3f}</p>
                         <p><strong>Interpretação:</strong> {interpretacao_curt}</p>
                     </div>
@@ -695,7 +857,7 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                 
                 # Intervalo de Confiança
                 st.markdown("---")
-                st.markdown("<h4 style='color: #1e3c72; text-align: center;'>Intervalo de Confiança (95%) para a Média</h4>", unsafe_allow_html=True)
+                st.markdown("<h4>🎯 Intervalo de Confiança (95%) para a Média</h4>", unsafe_allow_html=True)
                 
                 col_ic1, col_ic2 = st.columns([1, 2])
                 
@@ -731,33 +893,34 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                         x=['IC 95%'],
                         y=[media],
                         mode='markers',
-                        marker=dict(color='#1e3c72', size=15),
+                        marker=dict(color='#3498db', size=20),
                         error_y=dict(
                             type='constant',
                             value=(ic_sup - media),
-                            color='#3498db',
-                            thickness=2,
-                            width=10
+                            color='#e74c3c',
+                            thickness=3,
+                            width=15
                         ),
                         name='Média'
                     ))
                     
                     fig_ic.update_layout(
                         title="Intervalo de Confiança (95%)",
-                        plot_bgcolor='white',
-                        paper_bgcolor='white',
-                        font=dict(color='#1e3c72', size=11),
+                        plot_bgcolor='#1a1a1a',
+                        paper_bgcolor='#1a1a1a',
+                        font=dict(color='white', size=11),
+                        title_font=dict(color='#3498db', size=14),
                         showlegend=False,
                         yaxis_title=variavel_analise
                     )
-                    fig_ic.update_xaxes(gridcolor='#e9ecef', tickfont=dict(color='#1e3c72'))
-                    fig_ic.update_yaxes(gridcolor='#e9ecef', tickfont=dict(color='#1e3c72'))
+                    fig_ic.update_xaxes(gridcolor='#333', tickfont=dict(color='white'))
+                    fig_ic.update_yaxes(gridcolor='#333', tickfont=dict(color='white'))
                     
                     st.plotly_chart(fig_ic, use_container_width=True)
                 
                 # Teste de Normalidade
                 st.markdown("---")
-                st.markdown("<h4 style='color: #1e3c72; text-align: center;'>Teste de Normalidade</h4>", unsafe_allow_html=True)
+                st.markdown("<h4>🧪 Teste de Normalidade</h4>", unsafe_allow_html=True)
                 
                 dados_teste = df_filtrado[variavel_analise].dropna()
                 n_teste = len(dados_teste)
@@ -785,7 +948,7 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                 
                 # Gráfico Temporal
                 st.markdown("---")
-                st.markdown("<h4 style='color: #1e3c72; text-align: center;'>Evolução Temporal</h4>", unsafe_allow_html=True)
+                st.markdown("<h4>⏱️ Evolução Temporal</h4>", unsafe_allow_html=True)
                 
                 df_tempo = df_filtrado.sort_values('Minuto').reset_index(drop=True)
                 
@@ -804,8 +967,8 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                     y=df_tempo[variavel_analise],
                     mode='lines+markers',
                     name='Valores',
-                    line=dict(color='#1e3c72', width=2),
-                    marker=dict(color='#1e3c72', size=6),
+                    line=dict(color='#3498db', width=2),
+                    marker=dict(color='#3498db', size=8),
                     hovertemplate='Minuto: %{x}<br>Valor: %{y:.2f}<extra></extra>'
                 ))
                 
@@ -825,27 +988,29 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                     line_color="#e74c3c",
                     line_width=2,
                     annotation_text=f"Média: {media_tempo:.2f}",
-                    annotation_position="left"
+                    annotation_position="left",
+                    annotation_font_color="white"
                 )
                 
                 fig_tempo.update_layout(
                     title=f"Evolução Temporal - {variavel_analise}",
-                    plot_bgcolor='white',
-                    paper_bgcolor='white',
-                    font=dict(color='#1e3c72', size=11),
-                    title_font=dict(color='#1e3c72', size=14),
+                    plot_bgcolor='#1a1a1a',
+                    paper_bgcolor='#1a1a1a',
+                    font=dict(color='white', size=11),
+                    title_font=dict(color='#3498db', size=16),
                     xaxis_title="Minuto",
                     yaxis_title=variavel_analise,
-                    hovermode='x unified'
+                    hovermode='x unified',
+                    hoverlabel=dict(bgcolor="#1a1a1a", font_size=12)
                 )
-                fig_tempo.update_xaxes(gridcolor='#e9ecef', tickfont=dict(color='#1e3c72'), tickangle=-45)
-                fig_tempo.update_yaxes(gridcolor='#e9ecef', tickfont=dict(color='#1e3c72'))
+                fig_tempo.update_xaxes(gridcolor='#333', tickfont=dict(color='white'), tickangle=-45)
+                fig_tempo.update_yaxes(gridcolor='#333', tickfont=dict(color='white'))
                 
                 st.plotly_chart(fig_tempo, use_container_width=True)
                 
                 # Resumo por Atleta, Posição e Período
                 st.markdown("---")
-                st.markdown("<h4 style='color: #1e3c72; text-align: center;'>Resumo por Atleta, Posição e Período</h4>", unsafe_allow_html=True)
+                st.markdown("<h4>🏃 Resumo por Atleta, Posição e Período</h4>", unsafe_allow_html=True)
                 
                 resumo = []
                 for nome in atletas_selecionados[:10]:
@@ -857,6 +1022,10 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                                 (df_filtrado['Período'] == periodo)
                             ]
                             if not dados.empty:
+                                media_grupo = dados[variavel_analise].mean()
+                                desvio_grupo = dados[variavel_analise].std()
+                                cv_grupo = calcular_cv(media_grupo, desvio_grupo)
+                                
                                 resumo.append({
                                     'Atleta': nome,
                                     'Posição': posicao,
@@ -864,7 +1033,8 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                                     f'Máx {variavel_analise}': dados[variavel_analise].max(),
                                     f'Mín {variavel_analise}': dados[variavel_analise].min(),
                                     'Amplitude': dados[variavel_analise].max() - dados[variavel_analise].min(),
-                                    'Média': dados[variavel_analise].mean(),
+                                    'Média': media_grupo,
+                                    'CV (%)': cv_grupo,
                                     'Nº Amostras': len(dados)
                                 })
                 
@@ -876,6 +1046,7 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                             f'Mín {variavel_analise}': '{:.2f}',
                             'Amplitude': '{:.2f}',
                             'Média': '{:.2f}',
+                            'CV (%)': '{:.1f}',
                             'Nº Amostras': '{:.0f}'
                         }),
                         use_container_width=True,
@@ -883,10 +1054,10 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                     )
             
             with tab3:
-                st.markdown("<h3 style='color: #1e3c72; text-align: center;'>Análise por Boxplot</h3>", unsafe_allow_html=True)
+                st.markdown("<h3>📦 Análise por Boxplot</h3>", unsafe_allow_html=True)
                 
                 # Boxplot por posição
-                st.markdown("<h4 style='color: #1e3c72;'>📍 Distribuição por Posição</h4>", unsafe_allow_html=True)
+                st.markdown("<h4>📍 Distribuição por Posição</h4>", unsafe_allow_html=True)
                 
                 fig_box_pos = go.Figure()
                 for posicao in posicoes_selecionadas:
@@ -896,9 +1067,9 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                             y=dados_pos,
                             name=posicao,
                             boxmean='sd',
-                            marker_color='#1e3c72',
-                            line_color='#1e3c72',
-                            fillcolor='rgba(30, 60, 114, 0.7)',
+                            marker_color='#3498db',
+                            line_color='white',
+                            fillcolor='rgba(52, 152, 219, 0.7)',
                             jitter=0.3,
                             pointpos=-1.8,
                             opacity=0.8,
@@ -907,19 +1078,19 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                 
                 fig_box_pos.update_layout(
                     title=f"Distribuição de {variavel_analise} por Posição",
-                    plot_bgcolor='white',
-                    paper_bgcolor='white',
-                    font=dict(color='#1e3c72', size=11),
-                    title_font=dict(color='#1e3c72', size=14),
+                    plot_bgcolor='#1a1a1a',
+                    paper_bgcolor='#1a1a1a',
+                    font=dict(color='white', size=11),
+                    title_font=dict(color='#3498db', size=16),
                     yaxis_title=variavel_analise,
                     showlegend=False
                 )
-                fig_box_pos.update_xaxes(gridcolor='#e9ecef', tickfont=dict(color='#1e3c72'))
-                fig_box_pos.update_yaxes(gridcolor='#e9ecef', tickfont=dict(color='#1e3c72'))
+                fig_box_pos.update_xaxes(gridcolor='#333', tickfont=dict(color='white'))
+                fig_box_pos.update_yaxes(gridcolor='#333', tickfont=dict(color='white'))
                 st.plotly_chart(fig_box_pos, use_container_width=True)
                 
                 # Boxplot por atleta
-                st.markdown("<h4 style='color: #1e3c72;'>👥 Distribuição por Atleta</h4>", unsafe_allow_html=True)
+                st.markdown("<h4>👥 Distribuição por Atleta</h4>", unsafe_allow_html=True)
                 
                 atletas_plot = atletas_selecionados[:10]
                 if len(atletas_selecionados) > 10:
@@ -933,9 +1104,9 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                             y=dados_atl,
                             name=atleta[:15] + "..." if len(atleta) > 15 else atleta,
                             boxmean='sd',
-                            marker_color='#3498db',
-                            line_color='#1e3c72',
-                            fillcolor='rgba(52, 152, 219, 0.7)',
+                            marker_color='#9b59b6',
+                            line_color='white',
+                            fillcolor='rgba(155, 89, 182, 0.7)',
                             jitter=0.3,
                             pointpos=-1.8,
                             opacity=0.8
@@ -943,16 +1114,16 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                 
                 fig_box_atl.update_layout(
                     title=f"Distribuição de {variavel_analise} por Atleta",
-                    plot_bgcolor='white',
-                    paper_bgcolor='white',
-                    font=dict(color='#1e3c72', size=11),
-                    title_font=dict(color='#1e3c72', size=14),
+                    plot_bgcolor='#1a1a1a',
+                    paper_bgcolor='#1a1a1a',
+                    font=dict(color='white', size=11),
+                    title_font=dict(color='#3498db', size=16),
                     yaxis_title=variavel_analise,
                     showlegend=False,
                     height=400
                 )
-                fig_box_atl.update_xaxes(gridcolor='#e9ecef', tickfont=dict(color='#1e3c72'), tickangle=-45)
-                fig_box_atl.update_yaxes(gridcolor='#e9ecef', tickfont=dict(color='#1e3c72'))
+                fig_box_atl.update_xaxes(gridcolor='#333', tickfont=dict(color='white'), tickangle=-45)
+                fig_box_atl.update_yaxes(gridcolor='#333', tickfont=dict(color='white'))
                 st.plotly_chart(fig_box_atl, use_container_width=True)
                 
                 # Estatísticas por atleta
@@ -964,11 +1135,16 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                             q1 = dados_atl.quantile(0.25)
                             q3 = dados_atl.quantile(0.75)
                             iqr = q3 - q1
+                            media_atl = dados_atl.mean()
+                            desvio_atl = dados_atl.std()
+                            cv_atl = calcular_cv(media_atl, desvio_atl)
+                            
                             stats_atletas.append({
                                 'Atleta': atleta,
-                                'Média': dados_atl.mean(),
+                                'Média': media_atl,
                                 'Mediana': dados_atl.median(),
-                                'Desvio Padrão': dados_atl.std(),
+                                'Desvio Padrão': desvio_atl,
+                                'CV (%)': cv_atl,
                                 'Mínimo': dados_atl.min(),
                                 'Q1': q1,
                                 'Q3': q3,
@@ -984,6 +1160,7 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                             'Média': '{:.2f}',
                             'Mediana': '{:.2f}',
                             'Desvio Padrão': '{:.2f}',
+                            'CV (%)': '{:.1f}',
                             'Mínimo': '{:.2f}',
                             'Q1': '{:.2f}',
                             'Q3': '{:.2f}',
@@ -996,6 +1173,100 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                         hide_index=True
                     )
             
+            with tab4:
+                st.markdown("<h3>🔥 Matriz de Correlação</h3>", unsafe_allow_html=True)
+                
+                if len(st.session_state.variaveis_quantitativas) > 1:
+                    # Selecionar variáveis para correlação
+                    vars_corr = st.multiselect(
+                        "Selecione as variáveis para análise de correlação:",
+                        options=st.session_state.variaveis_quantitativas,
+                        default=st.session_state.variaveis_quantitativas[:min(5, len(st.session_state.variaveis_quantitativas))]
+                    )
+                    
+                    if len(vars_corr) >= 2:
+                        df_corr = df_filtrado[vars_corr].corr()
+                        
+                        # Heatmap de correlação
+                        fig_corr = px.imshow(
+                            df_corr,
+                            text_auto='.2f',
+                            aspect="auto",
+                            color_continuous_scale='RdBu_r',
+                            title="Matriz de Correlação",
+                            zmin=-1, zmax=1
+                        )
+                        fig_corr.update_layout(
+                            plot_bgcolor='#1a1a1a',
+                            paper_bgcolor='#1a1a1a',
+                            font=dict(color='white', size=11),
+                            title_font=dict(color='#3498db', size=16)
+                        )
+                        fig_corr.update_xaxes(gridcolor='#333', tickfont=dict(color='white'))
+                        fig_corr.update_yaxes(gridcolor='#333', tickfont=dict(color='white'))
+                        st.plotly_chart(fig_corr, use_container_width=True)
+                        
+                        # Tabela de correlação
+                        st.markdown("<h4>📊 Tabela de Correlação</h4>", unsafe_allow_html=True)
+                        
+                        # Estilizar a tabela com cores
+                        def style_correlation(val):
+                            color = '#e74c3c' if abs(val) > 0.7 else '#f39c12' if abs(val) > 0.5 else '#3498db'
+                            return f'color: {color}; font-weight: bold;'
+                        
+                        st.dataframe(
+                            df_corr.style.format('{:.3f}').applymap(style_correlation),
+                            use_container_width=True
+                        )
+                        
+                        # Gráfico de dispersão para pares
+                        if len(vars_corr) == 2:
+                            st.markdown("<h4>📈 Relação entre as variáveis</h4>", unsafe_allow_html=True)
+                            
+                            fig_scatter = px.scatter(
+                                df_filtrado,
+                                x=vars_corr[0],
+                                y=vars_corr[1],
+                                color='Posição',
+                                title=f"Relação entre {vars_corr[0]} e {vars_corr[1]}",
+                                opacity=0.7,
+                                trendline="ols",
+                                color_discrete_sequence=px.colors.qualitative.Set2
+                            )
+                            fig_scatter.update_layout(
+                                plot_bgcolor='#1a1a1a',
+                                paper_bgcolor='#1a1a1a',
+                                font=dict(color='white', size=11),
+                                title_font=dict(color='#3498db', size=16)
+                            )
+                            fig_scatter.update_xaxes(gridcolor='#333', tickfont=dict(color='white'))
+                            fig_scatter.update_yaxes(gridcolor='#333', tickfont=dict(color='white'))
+                            st.plotly_chart(fig_scatter, use_container_width=True)
+                            
+                            # Estatísticas de correlação
+                            corr_valor = df_corr.iloc[0, 1]
+                            st.markdown(f"""
+                            <div class="metric-container">
+                                <h4>📊 Estatísticas de Correlação</h4>
+                                <hr style="border-color: #333;">
+                                <p><strong>Correlação de Pearson:</strong> {corr_valor:.3f}</p>
+                                <p><strong>Interpretação:</strong> {
+                                    'Correlação forte positiva' if corr_valor > 0.7 else
+                                    'Correlação moderada positiva' if corr_valor > 0.5 else
+                                    'Correlação fraca positiva' if corr_valor > 0.3 else
+                                    'Correlação muito fraca positiva' if corr_valor > 0 else
+                                    'Correlação muito fraca negativa' if corr_valor > -0.3 else
+                                    'Correlação fraca negativa' if corr_valor > -0.5 else
+                                    'Correlação moderada negativa' if corr_valor > -0.7 else
+                                    'Correlação forte negativa'
+                                }</p>
+                            </div>
+                            """, unsafe_allow_html=True)
+                    else:
+                        st.info("ℹ️ Selecione pelo menos 2 variáveis para análise de correlação")
+                else:
+                    st.info("ℹ️ São necessárias pelo menos 2 variáveis para análise de correlação")
+            
             # Dados brutos
             with st.expander("📋 Visualizar dados brutos filtrados"):
                 st.dataframe(df_filtrado, use_container_width=True)
@@ -1007,31 +1278,54 @@ else:
     # Tela inicial com exemplo de dados
     if st.session_state.df_completo is None:
         st.info("👈 **Passo 1:** Faça upload de um ou mais arquivos CSV para começar")
-        st.markdown("""
-        ### 📋 Formato esperado do arquivo:
         
-        **Primeira coluna:** Identificação no formato `Nome-Período-Minuto`  
-        **Segunda coluna:** Posição do atleta (ex: Atacante, Meio-campo, Zagueiro, Goleiro)  
-        **Demais colunas (3+):** Variáveis numéricas para análise
+        col1, col2 = st.columns([2, 1])
         
-        **Exemplo:**
-        ```
-        Nome-Período-Minuto;Posição;Distancia Total;Velocidade Maxima;Aceleracao Max
-        Mariano-1 TEMPO 00:00-01:00;Atacante;250;23;3.6
-        Maria-SEGUNDO TEMPO 05:00-06:00;Meio-campo;127;29;4.2
-        Joao-2 TEMPO 44:00-45:00;Zagueiro;200;33;4.9
-        Marta-PRIMEIRO TEMPO 11:00-12:00;Atacante;90;27;3.1
-        Pedro-1 TEMPO 15:00-16:00;Goleiro;45;15;2.8
-        Ana-SEGUNDO TEMPO 22:00-23:00;Meio-campo;180;31;4.5
-        ```
-        
-        **Componentes da primeira coluna:**
-        - **Nome:** Primeira parte antes do primeiro hífen "-" (ex: Mariano, Maria, Joao, Marta, Pedro, Ana)
-        - **Período:** Texto entre o "nome" e o 14º último caractere (ex: 1 TEMPO, SEGUNDO TEMPO, 2 TEMPO, PRIMEIRO TEMPO)
-        - **Minuto:** Últimos 13 caracteres (ex: 00:00-01:00, 05:00-06:00, 44:00-45:00, 11:00-12:00)
-        
-        **💡 Dica:** Você pode selecionar múltiplos arquivos CSV com a **mesma estrutura** de colunas. O sistema verificará automaticamente se as estruturas são compatíveis.
-        """)
+        with col1:
+            st.markdown("""
+            ### 📋 Formato esperado do arquivo:
+            
+            **Primeira coluna:** Identificação no formato `Nome-Período-Minuto`  
+            **Segunda coluna:** Posição do atleta  
+            **Demais colunas (3+):** Variáveis numéricas para análise
+            """)
+            
+            # Exemplo de dados
+            exemplo_data = {
+                'Nome-Período-Minuto': [
+                    'Mariano-1 TEMPO 00:00-01:00',
+                    'Maria-SEGUNDO TEMPO 05:00-06:00',
+                    'Joao-2 TEMPO 44:00-45:00',
+                    'Marta-PRIMEIRO TEMPO 11:00-12:00',
+                    'Pedro-1 TEMPO 15:00-16:00',
+                    'Ana-SEGUNDO TEMPO 22:00-23:00'
+                ],
+                'Posição': ['Atacante', 'Meio-campo', 'Zagueiro', 'Atacante', 'Goleiro', 'Meio-campo'],
+                'Distancia Total': [250, 127, 200, 90, 45, 180],
+                'Velocidade Maxima': [23, 29, 33, 27, 15, 31],
+                'Aceleracao Max': [3.6, 4.2, 4.9, 3.1, 2.8, 4.5]
+            }
+            
+            df_exemplo = pd.DataFrame(exemplo_data)
+            st.dataframe(df_exemplo, use_container_width=True, hide_index=True)
+            
+        with col2:
+            st.markdown("""
+            <div class="metric-container">
+                <h4>📌 Componentes</h4>
+                <hr style="border-color: #333;">
+                <p><strong>Nome:</strong> Mariano, Maria, Joao...</p>
+                <p><strong>Período:</strong> 1 TEMPO, SEGUNDO TEMPO...</p>
+                <p><strong>Minuto:</strong> 00:00-01:00, 05:00-06:00...</p>
+                <p><strong>Posição:</strong> Atacante, Meio-campo...</p>
+            </div>
+            
+            <div class="metric-container" style="margin-top: 20px;">
+                <h4>💡 Dica</h4>
+                <hr style="border-color: #333;">
+                <p>Você pode selecionar múltiplos arquivos CSV com a mesma estrutura. O sistema verificará automaticamente a compatibilidade.</p>
+            </div>
+            """, unsafe_allow_html=True)
         
         # Mostrar exemplo de múltiplos arquivos
         with st.expander("📁 Exemplo de uso com múltiplos arquivos"):
@@ -1052,7 +1346,6 @@ else:
         st.info("👈 **Passo 2:** Selecione a variável, posições, períodos, atletas e clique em 'Processar Análise'")
         
         with st.expander("📋 Preview dos dados carregados"):
-            # Mostrar informação dos arquivos
             if st.session_state.upload_files_names:
                 st.caption(f"**Arquivos carregados ({len(st.session_state.upload_files_names)}):**")
                 for arquivo in st.session_state.upload_files_names:
