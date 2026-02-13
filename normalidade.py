@@ -119,6 +119,33 @@ st.markdown("""
         margin: 10px 0;
     }
     
+    /* Cards para métricas temporais */
+    .time-metric-card {
+        background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
+        padding: 15px;
+        border-radius: 10px;
+        border-left: 4px solid #3498db;
+        margin: 10px 0;
+    }
+    
+    .time-metric-card .label {
+        color: #888;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .time-metric-card .value {
+        color: white;
+        font-size: 1.8rem;
+        font-weight: 700;
+    }
+    
+    .time-metric-card .sub-value {
+        color: #888;
+        font-size: 0.9rem;
+    }
+    
     /* Títulos principais */
     h1 {
         color: white !important;
@@ -382,6 +409,16 @@ def metric_card(titulo, valor, icone, cor_gradiente):
     </div>
     """, unsafe_allow_html=True)
 
+def time_metric_card(label, valor, sub_label="", cor="#3498db"):
+    """Cria um card para métricas temporais"""
+    st.markdown(f"""
+    <div class="time-metric-card" style="border-left-color: {cor};">
+        <div class="label">{label}</div>
+        <div class="value">{valor}</div>
+        <div class="sub-value">{sub_label}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
 def calcular_cv(media, desvio):
     """Calcula o coeficiente de variação"""
     if media != 0:
@@ -565,7 +602,7 @@ with st.sidebar:
         st.markdown("---")
         st.markdown("<h2 class='sidebar-title'>⚙️ Configurações</h2>", unsafe_allow_html=True)
         
-        n_classes = st.slider("Número de classes:", 3, 20, 5)
+        n_classes = st.slider("Número de classes:", 3, 20, 5, help="Define o número de classes no histograma e na tabela de frequência")
         
         # Botão Processar
         st.markdown("---")
@@ -630,7 +667,7 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                 col1, col2 = st.columns(2)
                 
                 with col1:
-                    # Histograma
+                    # Histograma com número de classes dinâmico
                     dados_hist = df_filtrado[variavel_analise].dropna()
                     
                     fig_hist = go.Figure()
@@ -667,7 +704,7 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                     )
                     
                     fig_hist.update_layout(
-                        title=f"Histograma - {variavel_analise}",
+                        title=f"Histograma - {variavel_analise} ({n_classes} classes)",
                         plot_bgcolor='#1a1a1a',
                         paper_bgcolor='#1a1a1a',
                         font=dict(color='white', size=11),
@@ -728,9 +765,9 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                     
                     st.plotly_chart(fig_qq, use_container_width=True)
                 
-                # Tabela de Frequência
+                # Tabela de Frequência com número de classes dinâmico
                 st.markdown("---")
-                st.markdown("<h4>📋 Tabela de Frequência</h4>", unsafe_allow_html=True)
+                st.markdown(f"<h4>📋 Tabela de Frequência ({n_classes} classes)</h4>", unsafe_allow_html=True)
                 
                 minimo = df_filtrado[variavel_analise].min()
                 maximo = df_filtrado[variavel_analise].max()
@@ -946,49 +983,101 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                     except Exception as e:
                         st.error(f"❌ Erro no teste Shapiro-Wilk: {str(e)}")
                 
-                # Gráfico Temporal
+                # Gráfico Temporal com métricas e cores
                 st.markdown("---")
                 st.markdown("<h4>⏱️ Evolução Temporal</h4>", unsafe_allow_html=True)
                 
+                # Calcular métricas temporais
                 df_tempo = df_filtrado.sort_values('Minuto').reset_index(drop=True)
                 
+                valor_maximo = df_tempo[variavel_analise].max()
                 media_tempo = df_tempo[variavel_analise].mean()
-                desvio_tempo = df_tempo[variavel_analise].std()
-                n_tempo = len(df_tempo)
-                erro_tempo = desvio_tempo / np.sqrt(n_tempo)
-                t_tempo = stats.t.ppf(0.975, n_tempo-1) if n_tempo > 1 else 1
-                ic_inf_tempo = media_tempo - t_tempo * erro_tempo
-                ic_sup_tempo = media_tempo + t_tempo * erro_tempo
+                limiar_80 = valor_maximo * 0.8
                 
+                # Cards com métricas temporais
+                col_t1, col_t2, col_t3 = st.columns(3)
+                
+                with col_t1:
+                    time_metric_card(
+                        "📈 VALOR MÁXIMO",
+                        f"{valor_maximo:.2f}",
+                        "Pico máximo da variável",
+                        "#e74c3c"
+                    )
+                
+                with col_t2:
+                    time_metric_card(
+                        "📊 MÉDIA",
+                        f"{media_tempo:.2f}",
+                        "Valor médio",
+                        "#3498db"
+                    )
+                
+                with col_t3:
+                    time_metric_card(
+                        "🎯 LIMIAR 80%",
+                        f"{limiar_80:.2f}",
+                        f"80% do máximo ({valor_maximo:.2f})",
+                        "#f39c12"
+                    )
+                
+                # Gráfico temporal com cores condicionais
                 fig_tempo = go.Figure()
                 
+                # Criar lista de cores baseada no limiar de 80%
+                cores_pontos = ['#e74c3c' if v > limiar_80 else '#3498db' for v in df_tempo[variavel_analise]]
+                
+                # Adicionar linha com marcadores coloridos
+                for i in range(len(df_tempo)):
+                    cor = cores_pontos[i]
+                    fig_tempo.add_trace(go.Scatter(
+                        x=[df_tempo['Minuto'].iloc[i]],
+                        y=[df_tempo[variavel_analise].iloc[i]],
+                        mode='markers',
+                        marker=dict(color=cor, size=10, line=dict(color='white', width=1)),
+                        name='Acima 80%' if cor == '#e74c3c' else 'Abaixo 80%',
+                        showlegend=False,
+                        hovertemplate='Minuto: %{x}<br>Valor: %{y:.2f}<br>' + ('⚠️ ACIMA DO LIMIAR 80%' if cor == '#e74c3c' else '✅ Abaixo do limiar') + '<extra></extra>'
+                    ))
+                
+                # Adicionar linha conectando os pontos
                 fig_tempo.add_trace(go.Scatter(
                     x=df_tempo['Minuto'],
                     y=df_tempo[variavel_analise],
-                    mode='lines+markers',
-                    name='Valores',
-                    line=dict(color='#3498db', width=2),
-                    marker=dict(color='#3498db', size=8),
-                    hovertemplate='Minuto: %{x}<br>Valor: %{y:.2f}<extra></extra>'
+                    mode='lines',
+                    line=dict(color='#888', width=1, dash='dot'),
+                    showlegend=False,
+                    hoverinfo='skip'
                 ))
                 
-                fig_tempo.add_trace(go.Scatter(
-                    x=df_tempo['Minuto'].tolist() + df_tempo['Minuto'].tolist()[::-1],
-                    y=[ic_sup_tempo] * len(df_tempo) + [ic_inf_tempo] * len(df_tempo),
-                    fill='toself',
-                    fillcolor='rgba(52, 152, 219, 0.2)',
-                    line=dict(color='rgba(255,255,255,0)'),
-                    name='IC 95%',
-                    showlegend=True
-                ))
-                
+                # Linhas de referência
                 fig_tempo.add_hline(
                     y=media_tempo,
                     line_dash="dash",
-                    line_color="#e74c3c",
+                    line_color="#3498db",
                     line_width=2,
                     annotation_text=f"Média: {media_tempo:.2f}",
                     annotation_position="left",
+                    annotation_font_color="white"
+                )
+                
+                fig_tempo.add_hline(
+                    y=limiar_80,
+                    line_dash="dot",
+                    line_color="#f39c12",
+                    line_width=2,
+                    annotation_text=f"80% do Máx: {limiar_80:.2f}",
+                    annotation_position="right",
+                    annotation_font_color="white"
+                )
+                
+                fig_tempo.add_hline(
+                    y=valor_maximo,
+                    line_dash="solid",
+                    line_color="#e74c3c",
+                    line_width=2,
+                    annotation_text=f"Máx: {valor_maximo:.2f}",
+                    annotation_position="right",
                     annotation_font_color="white"
                 )
                 
@@ -1000,13 +1089,25 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                     title_font=dict(color='#3498db', size=16),
                     xaxis_title="Minuto",
                     yaxis_title=variavel_analise,
-                    hovermode='x unified',
+                    hovermode='closest',
                     hoverlabel=dict(bgcolor="#1a1a1a", font_size=12)
                 )
                 fig_tempo.update_xaxes(gridcolor='#333', tickfont=dict(color='white'), tickangle=-45)
                 fig_tempo.update_yaxes(gridcolor='#333', tickfont=dict(color='white'))
                 
                 st.plotly_chart(fig_tempo, use_container_width=True)
+                
+                # Legenda explicativa
+                st.markdown("""
+                <div style="background: #1a1a1a; padding: 10px; border-radius: 5px; margin-top: 10px;">
+                    <p style="color: #ccc; margin: 0;">
+                        <span style="color: #e74c3c;">🔴 Pontos vermelhos:</span> Valores acima de 80% do máximo 
+                        | <span style="color: #3498db;">🔵 Pontos azuis:</span> Valores abaixo de 80% do máximo
+                        | <span style="color: #f39c12;">🟡 Linha amarela:</span> Limiar de 80%
+                        | <span style="color: #e74c3c;">🔴 Linha vermelha:</span> Valor máximo
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
                 
                 # Resumo por Atleta, Posição e Período
                 st.markdown("---")
@@ -1025,16 +1126,19 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                                 media_grupo = dados[variavel_analise].mean()
                                 desvio_grupo = dados[variavel_analise].std()
                                 cv_grupo = calcular_cv(media_grupo, desvio_grupo)
+                                max_grupo = dados[variavel_analise].max()
+                                perc_acima_80 = (dados[variavel_analise] > max_grupo * 0.8).sum() / len(dados) * 100
                                 
                                 resumo.append({
                                     'Atleta': nome,
                                     'Posição': posicao,
                                     'Período': periodo,
-                                    f'Máx {variavel_analise}': dados[variavel_analise].max(),
+                                    f'Máx {variavel_analise}': max_grupo,
                                     f'Mín {variavel_analise}': dados[variavel_analise].min(),
-                                    'Amplitude': dados[variavel_analise].max() - dados[variavel_analise].min(),
+                                    'Amplitude': max_grupo - dados[variavel_analise].min(),
                                     'Média': media_grupo,
                                     'CV (%)': cv_grupo,
+                                    '% Acima 80%': perc_acima_80,
                                     'Nº Amostras': len(dados)
                                 })
                 
@@ -1047,6 +1151,7 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                             'Amplitude': '{:.2f}',
                             'Média': '{:.2f}',
                             'CV (%)': '{:.1f}',
+                            '% Acima 80%': '{:.1f}',
                             'Nº Amostras': '{:.0f}'
                         }),
                         use_container_width=True,
@@ -1138,6 +1243,8 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                             media_atl = dados_atl.mean()
                             desvio_atl = dados_atl.std()
                             cv_atl = calcular_cv(media_atl, desvio_atl)
+                            max_atl = dados_atl.max()
+                            perc_acima_80_atl = (dados_atl > max_atl * 0.8).sum() / len(dados_atl) * 100
                             
                             stats_atletas.append({
                                 'Atleta': atleta,
@@ -1148,8 +1255,9 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                                 'Mínimo': dados_atl.min(),
                                 'Q1': q1,
                                 'Q3': q3,
-                                'Máximo': dados_atl.max(),
+                                'Máximo': max_atl,
                                 'IQR': iqr,
+                                '% Acima 80%': perc_acima_80_atl,
                                 'Outliers': len(dados_atl[(dados_atl < q1 - 1.5*iqr) | (dados_atl > q3 + 1.5*iqr)]),
                                 'N': len(dados_atl)
                             })
@@ -1166,6 +1274,7 @@ if st.session_state.get('process_button', False) and st.session_state.df_complet
                             'Q3': '{:.2f}',
                             'Máximo': '{:.2f}',
                             'IQR': '{:.2f}',
+                            '% Acima 80%': '{:.1f}',
                             'Outliers': '{:.0f}',
                             'N': '{:.0f}'
                         }),
