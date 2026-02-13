@@ -5,14 +5,11 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import scipy.stats as stats
-import io
-import base64
-from datetime import datetime
 import time
 import warnings
 warnings.filterwarnings('ignore')
 
-# Configuração da página
+# Configuração da página - DEVE ser a primeira chamada
 st.set_page_config(
     page_title="Sports Science Analytics Pro", 
     layout="wide", 
@@ -21,7 +18,7 @@ st.set_page_config(
 )
 
 # ============================================================================
-# INTERNACIONALIZAÇÃO
+# TRADUÇÕES
 # ============================================================================
 
 translations = {
@@ -63,7 +60,7 @@ translations = {
         'minute_of_min': 'Minuto do Mín',
         'threshold_80': 'LIMIAR 80%',
         'critical_events': 'EVENTOS CRÍTICOS',
-        'above_threshold': 'acima do limiar de 80%',
+        'above_threshold': 'acima do limiar',
         'intensity_zones': '🎚️ Zonas de Intensidade',
         'zone_method': 'Método de definição',
         'percentiles': 'Percentis',
@@ -93,7 +90,7 @@ translations = {
         'moderate_negative': 'Correlação moderada negativa',
         'strong_negative': 'Correlação forte negativa',
         'iqr_title': '📌 O que é IQR?',
-        'iqr_explanation': 'O IQR (Intervalo Interquartil) é a diferença entre o terceiro quartil (Q3) e o primeiro quartil (Q1). Representa a amplitude dos 50% centrais dos dados, sendo uma medida robusta de dispersão menos sensível a outliers.',
+        'iqr_explanation': 'IQR (Intervalo Interquartil) é a diferença entre Q3 e Q1, representando os 50% centrais dos dados.',
         'step1': '👈 **Passo 1:** Faça upload de um ou mais arquivos CSV para começar',
         'step2': '👈 **Passo 2:** Selecione os filtros e clique em Processar Análise',
         'file_format': '### 📋 Formato esperado do arquivo:',
@@ -153,7 +150,7 @@ translations = {
         'minute_of_min': 'Min Minute',
         'threshold_80': '80% THRESHOLD',
         'critical_events': 'CRITICAL EVENTS',
-        'above_threshold': 'above 80% threshold',
+        'above_threshold': 'above threshold',
         'intensity_zones': '🎚️ Intensity Zones',
         'zone_method': 'Definition method',
         'percentiles': 'Percentiles',
@@ -183,7 +180,7 @@ translations = {
         'moderate_negative': 'Moderate negative correlation',
         'strong_negative': 'Strong negative correlation',
         'iqr_title': '📌 What is IQR?',
-        'iqr_explanation': 'IQR (Interquartile Range) is the difference between the third quartile (Q3) and the first quartile (Q1). It represents the range of the middle 50% of the data, being a robust measure of dispersion.',
+        'iqr_explanation': 'IQR (Interquartile Range) is the difference between Q3 and Q1, representing the middle 50% of data.',
         'step1': '👈 **Step 1:** Upload one or more CSV files to start',
         'step2': '👈 **Step 2:** Select filters and click Process Analysis',
         'file_format': '### 📋 Expected file format:',
@@ -204,110 +201,8 @@ translations = {
             2. Select all desired files
             3. The system will check compatibility and concatenate automatically
         '''
-    },
-    'es': {
-        'title': 'Sports Science Analytics Pro',
-        'subtitle': 'Dashboard Profesional para Análisis de Rendimiento Deportivo',
-        'upload': 'Carga de Datos',
-        'variable': 'Variable',
-        'position': 'Posición',
-        'period': 'Período',
-        'athlete': 'Atleta',
-        'config': 'Configuración',
-        'tab_distribution': '📊 Distribución',
-        'tab_temporal': '📈 Estadísticas & Temporal',
-        'tab_boxplots': '📦 Boxplots',
-        'tab_correlation': '🔥 Correlaciones',
-        'tab_comparison': '⚖️ Comparaciones',
-        'positions': 'Posiciones',
-        'periods': 'Períodos',
-        'athletes': 'Atletas',
-        'observations': 'Observaciones',
-        'mean': 'Media',
-        'median': 'Mediana',
-        'mode': 'Moda',
-        'std': 'Desviación Estándar',
-        'variance': 'Varianza',
-        'cv': 'Coeficiente de Variación',
-        'min': 'Mínimo',
-        'max': 'Máximo',
-        'amplitude': 'Amplitud',
-        'q1': 'Q1 (25%)',
-        'q3': 'Q3 (75%)',
-        'iqr': 'IQR',
-        'skewness': 'Asimetría',
-        'kurtosis': 'Curtosis',
-        'max_value': 'VALOR MÁXIMO',
-        'min_value': 'VALOR MÍNIMO',
-        'minute_of_max': 'Minuto del Máx',
-        'minute_of_min': 'Minuto del Mín',
-        'threshold_80': 'UMBRAL 80%',
-        'critical_events': 'EVENTOS CRÍTICOS',
-        'above_threshold': 'por encima del umbral 80%',
-        'intensity_zones': '🎚️ Zonas de Intensidad',
-        'zone_method': 'Método de definición',
-        'percentiles': 'Percentiles',
-        'based_on_max': 'Basado en Máximo',
-        'very_low': 'Muy Baja',
-        'low': 'Baja',
-        'moderate': 'Moderada',
-        'high': 'Alta',
-        'very_high': 'Muy Alta',
-        'process': '🚀 Procesar Análisis',
-        'descriptive_stats': '📊 Estadísticas Descriptivas',
-        'confidence_interval': '🎯 Intervalo de Confianza (95%)',
-        'normality_test': '🧪 Prueba de Normalidad',
-        'summary_by_group': '🏃 Resumen por Atleta, Posición y Período',
-        'symmetric': 'Aproximadamente simétrica',
-        'moderate_skew': 'Moderadamente asimétrica',
-        'high_skew': 'Fuertemente asimétrica',
-        'leptokurtic': 'Leptocúrtica (colas pesadas)',
-        'platykurtic': 'Platicúrtica (colas ligeras)',
-        'mesokurtic': 'Mesocúrtica (normal)',
-        'strong_positive': 'Correlación fuerte positiva',
-        'moderate_positive': 'Correlación moderada positiva',
-        'weak_positive': 'Correlación débil positiva',
-        'very_weak_positive': 'Correlación muy débil positiva',
-        'very_weak_negative': 'Correlación muy débil negativa',
-        'weak_negative': 'Correlación débil negativa',
-        'moderate_negative': 'Correlación moderada negativa',
-        'strong_negative': 'Correlación fuerte negativa',
-        'iqr_title': '📌 ¿Qué es IQR?',
-        'iqr_explanation': 'IQR (Rango Intercuartil) es la diferencia entre el tercer cuartil (Q3) y el primer cuartil (Q1). Representa la amplitud del 50% central de los datos, siendo una medida robusta de dispersión.',
-        'step1': '👈 **Paso 1:** Cargue uno o más archivos CSV para comenzar',
-        'step2': '👈 **Paso 2:** Seleccione los filtros y haga clic en Procesar Análisis',
-        'file_format': '### 📋 Formato esperado del archivo:',
-        'col1_desc': '**Primera columna:** Identificación en formato `Nombre-Período-Minuto`',
-        'col2_desc': '**Segunda columna:** Posición del atleta',
-        'col3_desc': '**Demás columnas (3+):** Variables numéricas para análisis',
-        'components': '📌 Componentes',
-        'name_ex': 'Nombre: Mariano, Maria, Joao...',
-        'period_ex': 'Período: 1 TEMPO, SEGUNDO TEMPO...',
-        'minute_ex': 'Minuto: 00:00-01:00, 05:00-06:00...',
-        'position_ex': 'Posición: Atacante, Meio-campo...',
-        'tip': '💡 Consejo',
-        'tip_text': 'Puede seleccionar múltiples archivos CSV con la misma estructura.',
-        'multi_file_ex': '📁 Ejemplo con múltiples archivos',
-        'multi_file_text': '''
-            ### Cargando múltiples archivos:
-            1. Prepare sus archivos CSV con la **misma estructura** de columnas
-            2. Seleccione todos los archivos deseados
-            3. El sistema verificará compatibilidad y concatenará automáticamente
-        '''
     }
 }
-
-# ============================================================================
-# DETECÇÃO DE DISPOSITIVO MÓVEL
-# ============================================================================
-
-def is_mobile():
-    try:
-        user_agent = st.query_params.get('user_agent', [''])[0]
-        mobile_keywords = ['android', 'iphone', 'ipad', 'mobile']
-        return any(keyword in user_agent.lower() for keyword in mobile_keywords)
-    except:
-        return False
 
 # ============================================================================
 # CSS PERSONALIZADO
@@ -650,8 +545,9 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-mobile = is_mobile()
-n_colunas = 1 if mobile else 4
+# ============================================================================
+# HEADER
+# ============================================================================
 
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
@@ -670,98 +566,72 @@ with col2:
     """, unsafe_allow_html=True)
 
 # ============================================================================
-# SESSION STATE
+# SESSION STATE - Inicialização completa
 # ============================================================================
 
-def init_session_state():
-    if 'df_completo' not in st.session_state:
-        st.session_state.df_completo = None
-    if 'variaveis_quantitativas' not in st.session_state:
-        st.session_state.variaveis_quantitativas = []
-    if 'variavel_selecionada' not in st.session_state:
-        st.session_state.variavel_selecionada = None
-    if 'atletas_selecionados' not in st.session_state:
-        st.session_state.atletas_selecionados = []
-    if 'posicoes_selecionadas' not in st.session_state:
-        st.session_state.posicoes_selecionadas = []
-    if 'todos_posicoes' not in st.session_state:
-        st.session_state.todos_posicoes = []
-    if 'periodos_selecionados' not in st.session_state:
-        st.session_state.periodos_selecionados = []
-    if 'todos_periodos' not in st.session_state:
-        st.session_state.todos_periodos = []
-    if 'ordem_personalizada' not in st.session_state:
-        st.session_state.ordem_personalizada = []
-    if 'upload_files_names' not in st.session_state:
-        st.session_state.upload_files_names = []
-    if 'idioma' not in st.session_state:
-        st.session_state.idioma = 'pt'
-    if 'processar_click' not in st.session_state:
-        st.session_state.processar_click = False
-    if 'dados_processados' not in st.session_state:
-        st.session_state.dados_processados = False
-    if 'metodo_zona' not in st.session_state:
-        st.session_state.metodo_zona = 'percentis'
-    if 'grupo1' not in st.session_state:
-        st.session_state.grupo1 = None
-    if 'grupo2' not in st.session_state:
-        st.session_state.grupo2 = None
-
-init_session_state()
+if 'df_completo' not in st.session_state:
+    st.session_state.df_completo = None
+if 'variaveis_quantitativas' not in st.session_state:
+    st.session_state.variaveis_quantitativas = []
+if 'variavel_selecionada' not in st.session_state:
+    st.session_state.variavel_selecionada = None
+if 'atletas_selecionados' not in st.session_state:
+    st.session_state.atletas_selecionados = []
+if 'posicoes_selecionadas' not in st.session_state:
+    st.session_state.posicoes_selecionadas = []
+if 'todos_posicoes' not in st.session_state:
+    st.session_state.todos_posicoes = []
+if 'periodos_selecionados' not in st.session_state:
+    st.session_state.periodos_selecionados = []
+if 'todos_periodos' not in st.session_state:
+    st.session_state.todos_periodos = []
+if 'upload_files_names' not in st.session_state:
+    st.session_state.upload_files_names = []
+if 'idioma' not in st.session_state:
+    st.session_state.idioma = 'pt'
+if 'processar_click' not in st.session_state:
+    st.session_state.processar_click = False
+if 'dados_processados' not in st.session_state:
+    st.session_state.dados_processados = False
+if 'metodo_zona' not in st.session_state:
+    st.session_state.metodo_zona = 'percentis'
+if 'grupo1' not in st.session_state:
+    st.session_state.grupo1 = None
+if 'grupo2' not in st.session_state:
+    st.session_state.grupo2 = None
+if 'n_classes' not in st.session_state:
+    st.session_state.n_classes = 5
 
 # ============================================================================
 # FUNÇÕES AUXILIARES
 # ============================================================================
 
-def interpretar_teste(p_valor, nome_teste, t):
-    if p_valor < 0.0001:
-        p_text = f"{p_valor:.2e}"
-    else:
-        p_text = f"{p_valor:.5f}"
-    
-    if p_valor > 0.05:
-        status = f"✅ {t['normality_test'].split('🧪')[1] if '🧪' in t['normality_test'] else 'Dados normais'}"
-        cor = "#10b981"
-    else:
-        status = f"⚠️ {t['normality_test'].split('🧪')[1] if '🧪' in t['normality_test'] else 'Dados não normais'}"
-        cor = "#ef4444"
-    
-    st.markdown(f"""
-    <div style="background: rgba(30, 41, 59, 0.8); border-radius: 12px; padding: 20px; border-left: 5px solid {cor}; backdrop-filter: blur(10px);">
-        <h4 style="color: white; margin: 0 0 10px 0;">{status}</h4>
-        <p style="color: #94a3b8; margin: 5px 0;"><strong>Teste:</strong> {nome_teste}</p>
-        <p style="color: #94a3b8; margin: 5px 0;"><strong>p-valor:</strong> <span style="color: {cor};">{p_text}</span></p>
-    </div>
-    """, unsafe_allow_html=True)
-
 def extrair_periodo(texto):
+    """Extrai o período entre o nome e o minuto"""
     try:
         texto = str(texto)
         primeiro_hifen = texto.find('-')
-        
         if primeiro_hifen == -1:
             return ""
         if len(texto) < 13:
             return ""
-        
         periodo = texto[primeiro_hifen + 1:-13].strip()
         return periodo
     except:
         return ""
 
 def verificar_estruturas_arquivos(dataframes):
+    """Verifica se todos os dataframes têm a mesma estrutura"""
     if not dataframes:
         return False, []
-    
     primeira_estrutura = dataframes[0].columns.tolist()
-    
-    for i, df in enumerate(dataframes[1:], 1):
+    for df in dataframes[1:]:
         if df.columns.tolist() != primeira_estrutura:
             return False, primeira_estrutura
-    
     return True, primeira_estrutura
 
 def metric_card(titulo, valor, icone, cor_gradiente):
+    """Cria um card de métrica estilizado"""
     st.markdown(f"""
     <div class="metric-card fade-in">
         <div class="icon">{icone}</div>
@@ -771,6 +641,7 @@ def metric_card(titulo, valor, icone, cor_gradiente):
     """, unsafe_allow_html=True)
 
 def time_metric_card(label, valor, sub_label="", cor="#3b82f6"):
+    """Cria um card para métricas temporais"""
     st.markdown(f"""
     <div class="time-metric-card" style="border-left-color: {cor};">
         <div class="label">{label}</div>
@@ -780,6 +651,7 @@ def time_metric_card(label, valor, sub_label="", cor="#3b82f6"):
     """, unsafe_allow_html=True)
 
 def warning_card(titulo, valor, subtitulo, icone="⚠️"):
+    """Cria um card de alerta para eventos críticos"""
     st.markdown(f"""
     <div class="warning-card fade-in">
         <div class="label">{icone} {titulo}</div>
@@ -789,33 +661,29 @@ def warning_card(titulo, valor, subtitulo, icone="⚠️"):
     """, unsafe_allow_html=True)
 
 def calcular_cv(media, desvio):
+    """Calcula o coeficiente de variação"""
     if media != 0 and not np.isnan(media) and not np.isnan(desvio):
         return (desvio / media) * 100
     return 0
 
 def extrair_minuto_do_extremo(df, coluna_valor, coluna_minuto, extremo='max'):
+    """Extrai o minuto do valor máximo ou mínimo"""
     try:
         if df.empty or len(df) == 0:
             return "N/A"
-        
         df_reset = df.reset_index(drop=True)
         if extremo == 'max':
             idx_extremo = df_reset[coluna_valor].idxmax()
         else:
             idx_extremo = df_reset[coluna_valor].idxmin()
-        
         if pd.notna(idx_extremo) and idx_extremo < len(df_reset):
             return df_reset.loc[idx_extremo, coluna_minuto]
-        
         return "N/A"
     except:
-        try:
-            df_sorted = df.sort_values(coluna_valor, ascending=(extremo=='min'))
-            return df_sorted.iloc[0][coluna_minuto]
-        except:
-            return "N/A"
+        return "N/A"
 
 def criar_zonas_intensidade(df, variavel, metodo='percentis'):
+    """Cria zonas de intensidade baseadas em percentis ou no máximo"""
     if metodo == 'percentis':
         return {
             'Muito Baixa': df[variavel].quantile(0.2),
@@ -824,7 +692,7 @@ def criar_zonas_intensidade(df, variavel, metodo='percentis'):
             'Alta': df[variavel].quantile(0.8),
             'Muito Alta': df[variavel].quantile(1.0)
         }
-    else:  # based_on_max
+    else:
         max_val = df[variavel].max()
         return {
             'Muito Baixa': max_val * 0.2,
@@ -835,23 +703,20 @@ def criar_zonas_intensidade(df, variavel, metodo='percentis'):
         }
 
 def comparar_grupos(df, variavel, grupo1, grupo2):
+    """Compara dois grupos com teste estatístico apropriado"""
     try:
         dados_grupo1 = df[df['Posição'] == grupo1][variavel].dropna()
         dados_grupo2 = df[df['Posição'] == grupo2][variavel].dropna()
-        
         if len(dados_grupo1) < 3 or len(dados_grupo2) < 3:
             return None
-        
         _, p1 = stats.shapiro(dados_grupo1)
         _, p2 = stats.shapiro(dados_grupo2)
-        
         if p1 > 0.05 and p2 > 0.05:
-            t_stat, p_valor = stats.ttest_ind(dados_grupo1, dados_grupo2)
+            _, p_valor = stats.ttest_ind(dados_grupo1, dados_grupo2)
             teste = "Teste t de Student"
         else:
-            u_stat, p_valor = stats.mannwhitneyu(dados_grupo1, dados_grupo2)
+            _, p_valor = stats.mannwhitneyu(dados_grupo1, dados_grupo2)
             teste = "Teste de Mann-Whitney"
-        
         return {
             'teste': teste,
             'p_valor': p_valor,
@@ -866,14 +731,28 @@ def comparar_grupos(df, variavel, grupo1, grupo2):
     except:
         return None
 
+# ============================================================================
+# CALLBACKS
+# ============================================================================
+
 def atualizar_metodo_zona():
     """Callback para atualizar método de zona"""
-    st.session_state.metodo_zona = st.session_state.metodo_zona_radio
+    if st.session_state.metodo_zona_radio == translations[st.session_state.idioma]['percentiles']:
+        st.session_state.metodo_zona = 'percentis'
+    else:
+        st.session_state.metodo_zona = 'based_on_max'
 
-def atualizar_grupos():
-    """Callback para atualizar grupos de comparação"""
+def atualizar_grupo1():
+    """Callback para atualizar grupo 1"""
     st.session_state.grupo1 = st.session_state.grupo1_select
+
+def atualizar_grupo2():
+    """Callback para atualizar grupo 2"""
     st.session_state.grupo2 = st.session_state.grupo2_select
+
+def processar_click():
+    """Callback para botão processar"""
+    st.session_state.processar_click = True
 
 # ============================================================================
 # SIDEBAR
@@ -884,8 +763,8 @@ with st.sidebar:
     
     idioma = st.selectbox(
         "", 
-        ['pt', 'en', 'es'], 
-        index=['pt', 'en', 'es'].index(st.session_state.idioma) if st.session_state.idioma in ['pt', 'en', 'es'] else 0,
+        ['pt', 'en'], 
+        index=0 if st.session_state.idioma == 'pt' else 1,
         label_visibility="collapsed",
         key="idioma_selector"
     )
@@ -913,27 +792,20 @@ with st.sidebar:
             try:
                 dataframes = []
                 arquivos_validos = []
-                arquivos_invalidos = []
                 
                 for uploaded_file in upload_files:
                     try:
                         data = pd.read_csv(uploaded_file)
-                        
                         if data.shape[1] >= 3 and not data.empty:
                             dataframes.append(data)
                             arquivos_validos.append(uploaded_file.name)
-                        else:
-                            arquivos_invalidos.append(f"{uploaded_file.name}")
-                    except Exception as e:
-                        arquivos_invalidos.append(f"{uploaded_file.name}")
+                    except:
+                        pass
                 
                 if dataframes:
-                    estruturas_ok, estrutura_referencia = verificar_estruturas_arquivos(dataframes)
-                    
+                    estruturas_ok, _ = verificar_estruturas_arquivos(dataframes)
                     if not estruturas_ok:
-                        st.error("❌ " + ("Arquivos com estruturas diferentes" if st.session_state.idioma == 'pt' else 
-                                        "Files with different structures" if st.session_state.idioma == 'en' else
-                                        "Archivos con estructuras diferentes"))
+                        st.error("❌ " + ("Arquivos com estruturas diferentes" if st.session_state.idioma == 'pt' else "Files with different structures"))
                         st.stop()
                     
                     data = pd.concat(dataframes, ignore_index=True)
@@ -955,7 +827,6 @@ with st.sidebar:
                         for col_idx in range(2, data.shape[1]):
                             nome_var = data.columns[col_idx]
                             valores = pd.to_numeric(data.iloc[:, col_idx], errors='coerce')
-                            
                             if not valores.dropna().empty:
                                 variaveis_quant.append(nome_var)
                                 dados_quantitativos[nome_var] = valores.reset_index(drop=True)
@@ -981,16 +852,14 @@ with st.sidebar:
                                 st.session_state.posicoes_selecionadas = posicoes_unicas.copy()
                                 st.session_state.todos_periodos = periodos_unicos
                                 st.session_state.periodos_selecionados = periodos_unicos.copy()
-                                st.session_state.ordem_personalizada = periodos_unicos.copy()
                                 st.session_state.upload_files_names = arquivos_validos
                                 
                                 if variaveis_quant and st.session_state.variavel_selecionada is None:
                                     st.session_state.variavel_selecionada = variaveis_quant[0]
                                 
-                                sucesso_msg = ("arquivo(s) carregado(s)" if st.session_state.idioma == 'pt' else
-                                              "file(s) loaded" if st.session_state.idioma == 'en' else
-                                              "archivo(s) cargado(s)")
+                                sucesso_msg = ("arquivo(s) carregado(s)" if st.session_state.idioma == 'pt' else "file(s) loaded")
                                 st.success(f"✅ {len(arquivos_validos)} {sucesso_msg}")
+                                st.rerun()
             except Exception as e:
                 st.error(f"❌ Erro: {str(e)}")
     
@@ -1015,6 +884,7 @@ with st.sidebar:
             if variavel_selecionada != st.session_state.variavel_selecionada:
                 st.session_state.variavel_selecionada = variavel_selecionada
                 st.session_state.dados_processados = False
+                st.rerun()
             
             df_temp = st.session_state.df_completo[variavel_selecionada].dropna()
             if not df_temp.empty:
@@ -1025,10 +895,8 @@ with st.sidebar:
             st.markdown(f"<h2 class='sidebar-title'>📍 {t['position']}</h2>", unsafe_allow_html=True)
             
             selecionar_todos = st.checkbox(
-                f"Selecionar todas as {t['position'].lower()}s" if st.session_state.idioma == 'pt' else
-                f"Select all {t['position'].lower()}s" if st.session_state.idioma == 'en' else
-                f"Seleccionar todas las {t['position'].lower()}s",
-                value=True,
+                f"Selecionar todas as {t['position'].lower()}s" if st.session_state.idioma == 'pt' else f"Select all {t['position'].lower()}s",
+                value=True if len(st.session_state.posicoes_selecionadas) == len(st.session_state.todos_posicoes) else False,
                 key="todos_posicoes_check"
             )
             
@@ -1036,6 +904,7 @@ with st.sidebar:
                 if st.session_state.posicoes_selecionadas != st.session_state.todos_posicoes:
                     st.session_state.posicoes_selecionadas = st.session_state.todos_posicoes.copy()
                     st.session_state.dados_processados = False
+                    st.rerun()
             else:
                 posicoes_sel = st.multiselect(
                     "",
@@ -1047,24 +916,23 @@ with st.sidebar:
                 if posicoes_sel != st.session_state.posicoes_selecionadas:
                     st.session_state.posicoes_selecionadas = posicoes_sel
                     st.session_state.dados_processados = False
+                    st.rerun()
         
         if st.session_state.todos_periodos:
             st.markdown("---")
             st.markdown(f"<h2 class='sidebar-title'>📅 {t['period']}</h2>", unsafe_allow_html=True)
             
             selecionar_todos = st.checkbox(
-                f"Selecionar todos os {t['period'].lower()}s" if st.session_state.idioma == 'pt' else
-                f"Select all {t['period'].lower()}s" if st.session_state.idioma == 'en' else
-                f"Seleccionar todos los {t['period'].lower()}s",
-                value=True,
+                f"Selecionar todos os {t['period'].lower()}s" if st.session_state.idioma == 'pt' else f"Select all {t['period'].lower()}s",
+                value=True if len(st.session_state.periodos_selecionados) == len(st.session_state.todos_periodos) else False,
                 key="todos_periodos_check"
             )
             
             if selecionar_todos:
                 if st.session_state.periodos_selecionados != st.session_state.todos_periodos:
                     st.session_state.periodos_selecionados = st.session_state.todos_periodos.copy()
-                    st.session_state.ordem_personalizada = st.session_state.todos_periodos.copy()
                     st.session_state.dados_processados = False
+                    st.rerun()
             else:
                 periodos_sel = st.multiselect(
                     "",
@@ -1076,6 +944,7 @@ with st.sidebar:
                 if periodos_sel != st.session_state.periodos_selecionados:
                     st.session_state.periodos_selecionados = periodos_sel
                     st.session_state.dados_processados = False
+                    st.rerun()
         
         if st.session_state.atletas_selecionados:
             st.markdown("---")
@@ -1090,10 +959,8 @@ with st.sidebar:
             atletas_disponiveis = sorted(df_temp['Nome'].unique())
             
             selecionar_todos = st.checkbox(
-                f"Selecionar todos os {t['athlete'].lower()}s" if st.session_state.idioma == 'pt' else
-                f"Select all {t['athlete'].lower()}s" if st.session_state.idioma == 'en' else
-                f"Seleccionar todos los {t['athlete'].lower()}s",
-                value=True,
+                f"Selecionar todos os {t['athlete'].lower()}s" if st.session_state.idioma == 'pt' else f"Select all {t['athlete'].lower()}s",
+                value=True if len(st.session_state.atletas_selecionados) == len(atletas_disponiveis) and len(atletas_disponiveis) > 0 else False,
                 key="todos_atletas_check"
             )
             
@@ -1101,6 +968,7 @@ with st.sidebar:
                 if st.session_state.atletas_selecionados != atletas_disponiveis:
                     st.session_state.atletas_selecionados = atletas_disponiveis
                     st.session_state.dados_processados = False
+                    st.rerun()
             else:
                 atletas_sel = st.multiselect(
                     "",
@@ -1112,11 +980,13 @@ with st.sidebar:
                 if atletas_sel != st.session_state.atletas_selecionados:
                     st.session_state.atletas_selecionados = atletas_sel
                     st.session_state.dados_processados = False
+                    st.rerun()
         
         st.markdown("---")
         st.markdown(f"<h2 class='sidebar-title'>⚙️ {t['config']}</h2>", unsafe_allow_html=True)
         
         n_classes = st.slider(f"{t['config']}:", 3, 20, 5, key="classes_slider")
+        st.session_state.n_classes = n_classes
         
         st.markdown("---")
         pode_processar = (st.session_state.variavel_selecionada and 
@@ -1124,9 +994,8 @@ with st.sidebar:
                          st.session_state.periodos_selecionados and 
                          st.session_state.atletas_selecionados)
         
-        if st.button(t['process'], use_container_width=True, disabled=not pode_processar, key="process_button"):
-            st.session_state.processar_click = True
-            st.rerun()
+        if st.button(t['process'], use_container_width=True, disabled=not pode_processar, key="process_button", on_click=processar_click):
+            pass
 
 # ============================================================================
 # ÁREA PRINCIPAL
@@ -1134,9 +1003,7 @@ with st.sidebar:
 
 if st.session_state.processar_click and st.session_state.df_completo is not None:
     
-    with st.spinner('🔄 ' + ("Gerando análises..." if st.session_state.idioma == 'pt' else 
-                             "Generating analysis..." if st.session_state.idioma == 'en' else
-                             "Generando análisis...")):
+    with st.spinner('🔄 ' + ("Gerando análises..." if st.session_state.idioma == 'pt' else "Generating analysis...")):
         time.sleep(0.5)
         
         df_completo = st.session_state.df_completo
@@ -1144,6 +1011,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
         posicoes_selecionadas = st.session_state.posicoes_selecionadas
         periodos_selecionados = st.session_state.periodos_selecionados
         variavel_analise = st.session_state.variavel_selecionada
+        n_classes = st.session_state.n_classes
         
         df_filtrado = df_completo[
             df_completo['Nome'].isin(atletas_selecionados) & 
@@ -1154,23 +1022,21 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
         df_filtrado = df_filtrado.dropna(subset=[variavel_analise])
         
         if df_filtrado.empty:
-            st.warning("⚠️ " + ("Nenhum dado encontrado" if st.session_state.idioma == 'pt' else 
-                               "No data found" if st.session_state.idioma == 'en' else
-                               "No se encontraron datos"))
+            st.warning("⚠️ " + ("Nenhum dado encontrado" if st.session_state.idioma == 'pt' else "No data found"))
         else:
             st.session_state.dados_processados = True
             t = translations[st.session_state.idioma]
             
             st.markdown(f"<h2>📊 {t['title'].split('Pro')[0] if 'Pro' in t['title'] else 'Visão Geral'}</h2>", unsafe_allow_html=True)
             
-            cols = st.columns(n_colunas)
+            cols = st.columns(4)
             with cols[0]:
                 metric_card(t['positions'], len(posicoes_selecionadas), "📍", "linear-gradient(135deg, #3b82f6, #2563eb)")
-            with cols[1 % n_colunas]:
+            with cols[1]:
                 metric_card(t['periods'], len(periodos_selecionados), "📅", "linear-gradient(135deg, #8b5cf6, #7c3aed)")
-            with cols[2 % n_colunas]:
+            with cols[2]:
                 metric_card(t['athletes'], len(atletas_selecionados), "👥", "linear-gradient(135deg, #ef4444, #dc2626)")
-            with cols[3 % n_colunas]:
+            with cols[3]:
                 metric_card(t['observations'], len(df_filtrado), "📊", "linear-gradient(135deg, #f59e0b, #d97706)")
             
             st.markdown("---")
@@ -1185,7 +1051,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
             
             tabs = st.tabs(tab_titles)
             
-            # Aba 1: Distribuição
+            # ABA 1: DISTRIBUIÇÃO
             with tabs[0]:
                 st.markdown(f"<h3>{t['tab_distribution']}</h3>", unsafe_allow_html=True)
                 
@@ -1195,7 +1061,6 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     dados_hist = df_filtrado[variavel_analise].dropna()
                     
                     fig_hist = go.Figure()
-                    
                     fig_hist.add_trace(go.Histogram(
                         x=dados_hist,
                         nbinsx=n_classes,
@@ -1249,13 +1114,8 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     
                     z = np.polyfit(quantis_teoricos, quantis_observados, 1)
                     linha_ref = np.poly1d(z)
-                    residuos = quantis_observados - linha_ref(quantis_teoricos)
-                    ss_res = np.sum(residuos**2)
-                    ss_tot = np.sum((quantis_observados - np.mean(quantis_observados))**2)
-                    r2 = 1 - (ss_res / ss_tot) if ss_tot != 0 else 0
                     
                     fig_qq = go.Figure()
-                    
                     fig_qq.add_trace(go.Scatter(
                         x=quantis_teoricos,
                         y=quantis_observados,
@@ -1263,12 +1123,11 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                         name='Dados',
                         marker=dict(color='#3b82f6', size=8, opacity=0.7)
                     ))
-                    
                     fig_qq.add_trace(go.Scatter(
                         x=quantis_teoricos,
                         y=linha_ref(quantis_teoricos),
                         mode='lines',
-                        name=f'Referência (R² = {r2:.3f})',
+                        name='Referência',
                         line=dict(color='#ef4444', width=2)
                     ))
                     
@@ -1319,7 +1178,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     hide_index=True
                 )
             
-            # Aba 2: Estatísticas & Temporal
+            # ABA 2: ESTATÍSTICAS & TEMPORAL
             with tabs[1]:
                 st.markdown(f"<h3>{t['tab_temporal']}</h3>", unsafe_allow_html=True)
                 
@@ -1350,19 +1209,20 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 st.markdown("---")
                 st.markdown(f"<h4>{t['intensity_zones']}</h4>", unsafe_allow_html=True)
                 
-                # Radio button com apenas 2 opções e callback para atualização dinâmica
-                metodo_zona = st.radio(
+                # Radio button com callback
+                metodo_opcoes = [t['percentiles'], t['based_on_max']]
+                index_atual = 0 if st.session_state.metodo_zona == 'percentis' else 1
+                
+                st.radio(
                     t['zone_method'],
-                    [t['percentiles'], t['based_on_max']],
-                    index=0 if st.session_state.metodo_zona == 'percentis' else 1,
+                    metodo_opcoes,
+                    index=index_atual,
                     key="metodo_zona_radio",
                     on_change=atualizar_metodo_zona
                 )
                 
-                # Converter para o valor interno
-                metodo_interno = 'percentis' if metodo_zona == t['percentiles'] else 'based_on_max'
-                
-                # Calcular zonas com base no método selecionado
+                # Usar o valor do session state
+                metodo_interno = st.session_state.metodo_zona
                 zonas = criar_zonas_intensidade(df_filtrado, variavel_analise, metodo_interno)
                 
                 if zonas:
@@ -1549,7 +1409,6 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 
                 with col_ic2:
                     fig_ic = go.Figure()
-                    
                     fig_ic.add_trace(go.Scatter(
                         x=['IC 95%'],
                         y=[media],
@@ -1558,7 +1417,6 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                         error_y=dict(type='constant', value=(ic_sup - media), color='#ef4444', thickness=3, width=15),
                         name=t['mean']
                     ))
-                    
                     fig_ic.update_layout(
                         title=t['confidence_interval'],
                         plot_bgcolor='rgba(30, 41, 59, 0.8)',
@@ -1570,7 +1428,6 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     )
                     fig_ic.update_xaxes(gridcolor='#334155', tickfont=dict(color='white'))
                     fig_ic.update_yaxes(gridcolor='#334155', tickfont=dict(color='white'))
-                    
                     st.plotly_chart(fig_ic, use_container_width=True)
                 
                 st.markdown("---")
@@ -1580,28 +1437,28 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 n_teste = len(dados_teste)
                 
                 if n_teste < 3:
-                    st.error("❌ " + ("Amostra muito pequena (n < 3)" if st.session_state.idioma == 'pt' else 
-                                    "Sample too small (n < 3)" if st.session_state.idioma == 'en' else
-                                    "Muestra muy pequeña (n < 3)"))
+                    st.error("❌ " + ("Amostra muito pequena (n < 3)" if st.session_state.idioma == 'pt' else "Sample too small (n < 3)"))
                 elif n_teste > 5000:
-                    st.info("ℹ️ " + ("Amostra grande demais. Usando D'Agostino-Pearson." if st.session_state.idioma == 'pt' else
-                                    "Sample too large. Using D'Agostino-Pearson." if st.session_state.idioma == 'en' else
-                                    "Muestra demasiado grande. Usando D'Agostino-Pearson."))
+                    st.info("ℹ️ " + ("Amostra grande demais. Usando D'Agostino-Pearson." if st.session_state.idioma == 'pt' else "Sample too large. Using D'Agostino-Pearson."))
                     try:
-                        k2, p = stats.normaltest(dados_teste)
-                        interpretar_teste(p, "D'Agostino-Pearson", t)
+                        _, p = stats.normaltest(dados_teste)
+                        if p > 0.05:
+                            status = f"✅ {t['normality_test'].split('🧪')[1] if '🧪' in t['normality_test'] else 'Dados normais'}"
+                        else:
+                            status = f"⚠️ {t['normality_test'].split('🧪')[1] if '🧪' in t['normality_test'] else 'Dados não normais'}"
+                        st.info(status + f" (p={p:.4f})")
                     except:
-                        st.warning("⚠️ " + ("Teste alternativo não disponível" if st.session_state.idioma == 'pt' else
-                                          "Alternative test not available" if st.session_state.idioma == 'en' else
-                                          "Prueba alternativa no disponible"))
+                        st.warning("⚠️ " + ("Teste alternativo não disponível" if st.session_state.idioma == 'pt' else "Alternative test not available"))
                 else:
                     try:
                         shapiro = stats.shapiro(dados_teste)
-                        interpretar_teste(shapiro.pvalue, "Shapiro-Wilk", t)
+                        if shapiro.pvalue > 0.05:
+                            status = f"✅ {t['normality_test'].split('🧪')[1] if '🧪' in t['normality_test'] else 'Dados normais'}"
+                        else:
+                            status = f"⚠️ {t['normality_test'].split('🧪')[1] if '🧪' in t['normality_test'] else 'Dados não normais'}"
+                        st.info(status + f" (p={shapiro.pvalue:.4f})")
                     except:
-                        st.error("❌ " + ("Erro no teste" if st.session_state.idioma == 'pt' else
-                                        "Test error" if st.session_state.idioma == 'en' else
-                                        "Error en la prueba"))
+                        st.error("❌ " + ("Erro no teste" if st.session_state.idioma == 'pt' else "Test error"))
                 
                 st.markdown("---")
                 st.markdown(f"<h4>{t['summary_by_group']}</h4>", unsafe_allow_html=True)
@@ -1653,10 +1510,10 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                         hide_index=True
                     )
                     
-                    # Adicionar explicação do IQR ao final da tabela
+                    # Explicação do IQR ao final da tabela
                     st.caption(f"📌 {t['iqr_title']}: {t['iqr_explanation']}")
             
-            # Aba 3: Boxplots
+            # ABA 3: BOXPLOTS
             with tabs[2]:
                 st.markdown(f"<h3>{t['tab_boxplots']}</h3>", unsafe_allow_html=True)
                 
@@ -1693,7 +1550,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 
                 st.markdown(f"<h4>👥 {t['athlete']}</h4>", unsafe_allow_html=True)
                 
-                # Mostrar todos os atletas, com altura dinâmica
+                # Mostrar TODOS os atletas (sem limitação)
                 fig_box_atl = go.Figure()
                 for atleta in atletas_selecionados:
                     dados_atl = df_filtrado[df_filtrado['Nome'] == atleta][variavel_analise]
@@ -1779,10 +1636,10 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                             hide_index=True
                         )
                     
-                    # Adicionar explicação do IQR ao final
+                    # Explicação do IQR ao final
                     st.caption(f"📌 {t['iqr_title']}: {t['iqr_explanation']}")
             
-            # Aba 4: Correlações
+            # ABA 4: CORRELAÇÕES
             with tabs[3]:
                 st.markdown(f"<h3>{t['tab_correlation']}</h3>", unsafe_allow_html=True)
                 
@@ -1878,15 +1735,11 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                             </div>
                             """, unsafe_allow_html=True)
                     else:
-                        st.info("ℹ️ " + ("Selecione pelo menos 2 variáveis" if st.session_state.idioma == 'pt' else 
-                                       "Select at least 2 variables" if st.session_state.idioma == 'en' else
-                                       "Seleccione al menos 2 variables"))
+                        st.info("ℹ️ " + ("Selecione pelo menos 2 variáveis" if st.session_state.idioma == 'pt' else "Select at least 2 variables"))
                 else:
-                    st.info("ℹ️ " + ("São necessárias pelo menos 2 variáveis" if st.session_state.idioma == 'pt' else 
-                                   "At least 2 variables are needed" if st.session_state.idioma == 'en' else
-                                   "Se necesitan al menos 2 variables"))
+                    st.info("ℹ️ " + ("São necessárias pelo menos 2 variáveis" if st.session_state.idioma == 'pt' else "At least 2 variables are needed"))
             
-            # Aba 5: Comparações
+            # ABA 5: COMPARAÇÕES
             with tabs[4]:
                 st.markdown(f"<h3>{t['tab_comparison']}</h3>", unsafe_allow_html=True)
                 
@@ -1901,7 +1754,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                             posicoes_selecionadas, 
                             index=0, 
                             key="grupo1_select",
-                            on_change=atualizar_grupos
+                            on_change=atualizar_grupo1
                         )
                     with col_comp2:
                         grupo2 = st.selectbox(
@@ -1909,23 +1762,23 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                             posicoes_selecionadas, 
                             index=min(1, len(posicoes_selecionadas)-1), 
                             key="grupo2_select",
-                            on_change=atualizar_grupos
+                            on_change=atualizar_grupo2
                         )
                     
-                    # Usar os valores atuais dos selects
-                    grupo1_atual = st.session_state.grupo1_select if 'grupo1_select' in st.session_state else grupo1
-                    grupo2_atual = st.session_state.grupo2_select if 'grupo2_select' in st.session_state else grupo2
+                    # Usar valores do session state
+                    g1_atual = st.session_state.grupo1 if st.session_state.grupo1 is not None else grupo1
+                    g2_atual = st.session_state.grupo2 if st.session_state.grupo2 is not None else grupo2
                     
-                    if grupo1_atual != grupo2_atual:
-                        resultado = comparar_grupos(df_filtrado, variavel_analise, grupo1_atual, grupo2_atual)
+                    if g1_atual and g2_atual and g1_atual != g2_atual:
+                        resultado = comparar_grupos(df_filtrado, variavel_analise, g1_atual, g2_atual)
                         
                         if resultado:
                             st.markdown(f"""
                             <div class="metric-container">
                                 <h4>📊 {t['tab_comparison']}</h4>
                                 <hr style="border-color: #334155;">
-                                <p><strong>{t['position']} 1 ({grupo1_atual}):</strong> {resultado['media_g1']:.2f} ± {resultado['std_g1']:.2f} (n={resultado['n_g1']})</p>
-                                <p><strong>{t['position']} 2 ({grupo2_atual}):</strong> {resultado['media_g2']:.2f} ± {resultado['std_g2']:.2f} (n={resultado['n_g2']})</p>
+                                <p><strong>{t['position']} 1 ({g1_atual}):</strong> {resultado['media_g1']:.2f} ± {resultado['std_g1']:.2f} (n={resultado['n_g1']})</p>
+                                <p><strong>{t['position']} 2 ({g2_atual}):</strong> {resultado['media_g2']:.2f} ± {resultado['std_g2']:.2f} (n={resultado['n_g2']})</p>
                                 <p><strong>Teste:</strong> {resultado['teste']}</p>
                                 <p><strong>p-valor:</strong> {resultado['p_valor']:.4f}</p>
                                 <p><strong>Diferença:</strong> {resultado['media_g1'] - resultado['media_g2']:.2f}</p>
@@ -1934,28 +1787,22 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                             """, unsafe_allow_html=True)
                             
                             fig_comp = go.Figure()
-                            
-                            dados_comp1 = df_filtrado[df_filtrado['Posição'] == grupo1_atual][variavel_analise]
-                            dados_comp2 = df_filtrado[df_filtrado['Posição'] == grupo2_atual][variavel_analise]
-                            
                             fig_comp.add_trace(go.Box(
-                                y=dados_comp1,
-                                name=grupo1_atual,
+                                y=df_filtrado[df_filtrado['Posição'] == g1_atual][variavel_analise],
+                                name=g1_atual,
                                 boxmean='sd',
                                 marker_color='#3b82f6',
                                 line_color='white'
                             ))
-                            
                             fig_comp.add_trace(go.Box(
-                                y=dados_comp2,
-                                name=grupo2_atual,
+                                y=df_filtrado[df_filtrado['Posição'] == g2_atual][variavel_analise],
+                                name=g2_atual,
                                 boxmean='sd',
                                 marker_color='#ef4444',
                                 line_color='white'
                             ))
-                            
                             fig_comp.update_layout(
-                                title=f"{grupo1_atual} vs {grupo2_atual} - {variavel_analise}",
+                                title=f"{g1_atual} vs {g2_atual} - {variavel_analise}",
                                 plot_bgcolor='rgba(30, 41, 59, 0.8)',
                                 paper_bgcolor='rgba(0,0,0,0)',
                                 font=dict(color='white', size=11),
@@ -1964,92 +1811,80 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                             )
                             fig_comp.update_xaxes(gridcolor='#334155', tickfont=dict(color='white'))
                             fig_comp.update_yaxes(gridcolor='#334155', tickfont=dict(color='white'))
-                            
                             st.plotly_chart(fig_comp, use_container_width=True)
                         else:
-                            st.warning("⚠️ " + ("Dados insuficientes para comparação" if st.session_state.idioma == 'pt' else 
-                                              "Insufficient data for comparison" if st.session_state.idioma == 'en' else
-                                              "Datos insuficientes para comparación"))
+                            st.warning("⚠️ " + ("Dados insuficientes para comparação" if st.session_state.idioma == 'pt' else "Insufficient data for comparison"))
                     else:
-                        st.info("ℹ️ " + ("Selecione grupos diferentes" if st.session_state.idioma == 'pt' else 
-                                       "Select different groups" if st.session_state.idioma == 'en' else
-                                       "Seleccione grupos diferentes"))
+                        st.info("ℹ️ " + ("Selecione grupos diferentes" if st.session_state.idioma == 'pt' else "Select different groups"))
                 else:
-                    st.info("ℹ️ " + ("Selecione pelo menos 2 posições" if st.session_state.idioma == 'pt' else 
-                                   "Select at least 2 positions" if st.session_state.idioma == 'en' else
-                                   "Seleccione al menos 2 posiciones"))
+                    st.info("ℹ️ " + ("Selecione pelo menos 2 posições" if st.session_state.idioma == 'pt' else "Select at least 2 positions"))
             
-            with st.expander("📋 " + ("Visualizar dados brutos filtrados" if st.session_state.idioma == 'pt' else 
-                                     "View filtered raw data" if st.session_state.idioma == 'en' else
-                                     "Ver datos brutos filtrados")):
+            with st.expander("📋 " + ("Visualizar dados brutos filtrados" if st.session_state.idioma == 'pt' else "View filtered raw data")):
                 st.dataframe(df_filtrado, use_container_width=True)
     
     # Reset do botão após processamento
     st.session_state.processar_click = False
 
-elif st.session_state.df_completo is None:
+else:
     t = translations[st.session_state.idioma]
-    st.info(t['step1'])
-    
-    col1, col2 = st.columns([2, 1])
-    
-    with col1:
-        st.markdown(t['file_format'])
+    if st.session_state.df_completo is None:
+        st.info(t['step1'])
         
-        exemplo_data = {
-            'Nome-Período-Minuto': [
-                'Mariano-1 TEMPO 00:00-01:00',
-                'Maria-SEGUNDO TEMPO 05:00-06:00',
-                'Joao-2 TEMPO 44:00-45:00',
-                'Marta-PRIMEIRO TEMPO 11:00-12:00',
-                'Pedro-1 TEMPO 15:00-16:00',
-                'Ana-SEGUNDO TEMPO 22:00-23:00'
-            ],
-            'Posição': ['Atacante', 'Meio-campo', 'Zagueiro', 'Atacante', 'Goleiro', 'Meio-campo'],
-            'Distancia Total': [250, 127, 200, 90, 45, 180],
-            'Velocidade Maxima': [23, 29, 33, 27, 15, 31],
-            'Aceleracao Max': [3.6, 4.2, 4.9, 3.1, 2.8, 4.5]
-        }
+        col1, col2 = st.columns([2, 1])
         
-        df_exemplo = pd.DataFrame(exemplo_data)
-        st.dataframe(df_exemplo, use_container_width=True, hide_index=True)
+        with col1:
+            st.markdown(t['file_format'])
+            
+            exemplo_data = {
+                'Nome-Período-Minuto': [
+                    'Mariano-1 TEMPO 00:00-01:00',
+                    'Maria-SEGUNDO TEMPO 05:00-06:00',
+                    'Joao-2 TEMPO 44:00-45:00',
+                    'Marta-PRIMEIRO TEMPO 11:00-12:00',
+                    'Pedro-1 TEMPO 15:00-16:00',
+                    'Ana-SEGUNDO TEMPO 22:00-23:00'
+                ],
+                'Posição': ['Atacante', 'Meio-campo', 'Zagueiro', 'Atacante', 'Goleiro', 'Meio-campo'],
+                'Distancia Total': [250, 127, 200, 90, 45, 180],
+                'Velocidade Maxima': [23, 29, 33, 27, 15, 31],
+                'Aceleracao Max': [3.6, 4.2, 4.9, 3.1, 2.8, 4.5]
+            }
+            
+            df_exemplo = pd.DataFrame(exemplo_data)
+            st.dataframe(df_exemplo, use_container_width=True, hide_index=True)
+            
+        with col2:
+            st.markdown(f"""
+            <div class="metric-container">
+                <h4>{t['components']}</h4>
+                <hr style="border-color: #334155;">
+                <p>{t['name_ex']}</p>
+                <p>{t['period_ex']}</p>
+                <p>{t['minute_ex']}</p>
+                <p>{t['position_ex']}</p>
+            </div>
+            
+            <div class="metric-container" style="margin-top: 20px;">
+                <h4>{t['tip']}</h4>
+                <hr style="border-color: #334155;">
+                <p>{t['tip_text']}</p>
+            </div>
+            """, unsafe_allow_html=True)
         
-    with col2:
-        st.markdown(f"""
-        <div class="metric-container">
-            <h4>{t['components']}</h4>
-            <hr style="border-color: #334155;">
-            <p>{t['name_ex']}</p>
-            <p>{t['period_ex']}</p>
-            <p>{t['minute_ex']}</p>
-            <p>{t['position_ex']}</p>
-        </div>
+        with st.expander(t['multi_file_ex']):
+            st.markdown(t['multi_file_text'])
+    else:
+        st.info(t['step2'])
         
-        <div class="metric-container" style="margin-top: 20px;">
-            <h4>{t['tip']}</h4>
-            <hr style="border-color: #334155;">
-            <p>{t['tip_text']}</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with st.expander(t['multi_file_ex']):
-        st.markdown(t['multi_file_text'])
-        
-elif st.session_state.dados_processados:
-    t = translations[st.session_state.idioma]
-    st.info(t['step2'])
-    
-    with st.expander("📋 " + ("Preview dos dados carregados" if st.session_state.idioma == 'pt' else 
-                             "Preview of loaded data" if st.session_state.idioma == 'en' else
-                             "Vista previa de datos cargados")):
-        if st.session_state.upload_files_names:
-            st.caption(f"**{t['upload']}:** {', '.join(st.session_state.upload_files_names)}")
-            st.markdown("---")
-        
-        st.dataframe(st.session_state.df_completo.head(10), use_container_width=True)
-        st.caption(f"**{t['observations']}:** {len(st.session_state.df_completo)}")
-        st.caption(f"**{t['variable']}s:** {', '.join(st.session_state.variaveis_quantitativas)}")
-        if st.session_state.todos_posicoes:
-            st.caption(f"**{t['positions']}:** {', '.join(st.session_state.todos_posicoes)}")
-        if st.session_state.todos_periodos:
-            st.caption(f"**{t['periods']}:** {', '.join(st.session_state.todos_periodos)}")
+        with st.expander("📋 " + ("Preview dos dados carregados" if st.session_state.idioma == 'pt' else "Preview of loaded data")):
+            if st.session_state.upload_files_names:
+                st.caption(f"**{t['upload']}:** {', '.join(st.session_state.upload_files_names)}")
+                st.markdown("---")
+            
+            st.dataframe(st.session_state.df_completo.head(10), use_container_width=True)
+            st.caption(f"**{t['observations']}:** {len(st.session_state.df_completo)}")
+            st.caption(f"**{t['variable']}s:** {', '.join(st.session_state.variaveis_quantitativas)}")
+            if st.session_state.todos_posicoes:
+                st.caption(f"**{t['positions']}:** {', '.join(st.session_state.todos_posicoes)}")
+            if st.session_state.todos_periodos:
+                st.caption(f"**{t['periods']}:** {', '.join(st.session_state.todos_periodos)}")
