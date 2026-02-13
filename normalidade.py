@@ -621,6 +621,43 @@ if process_button and st.session_state.df_completo is not None and st.session_st
             q3 = df_filtrado[variavel_analise].quantile(0.75)
             st.metric("Q3 (75%)", f"{q3:.2f}")
         
+        # --- INTERVALO DE CONFIANÇA PARA A MÉDIA (OPÇÃO 1) ---
+        st.subheader("🎯 Intervalo de Confiança para a Média")
+        
+        # Cálculos do IC
+        conf_level = 0.95
+        media = df_filtrado[variavel_analise].mean()
+        desvio_padrao = df_filtrado[variavel_analise].std()
+        n_amostra = len(df_filtrado)
+        erro_padrao = desvio_padrao / np.sqrt(n_amostra)
+        graus_liberdade = n_amostra - 1
+        
+        # Escolha da distribuição baseada no tamanho da amostra
+        if n_amostra > 30:  # Aproximação normal
+            z_critico = stats.norm.ppf((1 + conf_level) / 2)
+            ic_inferior = media - z_critico * erro_padrao
+            ic_superior = media + z_critico * erro_padrao
+            distribuicao = "normal (n>30)"
+        else:  # Distribuição t de Student
+            t_critico = stats.t.ppf((1 + conf_level) / 2, graus_liberdade)
+            ic_inferior = media - t_critico * erro_padrao
+            ic_superior = media + t_critico * erro_padrao
+            distribuicao = "t-Student"
+        
+        # Exibição em colunas
+        col_ic1, col_ic2, col_ic3, col_ic4 = st.columns(4)
+        with col_ic1:
+            st.metric("Média", f"{media:.2f}")
+        with col_ic2:
+            st.metric("Erro Padrão", f"{erro_padrao:.3f}")
+        with col_ic3:
+            st.metric("IC Inferior (95%)", f"{ic_inferior:.2f}")
+        with col_ic4:
+            st.metric("IC Superior (95%)", f"{ic_superior:.2f}")
+        
+        st.caption(f"Intervalo de 95% de confiança para a média usando distribuição {distribuicao}: [{ic_inferior:.2f}, {ic_superior:.2f}]")
+        st.caption("📌 Interpretação: Há 95% de confiança de que a verdadeira média populacional está neste intervalo.")
+        
         # --- TABELA RESUMO POR ATLETA, POSIÇÃO E PERÍODO ---
         st.subheader("🏃 Resumo por Atleta, Posição e Período")
         
@@ -679,14 +716,14 @@ if process_button and st.session_state.df_completo is not None and st.session_st
         st.subheader("🧪 Resultado do Teste de Normalidade")
         
         dados_teste = df_filtrado[variavel_analise].dropna()
-        n_amostra = len(dados_teste)
+        n_amostra_teste = len(dados_teste)
         
-        st.write(f"**Tamanho da amostra:** {n_amostra}")
+        st.write(f"**Tamanho da amostra:** {n_amostra_teste}")
         st.write(f"**Variável analisada:** {variavel_analise}")
         
-        if n_amostra < 3:
+        if n_amostra_teste < 3:
             st.error("❌ Amostra muito pequena (n < 3). Teste não aplicável.")
-        elif n_amostra > 5000:
+        elif n_amostra_teste > 5000:
             st.info("ℹ️ Amostra grande demais para Shapiro-Wilk. Usando teste D'Agostino-Pearson.")
             try:
                 k2, p_value = stats.normaltest(dados_teste)
@@ -706,8 +743,8 @@ if process_button and st.session_state.df_completo is not None and st.session_st
             except Exception as e:
                 st.error(f"❌ Erro no teste Shapiro-Wilk: {str(e)}")
         
-        # --- GRÁFICO DE LINHA DO TEMPO COM ORDENAÇÃO FLEXÍVEL ---
-        st.subheader("⏱️ Evolução Temporal dos Valores")
+        # --- GRÁFICO DE LINHA DO TEMPO COM ORDENAÇÃO FLEXÍVEL E IC (OPÇÃO 2) ---
+        st.subheader("⏱️ Evolução Temporal dos Valores com Intervalo de Confiança")
         
         # APLICAR ORDENAÇÃO CONFORME ESCOLHA DO USUÁRIO
         df_tempo = df_filtrado.copy()
@@ -732,9 +769,17 @@ if process_button and st.session_state.df_completo is not None and st.session_st
         
         df_tempo = df_tempo.reset_index(drop=True)
         
-        # Calcular média e limiar de 80%
+        # Calcular média, desvio padrão e intervalo de confiança
         media_valor = df_tempo[variavel_analise].mean()
+        desvio_padrao = df_tempo[variavel_analise].std()
+        n_total = len(df_tempo)
+        erro_padrao = desvio_padrao / np.sqrt(n_total)
         limiar_80 = df_tempo[variavel_analise].max() * 0.8
+        
+        # Calcular IC para a média (95%)
+        t_critico_ic = stats.t.ppf(0.975, n_total-1) if n_total > 1 else 1
+        ic_inferior_media = media_valor - t_critico_ic * erro_padrao
+        ic_superior_media = media_valor + t_critico_ic * erro_padrao
         
         # Criar gráfico
         fig_tempo, ax_tempo = plt.subplots(figsize=(14, 6))
@@ -748,6 +793,16 @@ if process_button and st.session_state.df_completo is not None and st.session_st
             alpha=0.7,
             edgecolor='black',
             linewidth=0.5
+        )
+        
+        # Adicionar banda do intervalo de confiança
+        ax_tempo.fill_between(
+            range(len(df_tempo)),
+            ic_inferior_media,
+            ic_superior_media,
+            alpha=0.2,
+            color='green',
+            label=f'IC 95% da média [{ic_inferior_media:.2f}, {ic_superior_media:.2f}]'
         )
         
         ax_tempo.set_xticks(range(len(df_tempo)))
@@ -775,7 +830,7 @@ if process_button and st.session_state.df_completo is not None and st.session_st
             label=f'80% do Máx: {limiar_80:.2f}'
         )
         
-        ax_tempo.set_title(f"Evolução Temporal - {variavel_analise}", fontsize=14, fontweight='bold')
+        ax_tempo.set_title(f"Evolução Temporal - {variavel_analise} com IC 95%", fontsize=14, fontweight='bold')
         ax_tempo.set_xlabel("Minuto", fontsize=12)
         ax_tempo.set_ylabel(variavel_analise, fontsize=12)
         ax_tempo.legend(loc='upper right')
@@ -789,6 +844,7 @@ if process_button and st.session_state.df_completo is not None and st.session_st
             "🔵 Barras azuis: valores ≤ 80% do máximo | "
             "🔴 Barras vermelhas: valores > 80% do máximo | "
             "⚫ Linha tracejada preta: média | "
+            "🟢 Área verde: intervalo de 95% de confiança da média | "
             "🟠 Linha pontilhada laranja: 80% do valor máximo | "
             f"**Ordenação:** {ordem_escolhida}"
         )
