@@ -669,7 +669,7 @@ elif not process_button:
         **Exemplo:**
         ```
         Nome-Período-Minuto; Distancia Total; Velocidade Maxima; Acc Max
-        Joao-1 TEMPO 00:00-01:00,250,23,3.6
+        Mariano-1 TEMPO 00:00-01:00,250,23,3.6
         Maria-SEGUNDO TEMPO 05:00-06:00,127,29,4.2
         Pele-2 TEMPO 44:00-45:00,200,33,4.9
         Marta-PRIMEIRO TEMPO 11:00-12:00,90,27,3.1
