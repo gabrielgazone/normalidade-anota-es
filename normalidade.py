@@ -779,6 +779,8 @@ def init_session_state():
         st.session_state.zona_key = 0
     if 'anotacoes' not in st.session_state:
         st.session_state.anotacoes = []
+    if 'upload_concluido' not in st.session_state:
+        st.session_state.upload_concluido = False  # NOVA FLAG PARA EVITAR LOOP
 
 init_session_state()
 
@@ -960,7 +962,7 @@ def comparar_grupos(df, variavel, grupo1, grupo2):
         return None
 
 def criar_timeline_profissional(df, variavel, t):
-    """Timeline com tooltips ricos e marcadores de eventos - VERSÃO CORRIGIDA"""
+    """Timeline com tooltips ricos e marcadores de eventos"""
     fig = go.Figure()
     
     # Calcular média móvel (5 pontos)
@@ -1162,28 +1164,26 @@ def time_range_selector(t):
     return data_inicio, data_fim
 
 # ============================================================================
-# CALLBACKS CORRIGIDOS - COM st.rerun() FORÇADO
+# CALLBACKS
 # ============================================================================
 
 def atualizar_metodo_zona():
-    """Callback para atualizar método de zona - AGORA COM RERUN"""
+    """Callback para atualizar método de zona"""
     metodo_selecionado = st.session_state.metodo_zona_radio
     if metodo_selecionado == translations[st.session_state.idioma]['percentiles']:
         st.session_state.metodo_zona = 'percentis'
     else:
         st.session_state.metodo_zona = 'based_on_max'
     st.session_state.zona_key += 1
-    st.rerun()  # FORÇA ATUALIZAÇÃO
 
 def atualizar_grupos():
-    """Callback para atualizar grupos de comparação - AGORA COM RERUN"""
+    """Callback para atualizar grupos de comparação"""
     st.session_state.grupo1 = st.session_state.grupo1_select
     st.session_state.grupo2 = st.session_state.grupo2_select
-    st.rerun()  # FORÇA ATUALIZAÇÃO
 
 def atualizar_comparacao_atletas():
-    """Callback para atualizar comparação de atletas - NOVO"""
-    st.rerun()
+    """Callback para atualizar comparação de atletas"""
+    pass  # Não precisa de rerun, o próprio Streamlit atualiza
 
 # ============================================================================
 # SIDEBAR
@@ -1220,7 +1220,8 @@ with st.sidebar:
         key="file_uploader"
     )
     
-    if upload_files and len(upload_files) > 0:
+    # CORREÇÃO: Processar upload apenas se houver arquivos novos e upload não foi concluído
+    if upload_files and len(upload_files) > 0 and not st.session_state.upload_concluido:
         with st.spinner('🔄 Processando...'):
             time.sleep(0.5)
             try:
@@ -1296,6 +1297,7 @@ with st.sidebar:
                                 st.session_state.periodos_selecionados = periodos_unicos.copy()
                                 st.session_state.ordem_personalizada = periodos_unicos.copy()
                                 st.session_state.upload_files_names = arquivos_validos
+                                st.session_state.upload_concluido = True  # MARCA COMO CONCLUÍDO
                                 
                                 if variaveis_quant and st.session_state.variavel_selecionada is None:
                                     st.session_state.variavel_selecionada = variaveis_quant[0]
@@ -1329,7 +1331,6 @@ with st.sidebar:
             if variavel_selecionada != st.session_state.variavel_selecionada:
                 st.session_state.variavel_selecionada = variavel_selecionada
                 st.session_state.dados_processados = False
-                st.rerun()
             
             df_temp = st.session_state.df_completo[variavel_selecionada].dropna()
             if not df_temp.empty:
@@ -1351,7 +1352,6 @@ with st.sidebar:
                 if st.session_state.posicoes_selecionadas != st.session_state.todos_posicoes:
                     st.session_state.posicoes_selecionadas = st.session_state.todos_posicoes.copy()
                     st.session_state.dados_processados = False
-                    st.rerun()
             else:
                 posicoes_sel = st.multiselect(
                     "",
@@ -1363,7 +1363,6 @@ with st.sidebar:
                 if posicoes_sel != st.session_state.posicoes_selecionadas:
                     st.session_state.posicoes_selecionadas = posicoes_sel
                     st.session_state.dados_processados = False
-                    st.rerun()
         
         if st.session_state.todos_periodos:
             st.markdown("---")
@@ -1382,7 +1381,6 @@ with st.sidebar:
                     st.session_state.periodos_selecionados = st.session_state.todos_periodos.copy()
                     st.session_state.ordem_personalizada = st.session_state.todos_periodos.copy()
                     st.session_state.dados_processados = False
-                    st.rerun()
             else:
                 periodos_sel = st.multiselect(
                     "",
@@ -1394,7 +1392,6 @@ with st.sidebar:
                 if periodos_sel != st.session_state.periodos_selecionados:
                     st.session_state.periodos_selecionados = periodos_sel
                     st.session_state.dados_processados = False
-                    st.rerun()
         
         if st.session_state.atletas_selecionados:
             st.markdown("---")
@@ -1420,7 +1417,6 @@ with st.sidebar:
                 if st.session_state.atletas_selecionados != atletas_disponiveis:
                     st.session_state.atletas_selecionados = atletas_disponiveis
                     st.session_state.dados_processados = False
-                    st.rerun()
             else:
                 atletas_sel = st.multiselect(
                     "",
@@ -1432,12 +1428,10 @@ with st.sidebar:
                 if atletas_sel != st.session_state.atletas_selecionados:
                     st.session_state.atletas_selecionados = atletas_sel
                     st.session_state.dados_processados = False
-                    st.rerun()
         
         st.markdown("---")
         st.markdown(f"<h2 class='sidebar-title'>⚙️ {t['config']}</h2>", unsafe_allow_html=True)
         
-        # CORREÇÃO 1: n_classes agora é armazenado em session_state
         n_classes = st.slider(f"{t['config']}:", 3, 20, 5, key="classes_slider")
         st.session_state.n_classes = n_classes
         
@@ -1547,11 +1541,10 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 with col1:
                     dados_hist = df_filtrado[variavel_analise].dropna()
                     
-                    # CORREÇÃO 1: Histograma usando n_classes do session_state
                     fig_hist = go.Figure()
                     fig_hist.add_trace(go.Histogram(
                         x=dados_hist,
-                        nbinsx=n_classes,  # AGORA USA O VALOR CORRETO
+                        nbinsx=n_classes,
                         name='Frequência',
                         marker_color='#3b82f6',
                         opacity=0.8
@@ -1703,13 +1696,13 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 st.markdown("---")
                 st.markdown(f"<h4>{t['intensity_zones']}</h4>", unsafe_allow_html=True)
                 
-                # CORREÇÃO 2: Radio button com callback que força rerun
+                # Radio button com callback
                 metodo_zona = st.radio(
                     t['zone_method'],
                     [t['percentiles'], t['based_on_max']],
                     index=0 if st.session_state.metodo_zona == 'percentis' else 1,
                     key="metodo_zona_radio",
-                    on_change=atualizar_metodo_zona  # Callback com rerun
+                    on_change=atualizar_metodo_zona
                 )
                 
                 # Calcular zonas com base no método selecionado
@@ -2198,7 +2191,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                                    "At least 2 variables are needed" if st.session_state.idioma == 'en' else
                                    "Se necesitan al menos 2 variables"))
             
-            # Aba 5: Comparações - CORREÇÃO 3
+            # Aba 5: Comparações
             with tabs[4]:
                 st.markdown(f"<h3>{t['tab_comparison']}</h3>", unsafe_allow_html=True)
                 
@@ -2213,7 +2206,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                             posicoes_selecionadas, 
                             index=0, 
                             key="grupo1_select",
-                            on_change=atualizar_grupos  # Callback com rerun
+                            on_change=atualizar_grupos
                         )
                     with col_comp2:
                         grupo2 = st.selectbox(
@@ -2221,14 +2214,14 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                             posicoes_selecionadas, 
                             index=min(1, len(posicoes_selecionadas)-1), 
                             key="grupo2_select",
-                            on_change=atualizar_grupos  # Callback com rerun
+                            on_change=atualizar_grupos
                         )
                     
-                    # Usar os valores armazenados em session_state
-                    grupo1_atual = st.session_state.grupo1 if st.session_state.grupo1 is not None else grupo1
-                    grupo2_atual = st.session_state.grupo2 if st.session_state.grupo2 is not None else grupo2
+                    # Usar os valores atuais dos selects
+                    grupo1_atual = st.session_state.grupo1_select if 'grupo1_select' in st.session_state else grupo1
+                    grupo2_atual = st.session_state.grupo2_select if 'grupo2_select' in st.session_state else grupo2
                     
-                    if grupo1_atual and grupo2_atual and grupo1_atual != grupo2_atual:
+                    if grupo1_atual != grupo2_atual:
                         resultado = comparar_grupos(df_filtrado, variavel_analise, grupo1_atual, grupo2_atual)
                         
                         if resultado:
@@ -2291,7 +2284,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                                    "Select at least 2 positions" if st.session_state.idioma == 'en' else
                                    "Seleccione al menos 2 posiciones"))
             
-            # Aba 6: Executivo - CORREÇÃO 4
+            # Aba 6: Executivo
             with tabs[5]:
                 st.markdown(f"<h3>{t['tab_executive']}</h3>", unsafe_allow_html=True)
                 
@@ -2305,7 +2298,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                             atletas_selecionados, 
                             index=0, 
                             key="atleta1_comp",
-                            on_change=atualizar_comparacao_atletas  # Callback com rerun
+                            on_change=atualizar_comparacao_atletas
                         )
                     with col_atl2:
                         atleta2_comp = st.selectbox(
@@ -2313,7 +2306,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                             atletas_selecionados, 
                             index=min(1, len(atletas_selecionados)-1), 
                             key="atleta2_comp",
-                            on_change=atualizar_comparacao_atletas  # Callback com rerun
+                            on_change=atualizar_comparacao_atletas
                         )
                     
                     if atleta1_comp != atleta2_comp:
@@ -2322,7 +2315,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                             st.session_state.variaveis_quantitativas,
                             default=st.session_state.variaveis_quantitativas[:3],
                             key="vars_comp",
-                            on_change=atualizar_comparacao_atletas  # Callback com rerun
+                            on_change=atualizar_comparacao_atletas
                         )
                         
                         if len(vars_comp) >= 1:
