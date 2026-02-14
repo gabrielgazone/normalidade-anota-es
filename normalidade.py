@@ -10,10 +10,10 @@ import time
 import warnings
 warnings.filterwarnings('ignore')
 
-# CONFIGURAÇÃO DA PÁGINA - DEVE SER A PRIMEIRA INSTRUÇÃO
+# CONFIGURAÇÃO DA PÁGINA - PRIMEIRA INSTRUÇÃO
 st.set_page_config(
-    page_title="🏃 Sports Science Analytics Pro | Quantum Edition",
-    page_icon="🏃",
+    page_title="🏆 SPORTS SCIENCE PRO | GAMIFIED EDITION",
+    page_icon="🏆",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -51,7 +51,13 @@ def init_session_state():
         'window_size': 3,
         'show_critical_markers': True,
         'show_moving_average': True,
-        'confidence_level': 0.95
+        'confidence_level': 0.95,
+        'xp_points': 100,
+        'level': 1,
+        'achievements': [],
+        'streak': 0,
+        'sound_effects': True,
+        'particle_effects': True
     }
     
     for key, value in defaults.items():
@@ -61,266 +67,392 @@ def init_session_state():
 init_session_state()
 
 # ============================================================================
-# CSS PERSONALIZADO - DESIGN CIENTÍFICO QUÂNTICO
+# CSS GAMIFICADO PROFISSIONAL - DESIGN RPG/SCI-FI
 # ============================================================================
 
 st.markdown("""
 <style>
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap');
     @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&display=swap');
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Audiowide&display=swap');
     
     * {
-        font-family: 'Inter', sans-serif;
+        font-family: 'Rajdhani', sans-serif;
     }
     
-    h1, h2, h3, h4, .stMarkdown h1, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4 {
+    h1, h2, h3, h4 {
         font-family: 'Orbitron', sans-serif !important;
     }
     
-    /* Background */
-    .stApp {
-        background: radial-gradient(ellipse at 50% 50%, #0a0f2a 0%, #000000 100%);
-    }
-    
-    /* Sidebar */
-    section[data-testid="stSidebar"] {
-        background: rgba(2, 6, 23, 0.95) !important;
-        backdrop-filter: blur(20px) !important;
-        border-right: 2px solid #3b82f6;
-    }
-    
-    .sidebar-title {
-        font-family: 'Orbitron', sans-serif;
-        font-size: 1.3rem;
-        font-weight: 700;
-        color: #3b82f6;
+    .game-title {
+        font-family: 'Audiowide', cursive !important;
+        font-size: 3.5rem;
         text-align: center;
-        padding: 15px;
-        margin: 15px 0;
-        border: 2px solid #3b82f6;
-        border-radius: 15px;
-        text-transform: uppercase;
-        letter-spacing: 3px;
+        background: linear-gradient(135deg, #ffd700, #ffaa00, #ff6b00);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0 0 30px rgba(255,215,0,0.5);
+        animation: glow 2s ease-in-out infinite;
     }
     
-    /* Cards */
-    .quantum-card {
+    @keyframes glow {
+        0% { filter: drop-shadow(0 0 20px #ffd700); }
+        50% { filter: drop-shadow(0 0 40px #ffaa00); }
+        100% { filter: drop-shadow(0 0 20px #ffd700); }
+    }
+    
+    /* Background com efeito de jogo */
+    .stApp {
+        background: radial-gradient(circle at 20% 30%, #1a1f2f 0%, #0a0f1a 100%);
+        position: relative;
+    }
+    
+    /* Efeito de grade de jogo */
+    .stApp::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: 
+            linear-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(59, 130, 246, 0.1) 1px, transparent 1px);
+        background-size: 50px 50px;
+        pointer-events: none;
+        z-index: 0;
+    }
+    
+    /* Sidebar estilo painel de jogo */
+    section[data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #1a1f2f 0%, #0f1422 100%) !important;
+        border-right: 3px solid #ffd700;
+        box-shadow: 5px 0 30px rgba(255,215,0,0.2);
+    }
+    
+    /* Título da sidebar gamificado */
+    .sidebar-title {
+        font-family: 'Press Start 2P', cursive !important;
+        font-size: 0.8rem;
+        color: #ffd700;
+        text-align: center;
+        padding: 20px;
+        margin: 10px 0;
+        border: 3px solid #ffd700;
+        background: linear-gradient(135deg, #0f1422, #1a1f2f);
+        text-shadow: 0 0 10px #ffd700;
+        animation: borderPulse 2s infinite;
+    }
+    
+    @keyframes borderPulse {
+        0% { border-color: #ffd700; box-shadow: 0 0 20px #ffd700; }
+        50% { border-color: #ffaa00; box-shadow: 0 0 40px #ffaa00; }
+        100% { border-color: #ffd700; box-shadow: 0 0 20px #ffd700; }
+    }
+    
+    /* Cards estilo RPG */
+    .rpg-card {
         background: linear-gradient(135deg, #1e293b, #0f172a);
-        border-radius: 20px;
+        border: 3px solid;
+        border-image: linear-gradient(135deg, #ffd700, #ffaa00, #ff6b00) 1;
+        border-radius: 15px;
         padding: 25px;
-        border: 2px solid #3b82f6;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 30px rgba(255,215,0,0.2);
         transition: all 0.3s ease;
-        margin-bottom: 15px;
+        position: relative;
+        overflow: hidden;
     }
     
-    .quantum-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 15px 40px rgba(59,130,246,0.3);
+    .rpg-card::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(45deg, transparent, rgba(255,215,0,0.1), transparent);
+        transform: rotate(45deg);
+        animation: shine 3s infinite;
     }
     
-    .quantum-card .label {
-        color: #94a3b8;
-        font-size: 0.9rem;
+    @keyframes shine {
+        0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+        100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+    }
+    
+    .rpg-card:hover {
+        transform: translateY(-5px) scale(1.02);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 50px rgba(255,215,0,0.4);
+    }
+    
+    .rpg-card .label {
+        font-family: 'Press Start 2P', cursive;
+        color: #ffd700;
+        font-size: 0.7rem;
         text-transform: uppercase;
         letter-spacing: 2px;
     }
     
-    .quantum-card .value {
+    .rpg-card .value {
         font-family: 'Orbitron', sans-serif;
         font-size: 2.5rem;
-        font-weight: 700;
+        font-weight: 800;
         color: white;
-        margin: 10px 0;
+        text-shadow: 0 0 20px rgba(255,215,0,0.5);
     }
     
-    .quantum-card .icon {
-        font-size: 3rem;
-    }
-    
-    /* Warning card */
-    .quantum-warning {
-        background: linear-gradient(135deg, #dc2626, #b91c1c);
-        border-radius: 20px;
-        padding: 20px;
-        border: 2px solid #ef4444;
-        text-align: center;
-        color: white;
-    }
-    
-    .quantum-warning .value {
-        font-family: 'Orbitron', sans-serif;
-        font-size: 2.5rem;
-        font-weight: 700;
-    }
-    
-    /* Zone cards */
-    .zone-card {
+    /* XP Bar */
+    .xp-bar {
         background: #1e293b;
-        border-radius: 15px;
+        border-radius: 30px;
+        padding: 5px;
+        border: 3px solid #ffd700;
+        margin: 15px 0;
+        position: relative;
+    }
+    
+    .xp-fill {
+        background: linear-gradient(90deg, #ffd700, #ffaa00, #ff6b00);
+        border-radius: 25px;
+        height: 30px;
+        transition: width 0.5s ease;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding-right: 15px;
+        color: black;
+        font-weight: bold;
+        text-shadow: 0 0 10px white;
+    }
+    
+    /* Level badge */
+    .level-badge {
+        background: linear-gradient(135deg, #ffd700, #ffaa00);
+        border-radius: 50px;
+        padding: 10px 25px;
+        display: inline-block;
+        font-family: 'Press Start 2P', cursive;
+        font-size: 0.8rem;
+        color: #0f1422;
+        border: 3px solid white;
+        box-shadow: 0 0 30px #ffd700;
+        animation: levelPulse 2s infinite;
+    }
+    
+    @keyframes levelPulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+    
+    /* Achievement cards */
+    .achievement-card {
+        background: linear-gradient(135deg, #2e3a4f, #1e293b);
+        border-left: 6px solid #ffd700;
+        border-radius: 10px;
         padding: 15px;
-        margin: 5px 0;
-        border-left: 6px solid;
+        margin: 10px 0;
         transition: all 0.3s ease;
     }
     
-    .zone-card:hover {
+    .achievement-card:hover {
         transform: translateX(10px);
+        box-shadow: -10px 10px 30px rgba(0,0,0,0.5);
+    }
+    
+    .achievement-card .achievement-name {
+        font-family: 'Press Start 2P', cursive;
+        color: #ffd700;
+        font-size: 0.7rem;
+    }
+    
+    .achievement-card .achievement-desc {
+        color: #94a3b8;
+        font-size: 0.9rem;
+    }
+    
+    /* Warning card gamificado */
+    .warning-card {
+        background: linear-gradient(135deg, #dc2626, #b91c1c);
+        border: 3px solid #ffd700;
+        border-radius: 15px;
+        padding: 20px;
+        text-align: center;
+        animation: warningPulse 1s infinite;
+        position: relative;
+    }
+    
+    @keyframes warningPulse {
+        0% { box-shadow: 0 0 30px #dc2626; }
+        50% { box-shadow: 0 0 60px #ffd700; }
+        100% { box-shadow: 0 0 30px #dc2626; }
+    }
+    
+    .warning-card .value {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 3rem;
+        color: white;
+        text-shadow: 0 0 30px rgba(255,255,255,0.5);
+    }
+    
+    /* Zone cards gamificados */
+    .zone-card {
+        background: linear-gradient(135deg, #1e293b, #0f172a);
+        border-radius: 15px;
+        padding: 15px;
+        margin: 5px 0;
+        border-left: 8px solid;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .zone-card::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 50px;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,215,0,0.1));
+    }
+    
+    .zone-card:hover {
+        transform: translateX(15px) scale(1.02);
+        box-shadow: -15px 15px 30px rgba(0,0,0,0.6);
     }
     
     .zone-card .zone-name {
-        color: #94a3b8;
-        font-size: 1rem;
-        text-transform: uppercase;
+        font-family: 'Press Start 2P', cursive;
+        font-size: 0.7rem;
+        color: #ffd700;
     }
     
     .zone-card .zone-value {
         font-family: 'Orbitron', sans-serif;
-        font-size: 1.5rem;
+        font-size: 1.8rem;
         color: white;
+        font-weight: 700;
     }
     
     .zone-card .zone-count {
-        color: #3b82f6;
-        font-size: 1rem;
-    }
-    
-    /* Wave card */
-    .wave-card {
-        background: linear-gradient(135deg, #1e293b, #0f172a);
-        border-radius: 15px;
-        padding: 15px;
-        border-left: 6px solid;
-        margin: 10px 0;
-    }
-    
-    .wave-card .label {
-        color: #94a3b8;
-        font-size: 0.85rem;
-        text-transform: uppercase;
-    }
-    
-    .wave-card .value {
-        font-family: 'Orbitron', sans-serif;
-        font-size: 1.8rem;
-        color: white;
-    }
-    
-    .wave-card .sub-value {
-        color: #64748b;
-        font-size: 0.85rem;
-    }
-    
-    /* Tabs */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 10px;
-        background: #1e293b;
-        border-radius: 10px;
-        padding: 5px;
-    }
-    
-    .stTabs [data-baseweb="tab"] {
-        border-radius: 10px;
-        padding: 10px 20px;
-        color: #94a3b8;
+        font-size: 1.2rem;
+        color: #ffd700;
         font-weight: 600;
     }
     
-    .stTabs [aria-selected="true"] {
-        background: #3b82f6 !important;
-        color: white !important;
+    /* Tabs gamificadas */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 15px;
+        background: rgba(30, 41, 59, 0.8);
+        backdrop-filter: blur(10px);
+        padding: 10px;
+        border-radius: 60px;
+        border: 3px solid #ffd700;
     }
     
-    /* Buttons */
-    .stButton > button {
-        background: linear-gradient(135deg, #3b82f6, #2563eb);
-        color: white;
-        border: none;
-        border-radius: 10px;
-        padding: 15px 30px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 2px;
+    .stTabs [data-baseweb="tab"] {
+        border-radius: 50px;
+        padding: 12px 30px;
+        font-weight: 600;
+        color: #94a3b8 !important;
         transition: all 0.3s ease;
-        border: 2px solid #3b82f6;
+        font-size: 1rem;
+        font-family: 'Press Start 2P', cursive !important;
+        font-size: 0.7rem;
+    }
+    
+    .stTabs [aria-selected="true"] {
+        background: linear-gradient(135deg, #ffd700, #ffaa00) !important;
+        color: #0f1422 !important;
+        transform: scale(1.05);
+        box-shadow: 0 0 30px #ffd700;
+    }
+    
+    /* Botões gamificados */
+    .stButton > button {
+        background: linear-gradient(135deg, #ffd700, #ffaa00, #ff6b00);
+        color: #0f1422;
+        border: none;
+        border-radius: 50px;
+        padding: 15px 35px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 3px;
+        font-size: 1.1rem;
+        border: 3px solid white;
+        box-shadow: 0 0 30px rgba(255,215,0,0.5);
+        transition: all 0.3s ease;
+        font-family: 'Press Start 2P', cursive !important;
+        font-size: 0.8rem;
     }
     
     .stButton > button:hover {
         transform: scale(1.05);
-        box-shadow: 0 10px 30px rgba(59,130,246,0.5);
+        box-shadow: 0 0 50px #ffd700;
+        border-color: #ffd700;
     }
     
-    /* Metric container */
-    .metric-container {
-        background: #1e293b;
-        border-radius: 15px;
-        padding: 20px;
-        border: 2px solid #3b82f6;
-        margin: 10px 0;
-    }
-    
-    .metric-container h4 {
-        color: #3b82f6;
-        margin-bottom: 10px;
-    }
-    
-    .metric-container p {
-        color: #e2e8f0;
-        margin: 5px 0;
-    }
-    
-    /* Note card */
-    .note-card {
-        background: #1e293b;
-        padding: 15px;
+    /* Progress bars gamificadas */
+    .stProgress > div > div {
+        background: linear-gradient(90deg, #ffd700, #ffaa00, #ff6b00) !important;
         border-radius: 10px;
-        margin: 10px 0;
-        border-left: 4px solid #3b82f6;
+        border: 2px solid white;
     }
     
-    .note-card .note-date {
-        color: #94a3b8;
-        font-size: 0.85rem;
-    }
-    
-    .note-card .note-text {
-        color: white;
-    }
-    
-    /* Scrollbar */
-    ::-webkit-scrollbar {
-        width: 10px;
-        height: 10px;
-    }
-    
-    ::-webkit-scrollbar-track {
-        background: #1e293b;
-    }
-    
-    ::-webkit-scrollbar-thumb {
-        background: #3b82f6;
-        border-radius: 5px;
-    }
-    
-    /* Dataframe */
+    /* Dataframe gamificado */
     .dataframe {
         background: #1e293b !important;
-        border-radius: 10px !important;
-        border: 2px solid #3b82f6 !important;
-        color: white !important;
+        border: 3px solid #ffd700 !important;
+        border-radius: 15px !important;
     }
     
     .dataframe th {
-        background: #0f172a !important;
-        color: #3b82f6 !important;
-        padding: 12px !important;
+        background: linear-gradient(135deg, #ffd700, #ffaa00) !important;
+        color: #0f1422 !important;
+        font-family: 'Press Start 2P', cursive !important;
+        font-size: 0.7rem !important;
+        padding: 15px !important;
     }
     
     .dataframe td {
-        background: #1e293b !important;
+        background: #0f172a !important;
         color: #e2e8f0 !important;
-        padding: 10px !important;
+        border-color: #ffd700 !important;
+        padding: 12px !important;
+    }
+    
+    /* Animações de entrada */
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(-30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    .slide-in {
+        animation: slideIn 0.5s ease-out;
+    }
+    
+    /* Efeito de partículas (opcional) */
+    .particle {
+        position: fixed;
+        width: 5px;
+        height: 5px;
+        background: #ffd700;
+        border-radius: 50%;
+        pointer-events: none;
+        animation: float 3s infinite;
+    }
+    
+    @keyframes float {
+        0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+        100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -341,20 +473,56 @@ mobile = is_mobile()
 n_colunas = 1 if mobile else 4
 
 # ============================================================================
-# HEADER
+# HEADER GAMIFICADO
 # ============================================================================
 
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
     st.markdown("""
     <div style="text-align: center; padding: 30px 0;">
-        <h1>⚛️ SPORTS SCIENCE PRO</h1>
-        <p style="color: #94a3b8; font-size: 1.4rem;">QUANTUM ANALYTICS PLATFORM</p>
+        <h1 class="game-title">🏆 SPORTS SCIENCE PRO</h1>
+        <p style="color: #ffd700; font-size: 1.2rem; letter-spacing: 4px; font-family: 'Press Start 2P', cursive;">
+            GAMIFIED EDITION ⚡ LEVEL UP YOUR ANALYSIS
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+# Sistema de XP e Level
+col1, col2, col3, col4 = st.columns(4)
+with col1:
+    st.markdown(f"""
+    <div class="level-badge">
+        LEVEL {st.session_state.level}
+    </div>
+    """, unsafe_allow_html=True)
+
+with col2:
+    st.markdown(f"""
+    <div class="xp-bar">
+        <div class="xp-fill" style="width: {min(st.session_state.xp_points % 100, 100)}%;">
+            {st.session_state.xp_points} XP
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col3:
+    st.markdown(f"""
+    <div class="rpg-card" style="padding: 10px;">
+        <p class="label">🔥 STREAK</p>
+        <p class="value" style="font-size: 1.5rem;">{st.session_state.streak} dias</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col4:
+    st.markdown(f"""
+    <div class="rpg-card" style="padding: 10px;">
+        <p class="label">🏆 ACHIEVEMENTS</p>
+        <p class="value" style="font-size: 1.5rem;">{len(st.session_state.achievements)}</p>
     </div>
     """, unsafe_allow_html=True)
 
 # ============================================================================
-# INTERNACIONALIZAÇÃO
+# INTERNACIONALIZAÇÃO COMPLETA (com espanhol latino)
 # ============================================================================
 
 translations = {
@@ -402,7 +570,7 @@ translations = {
         'moderate': 'Moderada',
         'high': 'Alta',
         'very_high': 'Muito Alta',
-        'process': '🚀 PROCESSAR ANÁLISE',
+        'process': '⚡ PROCESSAR ANÁLISE',
         'descriptive_stats': '📊 Estatísticas Descritivas',
         'confidence_interval': '🎯 Intervalo de Confiança',
         'normality_test': '🧪 Teste de Normalidade',
@@ -437,7 +605,12 @@ translations = {
         'moving_average': 'Média Móvel',
         'window_size': 'Janela',
         'critical_markers': 'Marcadores Críticos',
-        'trend_analysis': 'Análise de Tendência'
+        'trend_analysis': 'Análise de Tendência',
+        'gain_xp': 'Ganhou +10 XP!',
+        'achievement_unlocked': '🏆 Conquista Desbloqueada!',
+        'first_analysis': 'Primeira Análise',
+        'critical_finder': 'Caçador de Críticos',
+        'master_analyst': 'Mestre Analista'
     },
     'en': {
         'title': 'Sports Science Analytics Pro',
@@ -483,7 +656,7 @@ translations = {
         'moderate': 'Moderate',
         'high': 'High',
         'very_high': 'Very High',
-        'process': '🚀 PROCESS ANALYSIS',
+        'process': '⚡ PROCESS ANALYSIS',
         'descriptive_stats': '📊 Descriptive Statistics',
         'confidence_interval': '🎯 Confidence Interval',
         'normality_test': '🧪 Normality Test',
@@ -518,101 +691,282 @@ translations = {
         'moving_average': 'Moving Average',
         'window_size': 'Window',
         'critical_markers': 'Critical Markers',
-        'trend_analysis': 'Trend Analysis'
+        'trend_analysis': 'Trend Analysis',
+        'gain_xp': 'Earned +10 XP!',
+        'achievement_unlocked': '🏆 Achievement Unlocked!',
+        'first_analysis': 'First Analysis',
+        'critical_finder': 'Critical Hunter',
+        'master_analyst': 'Master Analyst'
+    },
+    'es': {
+        'title': 'Sports Science Analytics Pro',
+        'upload': 'Carga de Datos',
+        'variable': 'Variable',
+        'position': 'Posición',
+        'period': 'Período',
+        'athlete': 'Atleta',
+        'config': 'Configuración',
+        'tab_distribution': '📊 Distribución',
+        'tab_temporal': '📈 Temporal',
+        'tab_boxplots': '📦 Boxplots',
+        'tab_correlation': '🔥 Correlaciones',
+        'tab_comparison': '⚖️ Comparaciones',
+        'tab_executive': '📋 Ejecutivo',
+        'mean': 'Media',
+        'median': 'Mediana',
+        'mode': 'Moda',
+        'std': 'Desviación Estándar',
+        'variance': 'Varianza',
+        'cv': 'CV',
+        'min': 'Mínimo',
+        'max': 'Máximo',
+        'amplitude': 'Amplitud',
+        'q1': 'Q1 (25%)',
+        'q3': 'Q3 (75%)',
+        'iqr': 'IQR',
+        'skewness': 'Asimetría',
+        'kurtosis': 'Curtosis',
+        'max_value': 'MÁXIMO',
+        'min_value': 'MÍNIMO',
+        'minute_of_max': 'Minuto del Máx',
+        'minute_of_min': 'Minuto del Mín',
+        'threshold_80': 'UMBRAL 80%',
+        'critical_events': 'EVENTOS CRÍTICOS',
+        'above_threshold': 'sobre el umbral',
+        'intensity_zones': 'Zonas de Intensidad',
+        'zone_method': 'Método',
+        'percentiles': 'Percentiles',
+        'based_on_max': 'Basado en Máximo',
+        'very_low': 'Muy Baja',
+        'low': 'Baja',
+        'moderate': 'Moderada',
+        'high': 'Alta',
+        'very_high': 'Muy Alta',
+        'process': '⚡ PROCESAR ANÁLISIS',
+        'descriptive_stats': '📊 Estadísticas Descriptivas',
+        'confidence_interval': '🎯 Intervalo de Confianza',
+        'normality_test': '🧪 Prueba de Normalidad',
+        'summary_by_group': '🏃 Resumen por Grupo',
+        'symmetric': 'Simétrica',
+        'moderate_skew': 'Asimetría Moderada',
+        'high_skew': 'Asimetría Fuerte',
+        'leptokurtic': 'Leptocúrtica',
+        'platykurtic': 'Platicúrtica',
+        'mesokurtic': 'Mesocúrtica',
+        'strong_positive': 'Correlación Fuerte Positiva',
+        'moderate_positive': 'Correlación Moderada Positiva',
+        'weak_positive': 'Correlación Débil Positiva',
+        'very_weak_positive': 'Correlación Muy Débil Positiva',
+        'very_weak_negative': 'Correlación Muy Débil Negativa',
+        'weak_negative': 'Correlación Débil Negativa',
+        'moderate_negative': 'Correlación Moderada Negativa',
+        'strong_negative': 'Correlación Fuerte Negativa',
+        'iqr_title': '📌 IQR',
+        'iqr_explanation': 'Rango Intercuartil (Q3 - Q1)',
+        'step1': '👈 **Paso 1:** Cargue datos CSV',
+        'step2': '👈 **Paso 2:** Seleccione filtros y procese',
+        'file_format': '### 📋 Formato del Archivo',
+        'components': '📌 Componentes',
+        'name_ex': 'Nombre: Juan, María...',
+        'period_ex': 'Período: 1er Tiempo...',
+        'minute_ex': 'Minuto: 00:00-01:00...',
+        'position_ex': 'Posición: Delantero...',
+        'tip': '💡 Consejo',
+        'tip_text': 'Múltiples archivos CSV',
+        'multi_file_ex': '📁 Múltiples Archivos',
+        'moving_average': 'Media Móvil',
+        'window_size': 'Ventana',
+        'critical_markers': 'Marcadores Críticos',
+        'trend_analysis': 'Análisis de Tendencia',
+        'gain_xp': '¡Ganaste +10 XP!',
+        'achievement_unlocked': '🏆 ¡Logro Desbloqueado!',
+        'first_analysis': 'Primer Análisis',
+        'critical_finder': 'Cazador de Críticos',
+        'master_analyst': 'Analista Maestro'
+    },
+    'es-mx': {
+        'title': 'Sports Science Analytics Pro',
+        'upload': 'Carga de Datos',
+        'variable': 'Variable',
+        'position': 'Posición',
+        'period': 'Periodo',
+        'athlete': 'Atleta',
+        'config': 'Configuración',
+        'tab_distribution': '📊 Distribución',
+        'tab_temporal': '📈 Temporal',
+        'tab_boxplots': '📦 Boxplots',
+        'tab_correlation': '🔥 Correlaciones',
+        'tab_comparison': '⚖️ Comparaciones',
+        'tab_executive': '📋 Ejecutivo',
+        'mean': 'Media',
+        'median': 'Mediana',
+        'mode': 'Moda',
+        'std': 'Desviación Estándar',
+        'variance': 'Varianza',
+        'cv': 'CV',
+        'min': 'Mínimo',
+        'max': 'Máximo',
+        'amplitude': 'Amplitud',
+        'q1': 'Q1 (25%)',
+        'q3': 'Q3 (75%)',
+        'iqr': 'IQR',
+        'skewness': 'Asimetría',
+        'kurtosis': 'Curtosis',
+        'max_value': 'MÁXIMO',
+        'min_value': 'MÍNIMO',
+        'minute_of_max': 'Minuto del Máx',
+        'minute_of_min': 'Minuto del Mín',
+        'threshold_80': 'UMBRAL 80%',
+        'critical_events': 'EVENTOS CRÍTICOS',
+        'above_threshold': 'arriba del umbral',
+        'intensity_zones': 'Zonas de Intensidad',
+        'zone_method': 'Método',
+        'percentiles': 'Percentiles',
+        'based_on_max': 'Basado en Máximo',
+        'very_low': 'Muy Baja',
+        'low': 'Baja',
+        'moderate': 'Moderada',
+        'high': 'Alta',
+        'very_high': 'Muy Alta',
+        'process': '⚡ PROCESAR ANÁLISIS',
+        'descriptive_stats': '📊 Estadísticas Descriptivas',
+        'confidence_interval': '🎯 Intervalo de Confianza',
+        'normality_test': '🧪 Prueba de Normalidad',
+        'summary_by_group': '🏃 Resumen por Grupo',
+        'symmetric': 'Simétrica',
+        'moderate_skew': 'Asimetría Moderada',
+        'high_skew': 'Asimetría Fuerte',
+        'leptokurtic': 'Leptocúrtica',
+        'platykurtic': 'Platicúrtica',
+        'mesokurtic': 'Mesocúrtica',
+        'strong_positive': 'Correlación Fuerte Positiva',
+        'moderate_positive': 'Correlación Moderada Positiva',
+        'weak_positive': 'Correlación Débil Positiva',
+        'very_weak_positive': 'Correlación Muy Débil Positiva',
+        'very_weak_negative': 'Correlación Muy Débil Negativa',
+        'weak_negative': 'Correlación Débil Negativa',
+        'moderate_negative': 'Correlación Moderada Negativa',
+        'strong_negative': 'Correlación Fuerte Negativa',
+        'iqr_title': '📌 IQR',
+        'iqr_explanation': 'Rango Intercuartil (Q3 - Q1)',
+        'step1': '👈 **Paso 1:** Cargue archivos CSV',
+        'step2': '👈 **Paso 2:** Seleccione filtros y procese',
+        'file_format': '### 📋 Formato del Archivo',
+        'components': '📌 Componentes',
+        'name_ex': 'Nombre: Juan, María...',
+        'period_ex': 'Periodo: 1er Tiempo...',
+        'minute_ex': 'Minuto: 00:00-01:00...',
+        'position_ex': 'Posición: Delantero...',
+        'tip': '💡 Consejo',
+        'tip_text': 'Múltiples archivos CSV',
+        'multi_file_ex': '📁 Múltiples Archivos',
+        'moving_average': 'Media Móvil',
+        'window_size': 'Ventana',
+        'critical_markers': 'Marcadores Críticos',
+        'trend_analysis': 'Análisis de Tendencia',
+        'gain_xp': '¡Ganaste +10 XP!',
+        'achievement_unlocked': '🏆 ¡Logro Desbloqueado!',
+        'first_analysis': 'Primer Análisis',
+        'critical_finder': 'Cazador de Críticos',
+        'master_analyst': 'Analista Maestro'
     }
 }
 
 # ============================================================================
-# FUNÇÕES DE PROCESSAMENTO
+# FUNÇÕES DE PROCESSAMENTO DE DADOS
 # ============================================================================
 
 def parse_identificacao(series):
-    """Parseia coluna de identificação: Nome-Período-Minuto"""
-    nomes, periodos, minutos = [], [], []
+    """Parseia a coluna de identificação de forma robusta"""
+    nomes = []
+    periodos = []
+    minutos = []
     
-    for item in series:
+    for valor in series:
         try:
-            texto = str(item).strip()
+            texto = str(valor).strip()
             partes = texto.split('-')
             
             if len(partes) >= 3:
-                nomes.append(partes[0].strip())
-                periodos.append('-'.join(partes[1:-1]).strip())
-                minutos.append(partes[-1].strip())
+                nome = partes[0].strip()
+                periodo = '-'.join(partes[1:-1]).strip()
+                minuto = partes[-1].strip()
             else:
-                nomes.append(texto)
-                periodos.append('')
-                minutos.append('')
+                nome = texto
+                periodo = ''
+                minuto = ''
         except:
-            nomes.append('')
-            periodos.append('')
-            minutos.append('')
+            nome = ''
+            periodo = ''
+            minuto = ''
+        
+        nomes.append(nome)
+        periodos.append(periodo)
+        minutos.append(minuto)
     
     return nomes, periodos, minutos
 
 def verificar_estruturas_arquivos(dataframes):
-    """Verifica estrutura dos dataframes"""
+    """Verifica se todos os dataframes têm a mesma estrutura"""
     if not dataframes:
         return False, []
     
-    primeira = dataframes[0].columns.tolist()
+    primeira_estrutura = dataframes[0].columns.tolist()
     
-    for df in dataframes[1:]:
-        if df.columns.tolist() != primeira:
-            return False, primeira
+    for i, df in enumerate(dataframes[1:], 1):
+        if df.columns.tolist() != primeira_estrutura:
+            return False, primeira_estrutura
     
-    return True, primeira
+    return True, primeira_estrutura
 
 def processar_upload(files):
-    """Processa arquivos CSV"""
+    """Processa múltiplos arquivos CSV"""
     if not files:
         return None, [], [], [], []
     
     dataframes = []
     nomes_arquivos = []
     
-    for f in files:
+    for file in files:
         try:
-            df = pd.read_csv(f)
+            df = pd.read_csv(file)
             if df.shape[1] >= 3:
                 dataframes.append(df)
-                nomes_arquivos.append(f.name)
-        except:
+                nomes_arquivos.append(file.name)
+        except Exception as e:
+            st.error(f"Erro ao ler {file.name}: {str(e)}")
             continue
     
     if not dataframes:
         return None, [], [], [], []
     
-    # Verificar estrutura
-    estrutura_ok, _ = verificar_estruturas_arquivos(dataframes)
-    if not estrutura_ok:
+    estruturas_ok, estrutura_base = verificar_estruturas_arquivos(dataframes)
+    
+    if not estruturas_ok:
+        st.error(f"❌ Arquivos com estruturas diferentes!")
         return None, [], [], [], []
     
-    # Concatenar
-    df_final = pd.concat(dataframes, ignore_index=True)
+    df_concatenado = pd.concat(dataframes, ignore_index=True)
     
-    # Parsear identificação
-    primeira_coluna = df_final.iloc[:, 0].astype(str)
+    primeira_coluna = df_concatenado.iloc[:, 0].astype(str)
     nomes, periodos, minutos = parse_identificacao(primeira_coluna)
     
-    # Posições
-    posicoes = df_final.iloc[:, 1].astype(str)
+    posicoes = df_concatenado.iloc[:, 1].astype(str)
     
-    # Variáveis numéricas
-    variaveis = []
-    dados_var = {}
+    variaveis_quant = []
+    dados_quant = {}
     
-    for i in range(2, df_final.shape[1]):
-        nome = df_final.columns[i]
-        valores = pd.to_numeric(df_final.iloc[:, i], errors='coerce')
+    for col_idx in range(2, df_concatenado.shape[1]):
+        nome_var = df_concatenado.columns[col_idx]
+        valores = pd.to_numeric(df_concatenado.iloc[:, col_idx], errors='coerce')
+        
         if not valores.dropna().empty:
-            variaveis.append(nome)
-            dados_var[nome] = valores
+            variaveis_quant.append(nome_var)
+            dados_quant[nome_var] = valores.values
     
-    if not variaveis:
+    if not variaveis_quant:
         return None, [], [], [], []
     
-    # Dataframe estruturado
     df_estruturado = pd.DataFrame({
         'Nome': nomes,
         'Posição': posicoes,
@@ -620,15 +974,21 @@ def processar_upload(files):
         'Minuto': minutos
     })
     
-    for var, vals in dados_var.items():
-        df_estruturado[var] = vals
+    for var_nome, var_valores in dados_quant.items():
+        df_estruturado[var_nome] = var_valores
     
-    df_estruturado = df_estruturado[df_estruturado['Nome'].str.len() > 0].reset_index(drop=True)
+    df_estruturado = df_estruturado[
+        (df_estruturado['Nome'].str.len() > 0) & 
+        (df_estruturado['Posição'].str.len() > 0)
+    ].reset_index(drop=True)
     
-    periodos_unicos = sorted([p for p in df_estruturado['Período'].unique() if p])
-    posicoes_unicas = sorted([p for p in df_estruturado['Posição'].unique() if p])
+    if df_estruturado.empty:
+        return None, [], [], [], []
     
-    return df_estruturado, variaveis, periodos_unicos, posicoes_unicas, nomes_arquivos
+    periodos_unicos = sorted([p for p in df_estruturado['Período'].unique() if p and p.strip()])
+    posicoes_unicas = sorted([p for p in df_estruturado['Posição'].unique() if p and p.strip()])
+    
+    return df_estruturado, variaveis_quant, periodos_unicos, posicoes_unicas, nomes_arquivos
 
 def media_movel(series, window):
     """Calcula média móvel"""
@@ -636,22 +996,29 @@ def media_movel(series, window):
         return series
     return series.rolling(window=window, min_periods=1, center=True).mean()
 
-def extrair_minuto_extremo(df, col_valor, col_minuto, extremo='max'):
-    """Extrai minuto do valor extremo"""
+def extrair_minuto_extremo(df, coluna_valor, coluna_minuto, extremo='max'):
+    """Extrai o minuto onde ocorre o valor extremo"""
     try:
         if df.empty:
-            return 'N/A'
+            return "N/A"
+        
         if extremo == 'max':
-            idx = df[col_valor].idxmax()
+            idx = df[coluna_valor].idxmax()
         else:
-            idx = df[col_valor].idxmin()
-        return str(df.loc[idx, col_minuto]) if pd.notna(idx) else 'N/A'
+            idx = df[coluna_valor].idxmin()
+        
+        if pd.notna(idx):
+            return str(df.loc[idx, coluna_minuto])
+        
+        return "N/A"
     except:
-        return 'N/A'
+        return "N/A"
 
 def calcular_cv(media, desvio):
-    """Coeficiente de variação"""
-    return (desvio / abs(media)) * 100 if media != 0 else 0
+    """Calcula coeficiente de variação"""
+    if media != 0 and not np.isnan(media) and not np.isnan(desvio):
+        return (desvio / abs(media)) * 100
+    return 0
 
 def criar_zonas_intensidade(df, variavel, metodo='percentis'):
     """Cria zonas de intensidade"""
@@ -673,39 +1040,39 @@ def criar_zonas_intensidade(df, variavel, metodo='percentis'):
             'Muito Alta': max_val
         }
 
-def comparar_grupos(df, variavel, g1, g2):
-    """Compara dois grupos"""
+def comparar_grupos(df, variavel, grupo1, grupo2):
+    """Compara dois grupos usando teste estatístico"""
     try:
-        d1 = df[df['Posição'] == g1][variavel].dropna()
-        d2 = df[df['Posição'] == g2][variavel].dropna()
+        dados1 = df[df['Posição'] == grupo1][variavel].dropna()
+        dados2 = df[df['Posição'] == grupo2][variavel].dropna()
         
-        if len(d1) < 3 or len(d2) < 3:
+        if len(dados1) < 3 or len(dados2) < 3:
             return None
         
-        if len(d1) <= 5000 and len(d2) <= 5000:
-            _, p1 = stats.shapiro(d1)
-            _, p2 = stats.shapiro(d2)
+        if len(dados1) <= 5000 and len(dados2) <= 5000:
+            _, p1 = stats.shapiro(dados1)
+            _, p2 = stats.shapiro(dados2)
             
             if p1 > 0.05 and p2 > 0.05:
-                stat, p = stats.ttest_ind(d1, d2)
+                stat, p_valor = stats.ttest_ind(dados1, dados2)
                 teste = "Teste t"
             else:
-                stat, p = stats.mannwhitneyu(d1, d2)
+                stat, p_valor = stats.mannwhitneyu(dados1, dados2)
                 teste = "Mann-Whitney"
         else:
-            stat, p = stats.mannwhitneyu(d1, d2)
+            stat, p_valor = stats.mannwhitneyu(dados1, dados2)
             teste = "Mann-Whitney"
         
         return {
             'teste': teste,
-            'p_valor': p,
-            'significativo': p < 0.05,
-            'media_g1': d1.mean(),
-            'media_g2': d2.mean(),
-            'std_g1': d1.std(),
-            'std_g2': d2.std(),
-            'n_g1': len(d1),
-            'n_g2': len(d2)
+            'p_valor': p_valor,
+            'significativo': p_valor < 0.05,
+            'media_g1': dados1.mean(),
+            'media_g2': dados2.mean(),
+            'std_g1': dados1.std(),
+            'std_g2': dados2.std(),
+            'n_g1': len(dados1),
+            'n_g2': len(dados2)
         }
     except:
         return None
@@ -725,7 +1092,7 @@ def interpretar_teste(p_valor, nome_teste, t):
         cor = "#ef4444"
     
     st.markdown(f"""
-    <div style="background: #1e293b; border-radius: 12px; padding: 20px; border-left: 5px solid {cor};">
+    <div class="rpg-card" style="border-left: 5px solid {cor};">
         <h4 style="color: white;">{status}</h4>
         <p style="color: #94a3b8;"><strong>Teste:</strong> {nome_teste}</p>
         <p style="color: #94a3b8;"><strong>p-valor:</strong> <span style="color: {cor};">{p_text}</span></p>
@@ -733,19 +1100,19 @@ def interpretar_teste(p_valor, nome_teste, t):
     """, unsafe_allow_html=True)
 
 def executive_card(titulo, valor, delta, icone, cor_status="#3b82f6"):
-    """Card executivo"""
+    """Card executivo com delta"""
     delta_icon = "▲" if delta > 0 else "▼"
     delta_color = "#10b981" if delta > 0 else "#ef4444"
     
     st.markdown(f"""
-    <div class="quantum-card" style="border-left-color: {cor_status};">
+    <div class="rpg-card" style="border-left-color: {cor_status};">
         <div style="display: flex; justify-content: space-between;">
             <div>
                 <p class="label">{titulo}</p>
                 <p class="value">{valor}</p>
                 <p style="color: {delta_color};">{delta_icon} {abs(delta):.1f}%</p>
             </div>
-            <div class="icon">{icone}</div>
+            <div style="font-size: 3rem;">{icone}</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -753,25 +1120,42 @@ def executive_card(titulo, valor, delta, icone, cor_status="#3b82f6"):
 def time_metric_card(label, valor, sub_label="", cor="#3b82f6"):
     """Card para métricas temporais"""
     st.markdown(f"""
-    <div class="wave-card" style="border-left-color: {cor};">
+    <div class="rpg-card" style="border-left: 6px solid {cor};">
         <p class="label">{label}</p>
-        <p class="value">{valor}</p>
-        <p class="sub-value">{sub_label}</p>
+        <p class="value" style="font-size: 1.8rem;">{valor}</p>
+        <p style="color: #64748b;">{sub_label}</p>
     </div>
     """, unsafe_allow_html=True)
 
 def warning_card(titulo, valor, subtitulo, icone="⚠️"):
     """Card de aviso"""
     st.markdown(f"""
-    <div class="quantum-warning">
+    <div class="warning-card">
         <p class="label">{icone} {titulo}</p>
         <p class="value">{valor}</p>
-        <p>{subtitulo}</p>
+        <p style="color: white;">{subtitulo}</p>
     </div>
     """, unsafe_allow_html=True)
 
+def add_xp(amount=10):
+    """Adiciona XP e verifica level up"""
+    st.session_state.xp_points += amount
+    st.session_state.streak += 1
+    
+    # Level up a cada 100 XP
+    new_level = (st.session_state.xp_points // 100) + 1
+    if new_level > st.session_state.level:
+        st.session_state.level = new_level
+        st.balloons()
+        st.success(f"🎉 LEVEL UP! Agora você é nível {new_level}!")
+    
+    # Verificar conquistas
+    if st.session_state.xp_points >= 100 and 'first_analysis' not in st.session_state.achievements:
+        st.session_state.achievements.append('first_analysis')
+        st.success(f"🏆 {t['achievement_unlocked']}: {t['first_analysis']}")
+
 def comparar_atletas(df, atleta1, atleta2, variaveis, t):
-    """Compara dois atletas"""
+    """Comparação lado a lado de dois atletas"""
     try:
         dados1 = df[df['Nome'] == atleta1][variaveis].mean()
         dados2 = df[df['Nome'] == atleta2][variaveis].mean()
@@ -784,7 +1168,7 @@ def comparar_atletas(df, atleta1, atleta2, variaveis, t):
                 delta = ((dados1[var] - dados2[var]) / dados2[var]) * 100 if dados2[var] != 0 else 0
                 cor = "#10b981" if delta > 0 else "#ef4444"
                 st.markdown(f"""
-                <div style="background: #1e293b; padding: 15px; border-radius: 10px; margin: 10px 0; border-left: 4px solid {cor};">
+                <div class="rpg-card" style="padding: 15px; border-left: 4px solid {cor};">
                     <span style="color: #94a3b8;">{var}:</span>
                     <span style="color: white; float: right;">{dados1[var]:.2f}</span>
                     <br>
@@ -798,15 +1182,15 @@ def comparar_atletas(df, atleta1, atleta2, variaveis, t):
                 delta = ((dados2[var] - dados1[var]) / dados1[var]) * 100 if dados1[var] != 0 else 0
                 cor = "#10b981" if delta > 0 else "#ef4444"
                 st.markdown(f"""
-                <div style="background: #1e293b; padding: 15px; border-radius: 10px; margin: 10px 0; border-left: 4px solid {cor};">
+                <div class="rpg-card" style="padding: 15px; border-left: 4px solid {cor};">
                     <span style="color: #94a3b8;">{var}:</span>
                     <span style="color: white; float: right;">{dados2[var]:.2f}</span>
                     <br>
                     <span style="color: {cor};">{delta:+.1f}%</span>
                 </div>
                 """, unsafe_allow_html=True)
-    except:
-        st.error("Erro na comparação")
+    except Exception as e:
+        st.error(f"Erro na comparação: {str(e)}")
 
 def sistema_anotacoes(t):
     """Sistema de anotações"""
@@ -814,22 +1198,23 @@ def sistema_anotacoes(t):
         col1, col2 = st.columns([3, 1])
         
         with col1:
-            nova = st.text_area("Nova anotação:", height=100, key="nova_anotacao")
+            nova_anotacao = st.text_area("Nova anotação:", height=100, key="nova_anotacao")
         
         with col2:
             if st.button("➕ Adicionar"):
-                if nova:
+                if nova_anotacao:
                     st.session_state.anotacoes.append({
                         'data': datetime.now().strftime("%d/%m/%Y %H:%M"),
-                        'texto': nova
+                        'texto': nova_anotacao
                     })
+                    add_xp(5)
                     st.rerun()
         
-        for anot in reversed(st.session_state.anotacoes):
+        for anotacao in reversed(st.session_state.anotacoes):
             st.markdown(f"""
-            <div class="note-card">
-                <p class="note-date">{anot['data']}</p>
-                <p class="note-text">{anot['texto']}</p>
+            <div class="achievement-card">
+                <p class="note-date" style="color: #94a3b8;">{anotacao['data']}</p>
+                <p class="note-text" style="color: white;">{anotacao['texto']}</p>
             </div>
             """, unsafe_allow_html=True)
 
@@ -837,15 +1222,16 @@ def sistema_anotacoes(t):
 # FUNÇÃO PRINCIPAL DE TIMELINE
 # ============================================================================
 
-def criar_timeline_quantum(df_completo, atletas, periodos, variavel, window, t):
+def criar_timeline_quantum(df_completo, atletas_selecionados, periodos_selecionados,
+                          variavel, window_size, t):
     """Cria timeline com todas as funcionalidades"""
     try:
-        if not atletas or not periodos:
+        if not atletas_selecionados or not periodos_selecionados:
             return None, [], []
         
         df_filtrado = df_completo[
-            df_completo['Nome'].isin(atletas) &
-            df_completo['Período'].isin(periodos)
+            df_completo['Nome'].isin(atletas_selecionados) &
+            df_completo['Período'].isin(periodos_selecionados)
         ].copy()
         
         if df_filtrado.empty:
@@ -859,8 +1245,8 @@ def criar_timeline_quantum(df_completo, atletas, periodos, variavel, window, t):
         fig = go.Figure()
         cores = px.colors.qualitative.Set2 + px.colors.qualitative.Set1
         
-        valor_max = df_filtrado[variavel].max()
-        limiar_80 = valor_max * 0.8 if valor_max > 0 else 0
+        valor_maximo = df_filtrado[variavel].max()
+        limiar_80 = valor_maximo * 0.8 if valor_maximo > 0 else 0
         
         # Linha do limiar
         fig.add_hline(
@@ -869,17 +1255,18 @@ def criar_timeline_quantum(df_completo, atletas, periodos, variavel, window, t):
             line_color="#ef4444",
             line_width=3,
             annotation_text=f"🔴 {t['threshold_80']}: {limiar_80:.2f}",
-            annotation_position="top left"
+            annotation_position="top left",
+            annotation_font=dict(color="white", size=12)
         )
         
         # Média móvel
         if st.session_state.show_moving_average:
-            df_filtrado['Media_Movel'] = media_movel(df_filtrado[variavel], window)
+            df_filtrado['Media_Movel'] = media_movel(df_filtrado[variavel], window_size)
             fig.add_trace(go.Scatter(
                 x=df_filtrado['Minuto'],
                 y=df_filtrado['Media_Movel'],
                 mode='lines',
-                name=f"📈 {t['moving_average']} ({window})",
+                name=f"📈 {t['moving_average']} ({window_size})",
                 line=dict(color='white', width=4, dash='dash'),
                 opacity=0.9
             ))
@@ -969,9 +1356,13 @@ def criar_timeline_quantum(df_completo, atletas, periodos, variavel, window, t):
         )
         
         fig.update_layout(
-            title=f"📈 {t['trend_analysis']} - {variavel}",
-            xaxis_title="Minuto",
-            yaxis_title=variavel,
+            title=dict(
+                text=f"⚡ {t['trend_analysis']} - {variavel}",
+                font=dict(size=24, color='#ffd700'),
+                x=0.5
+            ),
+            xaxis_title="⏱️ Minuto",
+            yaxis_title=f"📊 {variavel}",
             hovermode='x unified',
             plot_bgcolor='rgba(15,23,42,0.95)',
             paper_bgcolor='rgba(0,0,0,0)',
@@ -985,7 +1376,7 @@ def criar_timeline_quantum(df_completo, atletas, periodos, variavel, window, t):
                 xanchor="left",
                 x=1.02,
                 bgcolor='rgba(15,23,42,0.9)',
-                bordercolor='#3b82f6',
+                bordercolor='#ffd700',
                 borderwidth=2
             )
         )
@@ -1006,9 +1397,9 @@ def criar_timeline_quantum(df_completo, atletas, periodos, variavel, window, t):
 with st.sidebar:
     st.markdown("<div class='sidebar-title'>🌐 IDIOMA</div>", unsafe_allow_html=True)
     
-    idiomas = ['pt', 'en']
-    idx = idiomas.index(st.session_state.idioma) if st.session_state.idioma in idiomas else 0
-    idioma = st.selectbox("", idiomas, index=idx, label_visibility="collapsed", key="idioma_selector")
+    idiomas = ['pt', 'en', 'es', 'es-mx']
+    idx_idioma = idiomas.index(st.session_state.idioma) if st.session_state.idioma in idiomas else 0
+    idioma = st.selectbox("", idiomas, index=idx_idioma, label_visibility="collapsed", key="idioma_selector")
     
     if idioma != st.session_state.idioma:
         st.session_state.idioma = idioma
@@ -1023,11 +1414,12 @@ with st.sidebar:
         "",
         type=['csv'],
         accept_multiple_files=True,
+        help=t['tip_text'],
         key="file_uploader"
     )
     
     if uploaded_files and len(uploaded_files) > 0 and not st.session_state.upload_concluido:
-        with st.spinner('Processando...'):
+        with st.spinner('⚡ Processando...'):
             df, vars_quant, periodos, posicoes, nomes = processar_upload(uploaded_files)
             
             if df is not None:
@@ -1045,6 +1437,7 @@ with st.sidebar:
                     st.session_state.variavel_selecionada = vars_quant[0]
                 
                 st.success(f"✅ {len(nomes)} {t['upload']}")
+                add_xp(20)
                 st.rerun()
     
     if st.session_state.df_completo is not None:
@@ -1059,7 +1452,7 @@ with st.sidebar:
             
             var_sel = st.selectbox(
                 "",
-                st.session_state.variaveis_quantitativas,
+                options=st.session_state.variaveis_quantitativas,
                 index=idx_var,
                 label_visibility="collapsed",
                 key="var_selector"
@@ -1074,7 +1467,11 @@ with st.sidebar:
             st.markdown("---")
             st.markdown(f"<div class='sidebar-title'>📍 {t['position']}</div>", unsafe_allow_html=True)
             
-            select_all_pos = st.checkbox("Todos", value=len(st.session_state.posicoes_selecionadas) == len(st.session_state.todos_posicoes))
+            select_all_pos = st.checkbox(
+                "Todos" if st.session_state.idioma in ['pt', 'es', 'es-mx'] else "All",
+                value=len(st.session_state.posicoes_selecionadas) == len(st.session_state.todos_posicoes),
+                key="todos_posicoes_check"
+            )
             
             if select_all_pos:
                 if st.session_state.posicoes_selecionadas != st.session_state.todos_posicoes:
@@ -1084,9 +1481,10 @@ with st.sidebar:
             else:
                 pos_sel = st.multiselect(
                     "",
-                    st.session_state.todos_posicoes,
+                    options=st.session_state.todos_posicoes,
                     default=st.session_state.posicoes_selecionadas,
-                    label_visibility="collapsed"
+                    label_visibility="collapsed",
+                    key="posicoes_selector"
                 )
                 if pos_sel != st.session_state.posicoes_selecionadas:
                     st.session_state.posicoes_selecionadas = pos_sel
@@ -1097,19 +1495,25 @@ with st.sidebar:
             st.markdown("---")
             st.markdown(f"<div class='sidebar-title'>📅 {t['period']}</div>", unsafe_allow_html=True)
             
-            select_all_per = st.checkbox("Todos", value=len(st.session_state.periodos_selecionados) == len(st.session_state.todos_periodos))
+            select_all_per = st.checkbox(
+                "Todos" if st.session_state.idioma in ['pt', 'es', 'es-mx'] else "All",
+                value=len(st.session_state.periodos_selecionados) == len(st.session_state.todos_periodos),
+                key="todos_periodos_check"
+            )
             
             if select_all_per:
                 if st.session_state.periodos_selecionados != st.session_state.todos_periodos:
                     st.session_state.periodos_selecionados = st.session_state.todos_periodos.copy()
+                    st.session_state.ordem_personalizada = st.session_state.todos_periodos.copy()
                     st.session_state.dados_processados = False
                     st.rerun()
             else:
                 per_sel = st.multiselect(
                     "",
-                    st.session_state.todos_periodos,
+                    options=st.session_state.todos_periodos,
                     default=st.session_state.periodos_selecionados,
-                    label_visibility="collapsed"
+                    label_visibility="collapsed",
+                    key="periodos_selector"
                 )
                 if per_sel != st.session_state.periodos_selecionados:
                     st.session_state.periodos_selecionados = per_sel
@@ -1131,7 +1535,11 @@ with st.sidebar:
             st.session_state.atletas_selecionados = atletas_disp.copy()
             st.rerun()
         
-        select_all_atl = st.checkbox("Todos", value=len(st.session_state.atletas_selecionados) == len(atletas_disp) and len(atletas_disp) > 0)
+        select_all_atl = st.checkbox(
+            "Todos" if st.session_state.idioma in ['pt', 'es', 'es-mx'] else "All",
+            value=len(st.session_state.atletas_selecionados) == len(atletas_disp) and len(atletas_disp) > 0,
+            key="todos_atletas_check"
+        )
         
         if select_all_atl:
             if st.session_state.atletas_selecionados != atletas_disp:
@@ -1141,9 +1549,10 @@ with st.sidebar:
         else:
             atl_sel = st.multiselect(
                 "",
-                atletas_disp,
+                options=atletas_disp,
                 default=st.session_state.atletas_selecionados if st.session_state.atletas_selecionados else (atletas_disp[:1] if atletas_disp else []),
-                label_visibility="collapsed"
+                label_visibility="collapsed",
+                key="atletas_selector"
             )
             if atl_sel != st.session_state.atletas_selecionados:
                 st.session_state.atletas_selecionados = atl_sel
@@ -1153,11 +1562,49 @@ with st.sidebar:
         st.markdown("---")
         st.markdown(f"<div class='sidebar-title'>⚙️ {t['config']}</div>", unsafe_allow_html=True)
         
-        st.session_state.n_classes = st.slider("Classes:", 3, 20, st.session_state.n_classes)
-        st.session_state.window_size = st.slider(f"{t['window_size']}:", 2, 10, st.session_state.window_size)
+        st.session_state.n_classes = st.slider(
+            "Classes:" if st.session_state.idioma == 'en' else "Clases:",
+            3, 20, st.session_state.n_classes, key="classes_slider"
+        )
         
-        st.session_state.show_moving_average = st.checkbox(t['moving_average'], st.session_state.show_moving_average)
-        st.session_state.show_critical_markers = st.checkbox(t['critical_markers'], st.session_state.show_critical_markers)
+        st.session_state.window_size = st.slider(
+            f"{t['window_size']}:",
+            2, 10, st.session_state.window_size, key="window_slider"
+        )
+        
+        st.session_state.show_moving_average = st.checkbox(
+            t['moving_average'],
+            st.session_state.show_moving_average,
+            key="show_ma_check"
+        )
+        
+        st.session_state.show_critical_markers = st.checkbox(
+            t['critical_markers'],
+            st.session_state.show_critical_markers,
+            key="show_cm_check"
+        )
+        
+        st.session_state.particle_effects = st.checkbox(
+            "Efeitos de Partícula" if st.session_state.idioma in ['pt', 'es', 'es-mx'] else "Particle Effects",
+            st.session_state.particle_effects,
+            key="particle_check"
+        )
+        
+        st.markdown("---")
+        
+        # Conquistas
+        with st.expander("🏆 Conquistas"):
+            if st.session_state.achievements:
+                for ach in st.session_state.achievements:
+                    if ach == 'first_analysis':
+                        st.markdown(f"""
+                        <div class="achievement-card">
+                            <p class="achievement-name">{t['first_analysis']}</p>
+                            <p class="achievement-desc">+50 XP</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+            else:
+                st.info("Nenhuma conquista ainda. Processe dados para ganhar!")
         
         st.markdown("---")
         
@@ -1166,7 +1613,7 @@ with st.sidebar:
                          st.session_state.periodos_selecionados and 
                          st.session_state.atletas_selecionados)
         
-        if st.button(t['process'], use_container_width=True, disabled=not pode_processar):
+        if st.button(t['process'], use_container_width=True, disabled=not pode_processar, key="process_button"):
             st.session_state.processar_click = True
             st.rerun()
 
@@ -1176,7 +1623,7 @@ with st.sidebar:
 
 if st.session_state.processar_click and st.session_state.df_completo is not None:
     
-    with st.spinner('Gerando análise...'):
+    with st.spinner('⚡ Gerando análise...'):
         time.sleep(0.5)
         
         df = st.session_state.df_completo
@@ -1201,6 +1648,9 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
             st.session_state.dados_processados = True
             t = translations[st.session_state.idioma]
             
+            # Adicionar XP por análise
+            add_xp(10)
+            
             # Dashboard Executivo
             st.markdown(f"<h2>📊 {t['tab_executive']}</h2>", unsafe_allow_html=True)
             
@@ -1211,36 +1661,13 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
             col1, col2, col3, col4 = st.columns(4)
             
             with col1:
-                st.markdown(f"""
-                <div class="quantum-card">
-                    <p class="label">{t['mean']}</p>
-                    <p class="value">{media_global:.2f}</p>
-                </div>
-                """, unsafe_allow_html=True)
-            
+                executive_card(t['mean'], f"{media_global:.2f}", 0, "📊")
             with col2:
-                st.markdown(f"""
-                <div class="quantum-card">
-                    <p class="label">{t['max_value']}</p>
-                    <p class="value">{valor_max:.2f}</p>
-                </div>
-                """, unsafe_allow_html=True)
-            
+                executive_card(t['max_value'], f"{valor_max:.2f}", 0, "📈")
             with col3:
-                st.markdown(f"""
-                <div class="quantum-card">
-                    <p class="label">{t['min_value']}</p>
-                    <p class="value">{valor_min:.2f}</p>
-                </div>
-                """, unsafe_allow_html=True)
-            
+                executive_card(t['min_value'], f"{valor_min:.2f}", 0, "📉")
             with col4:
-                st.markdown(f"""
-                <div class="quantum-card">
-                    <p class="label">{t['observations']}</p>
-                    <p class="value">{len(df_filtrado)}</p>
-                </div>
-                """, unsafe_allow_html=True)
+                executive_card(t['observations'], str(len(df_filtrado)), 0, "👥")
             
             st.markdown("---")
             
@@ -1355,9 +1782,9 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                         pct = count / len(df_filtrado) * 100
                         st.markdown(f"""
                         <div class="zone-card" style="border-left-color: {cores_zonas[i]};">
-                            <p class="zone-name">{zona}</p>
-                            <p class="zone-value">{limite:.1f}</p>
-                            <p class="zone-count">{count} ({pct:.0f}%)</p>
+                            <div class="zone-name">{zona}</div>
+                            <div class="zone-value">{limite:.1f}</div>
+                            <div class="zone-count">{count} ({pct:.0f}%)</div>
                         </div>
                         """, unsafe_allow_html=True)
                 
@@ -1377,6 +1804,10 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                         st.success(f"✅ {len(combinacoes)} combinações")
                     with col2:
                         st.warning(f"⚠️ {len(set(minutos_criticos))} minutos críticos")
+                        if len(set(minutos_criticos)) > 5 and 'critical_finder' not in st.session_state.achievements:
+                            st.session_state.achievements.append('critical_finder')
+                            st.balloons()
+                            st.success(f"🏆 {t['achievement_unlocked']}: {t['critical_finder']}")
                     with col3:
                         st.info(f"📊 {len(df_filtrado)} observações")
                 
@@ -1398,7 +1829,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 
                 with col_e1:
                     st.markdown(f"""
-                    <div class="metric-container">
+                    <div class="rpg-card">
                         <h4>{t['mean']}</h4>
                         <p><strong>{t['mean']}:</strong> {media:.3f}</p>
                         <p><strong>{t['median']}:</strong> {mediana:.3f}</p>
@@ -1407,7 +1838,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 
                 with col_e2:
                     st.markdown(f"""
-                    <div class="metric-container">
+                    <div class="rpg-card">
                         <h4>{t['std']}</h4>
                         <p><strong>{t['std']}:</strong> {desvio:.3f}</p>
                         <p><strong>{t['cv']}:</strong> {calcular_cv(media, desvio):.1f}%</p>
@@ -1416,7 +1847,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 
                 with col_e3:
                     st.markdown(f"""
-                    <div class="metric-container">
+                    <div class="rpg-card">
                         <h4>{t['iqr']}</h4>
                         <p><strong>{t['q1']}:</strong> {q1:.3f}</p>
                         <p><strong>{t['q3']}:</strong> {q3:.3f}</p>
@@ -1435,7 +1866,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                         interp_ass = t['high_skew']
                     
                     st.markdown(f"""
-                    <div class="metric-container">
+                    <div class="rpg-card">
                         <h4>{t['skewness']}</h4>
                         <p><strong>Valor:</strong> {assimetria:.3f}</p>
                         <p><strong>Interpretação:</strong> {interp_ass}</p>
@@ -1451,7 +1882,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                         interp_curt = t['mesokurtic']
                     
                     st.markdown(f"""
-                    <div class="metric-container">
+                    <div class="rpg-card">
                         <h4>{t['kurtosis']}</h4>
                         <p><strong>Valor:</strong> {curtose:.3f}</p>
                         <p><strong>Interpretação:</strong> {interp_curt}</p>
@@ -1481,7 +1912,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                         dist = "t-Student"
                     
                     st.markdown(f"""
-                    <div class="metric-container">
+                    <div class="rpg-card">
                         <p><strong>{t['mean']}:</strong> {media:.3f}</p>
                         <p><strong>Erro Padrão:</strong> {erro_padrao:.3f}</p>
                         <p><strong>IC Inferior:</strong> {ic_inf:.3f}</p>
@@ -1581,7 +2012,6 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
             with tabs[2]:
                 st.markdown(f"<h3>{t['tab_boxplots']}</h3>", unsafe_allow_html=True)
                 
-                # Boxplot por posição
                 st.markdown(f"<h4>📍 {t['position']}</h4>", unsafe_allow_html=True)
                 
                 fig_box_pos = go.Figure()
@@ -1605,7 +2035,6 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 fig_box_pos.update_yaxes(gridcolor='#334155')
                 st.plotly_chart(fig_box_pos, use_container_width=True)
                 
-                # Boxplot por atleta
                 st.markdown(f"<h4>👤 {t['athlete']}</h4>", unsafe_allow_html=True)
                 
                 fig_box_atl = go.Figure()
@@ -1689,7 +2118,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                         
                         if resultado:
                             st.markdown(f"""
-                            <div class="metric-container">
+                            <div class="rpg-card">
                                 <h4>📊 Resultado</h4>
                                 <p><strong>{grupo1}:</strong> {resultado['media_g1']:.2f} ± {resultado['std_g1']:.2f} (n={resultado['n_g1']})</p>
                                 <p><strong>{grupo2}:</strong> {resultado['media_g2']:.2f} ± {resultado['std_g2']:.2f} (n={resultado['n_g2']})</p>
@@ -1754,7 +2183,7 @@ elif st.session_state.df_completo is None:
     
     with col2:
         st.markdown(f"""
-        <div class="quantum-card">
+        <div class="rpg-card">
             <h4>{t['components']}</h4>
             <p>{t['name_ex']}</p>
             <p>{t['period_ex']}</p>
