@@ -38,7 +38,6 @@ translations = {
         'tab_temporal': '📈 Estatísticas & Temporal',
         'tab_boxplots': '📦 Boxplots',
         'tab_correlation': '🔥 Correlações',
-        'tab_comparison': '⚖️ Comparações',
         'tab_executive': '📋 Executivo',
         'positions': 'Posições',
         'periods': 'Períodos',
@@ -65,6 +64,7 @@ translations = {
         'threshold_80': 'LIMIAR 80%',
         'critical_events': 'EVENTOS CRÍTICOS',
         'above_threshold': 'acima do limiar de 80%',
+        'below_threshold': 'abaixo do limiar de 80%',
         'intensity_zones': '🎚️ Zonas de Intensidade',
         'zone_method': 'Método de definição',
         'percentiles': 'Percentis',
@@ -129,7 +129,6 @@ translations = {
         'tab_temporal': '📈 Statistics & Temporal',
         'tab_boxplots': '📦 Boxplots',
         'tab_correlation': '🔥 Correlations',
-        'tab_comparison': '⚖️ Comparisons',
         'tab_executive': '📋 Executive',
         'positions': 'Positions',
         'periods': 'Periods',
@@ -156,6 +155,7 @@ translations = {
         'threshold_80': '80% THRESHOLD',
         'critical_events': 'CRITICAL EVENTS',
         'above_threshold': 'above 80% threshold',
+        'below_threshold': 'below 80% threshold',
         'intensity_zones': '🎚️ Intensity Zones',
         'zone_method': 'Definition method',
         'percentiles': 'Percentiles',
@@ -220,7 +220,6 @@ translations = {
         'tab_temporal': '📈 Estadísticas & Temporal',
         'tab_boxplots': '📦 Boxplots',
         'tab_correlation': '🔥 Correlaciones',
-        'tab_comparison': '⚖️ Comparaciones',
         'tab_executive': '📋 Ejecutivo',
         'positions': 'Posiciones',
         'periods': 'Períodos',
@@ -247,6 +246,7 @@ translations = {
         'threshold_80': 'UMBRAL 80%',
         'critical_events': 'EVENTOS CRÍTICOS',
         'above_threshold': 'por encima del umbral 80%',
+        'below_threshold': 'por debajo del umbral 80%',
         'intensity_zones': '🎚️ Zonas de Intensidad',
         'zone_method': 'Método de definición',
         'percentiles': 'Percentiles',
@@ -943,62 +943,89 @@ def criar_zonas_intensidade(df, variavel, metodo='percentis'):
             'Muito Alta': max_val
         }
 
-def comparar_grupos(df, variavel, grupo1, grupo2):
-    try:
-        dados_grupo1 = df[df['Posição'] == grupo1][variavel].dropna()
-        dados_grupo2 = df[df['Posição'] == grupo2][variavel].dropna()
-        
-        if len(dados_grupo1) < 3 or len(dados_grupo2) < 3:
-            return None
-        
-        _, p1 = stats.shapiro(dados_grupo1)
-        _, p2 = stats.shapiro(dados_grupo2)
-        
-        if p1 > 0.05 and p2 > 0.05:
-            t_stat, p_valor = stats.ttest_ind(dados_grupo1, dados_grupo2)
-            teste = "Teste t de Student"
-        else:
-            u_stat, p_valor = stats.mannwhitneyu(dados_grupo1, dados_grupo2)
-            teste = "Teste de Mann-Whitney"
-        
-        return {
-            'teste': teste,
-            'p_valor': p_valor,
-            'significativo': p_valor < 0.05,
-            'media_g1': dados_grupo1.mean(),
-            'media_g2': dados_grupo2.mean(),
-            'std_g1': dados_grupo1.std(),
-            'std_g2': dados_grupo2.std(),
-            'n_g1': len(dados_grupo1),
-            'n_g2': len(dados_grupo2)
-        }
-    except:
-        return None
-
 def criar_timeline_profissional(df, variavel, t):
-    """Timeline com tooltips ricos e marcadores de eventos - VERSÃO CORRIGIDA"""
+    """Timeline com áreas sombreadas para valores acima/abaixo do limiar"""
     fig = go.Figure()
     
     # Calcular média móvel (5 pontos)
     media_movevel = df[variavel].rolling(window=5, min_periods=1).mean()
     
-    # Linha principal - cor fixa
-    fig.add_trace(go.Scatter(
-        x=df['Minuto'],
-        y=df[variavel],
-        mode='lines+markers',
-        name=variavel,
-        line=dict(color='#3b82f6', width=3),
-        marker=dict(
-            size=8,
-            color='#3b82f6',
-            line=dict(color='white', width=1)
-        ),
-        hovertemplate='<b>Minuto:</b> %{x}<br>' +
-                      '<b>Valor:</b> %{y:.2f}<br>' +
-                      '<b>Média Móvel:</b> %{customdata[0]:.2f}<extra></extra>',
-        customdata=np.column_stack([media_movevel])
-    ))
+    # Calcular limiar de 80%
+    valor_maximo = df[variavel].max()
+    limiar_80 = valor_maximo * 0.8
+    
+    # Identificar pontos acima e abaixo do limiar
+    acima_limiar = df[variavel] > limiar_80
+    abaixo_limiar = df[variavel] <= limiar_80
+    
+    # Criar área sombreada para valores acima do limiar (vermelho translúcido)
+    fig.add_hrect(
+        y0=limiar_80,
+        y1=valor_maximo * 1.05,  # Um pouco acima do máximo
+        fillcolor="rgba(239, 68, 68, 0.15)",  # Vermelho translúcido
+        line_width=0,
+        layer="below",
+        name=f"{t['above_threshold']}"
+    )
+    
+    # Criar área sombreada para valores abaixo do limiar (azul translúcido)
+    fig.add_hrect(
+        y0=0,
+        y1=limiar_80,
+        fillcolor="rgba(59, 130, 246, 0.1)",  # Azul translúcido
+        line_width=0,
+        layer="below",
+        name=f"{t['below_threshold']}"
+    )
+    
+    # Adicionar linha do limiar (vermelha sólida)
+    fig.add_hline(
+        y=limiar_80,
+        line_dash="solid",
+        line_color="#ef4444",
+        line_width=2,
+        annotation_text=f"🔴 {t['threshold_80']}: {limiar_80:.2f}",
+        annotation_position="top left",
+        annotation_font=dict(color="white", size=11)
+    )
+    
+    # Separar dados acima e abaixo do limiar para colorir os pontos
+    df_acima = df[acima_limiar].copy()
+    df_abaixo = df[abaixo_limiar].copy()
+    
+    # Adicionar pontos acima do limiar (vermelhos)
+    if not df_acima.empty:
+        fig.add_trace(go.Scatter(
+            x=df_acima['Minuto'],
+            y=df_acima[variavel],
+            mode='markers',
+            name=t['above_threshold'],
+            marker=dict(
+                size=10,
+                color='#ef4444',
+                symbol='circle',
+                line=dict(color='white', width=1)
+            ),
+            hovertemplate='<b>Minuto:</b> %{x}<br>' +
+                          '<b>Valor:</b> %{y:.2f} (ACIMA DO LIMIAR)<extra></extra>'
+        ))
+    
+    # Adicionar pontos abaixo do limiar (azuis)
+    if not df_abaixo.empty:
+        fig.add_trace(go.Scatter(
+            x=df_abaixo['Minuto'],
+            y=df_abaixo[variavel],
+            mode='markers',
+            name=t['below_threshold'],
+            marker=dict(
+                size=8,
+                color='#3b82f6',
+                symbol='circle',
+                line=dict(color='white', width=1)
+            ),
+            hovertemplate='<b>Minuto:</b> %{x}<br>' +
+                          '<b>Valor:</b> %{y:.2f}<extra></extra>'
+        ))
     
     # Linha de média móvel
     fig.add_trace(go.Scatter(
@@ -1009,7 +1036,7 @@ def criar_timeline_profissional(df, variavel, t):
         line=dict(color='#f59e0b', width=2, dash='dot')
     ))
     
-    # Linhas de referência
+    # Linhas de referência adicionais
     media = df[variavel].mean()
     desvio = df[variavel].std()
     
@@ -1033,16 +1060,21 @@ def criar_timeline_profissional(df, variavel, t):
     )
     
     fig.update_layout(
-        title=f"Evolução de {variavel}",
+        title=f"Evolução de {variavel} - Áreas: Azul (abaixo do limiar) | Vermelho (acima do limiar)",
         xaxis_title="Minuto",
         yaxis_title=variavel,
-        hovermode='x unified',
+        hovermode='closest',
         plot_bgcolor='rgba(30,41,59,0.8)',
         paper_bgcolor='rgba(0,0,0,0)',
         font=dict(color='white', size=12),
-        title_font=dict(color='#3b82f6', size=20),
+        title_font=dict(color='#3b82f6', size=18),
         showlegend=True,
-        legend=dict(font=dict(color='white'))
+        legend=dict(
+            font=dict(color='white'),
+            bgcolor='rgba(30,41,59,0.8)',
+            bordercolor='#334155',
+            borderwidth=1
+        )
     )
     
     fig.update_xaxes(gridcolor='#334155', tickfont=dict(color='white'))
@@ -1567,14 +1599,13 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
             st.markdown("---")
             
             # ====================================================================
-            # ABAS PRINCIPAIS
+            # ABAS PRINCIPAIS (SEM ABA DE COMPARAÇÃO)
             # ====================================================================
             tab_titles = [
                 t['tab_distribution'], 
                 t['tab_temporal'], 
                 t['tab_boxplots'], 
-                t['tab_correlation'], 
-                t['tab_comparison'],
+                t['tab_correlation'],
                 t['tab_executive']
             ]
             
@@ -1783,7 +1814,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 st.markdown("---")
                 st.markdown(f"<h4>{t['tab_temporal']}</h4>", unsafe_allow_html=True)
                 
-                # Timeline profissional
+                # Timeline profissional com áreas sombreadas
                 fig_tempo = criar_timeline_profissional(df_tempo, variavel_analise, t)
                 st.plotly_chart(fig_tempo, use_container_width=True)
                 
@@ -2145,7 +2176,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     # Adicionar explicação do IQR ao final
                     st.caption(f"📌 {t['iqr_title']}: {t['iqr_explanation']}")
             
-            # ABA 4: CORRELAÇÕES
+            # ABA 4: CORRELAÇÕES (COM NOVO HEATMAP)
             with tabs[3]:
                 st.markdown(f"<h3>{t['tab_correlation']}</h3>", unsafe_allow_html=True)
                 
@@ -2160,14 +2191,39 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     if len(vars_corr) >= 2:
                         df_corr = df_filtrado[vars_corr].corr()
                         
+                        # NOVO HEATMAP com cores mais extremas e diagonal destacada
+                        colorscale = [
+                            [0, '#00008B'],      # Azul escuro para -1
+                            [0.25, '#4169E1'],   # Azul médio para -0.5
+                            [0.45, '#E0E0E0'],   # Cinza claro para valores próximos de 0
+                            [0.5, '#D3D3D3'],    # Diagonal em cinza médio
+                            [0.55, '#E0E0E0'],   # Cinza claro
+                            [0.75, '#FF6347'],   # Vermelho médio para 0.5
+                            [1, '#8B0000']       # Vermelho escuro para 1
+                        ]
+                        
                         fig_corr = px.imshow(
                             df_corr,
                             text_auto='.2f',
                             aspect="auto",
-                            color_continuous_scale='RdBu_r',
+                            color_continuous_scale=colorscale,
                             title=f"{t['tab_correlation']}",
                             zmin=-1, zmax=1
                         )
+                        
+                        # Destacar a diagonal principal
+                        for i in range(len(df_corr)):
+                            fig_corr.add_annotation(
+                                x=i,
+                                y=i,
+                                text=f"{df_corr.iloc[i, i]:.2f}",
+                                showarrow=False,
+                                font=dict(color='white', size=12, weight='bold'),
+                                bgcolor='#2d3748',
+                                bordercolor='#4a5568',
+                                borderwidth=1
+                            )
+                        
                         fig_corr.update_layout(
                             plot_bgcolor='rgba(30, 41, 59, 0.8)',
                             paper_bgcolor='rgba(0,0,0,0)',
@@ -2182,6 +2238,10 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                         st.markdown(f"<h4>📊 {t['tab_correlation']}</h4>", unsafe_allow_html=True)
                         
                         def style_correlation(val):
+                            if pd.isna(val):
+                                return 'color: #94a3b8;'
+                            if val == 1.0:
+                                return 'color: #2d3748; font-weight: bold; background-color: #d3d3d3;'  # Diagonal em cinza
                             color = '#ef4444' if abs(val) > 0.7 else '#f59e0b' if abs(val) > 0.5 else '#3b82f6'
                             return f'color: {color}; font-weight: bold;'
                         
@@ -2249,101 +2309,8 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                                    "At least 2 variables are needed" if st.session_state.idioma == 'en' else
                                    "Se necesitan al menos 2 variables"))
             
-            # ABA 5: COMPARAÇÕES
+            # ABA 5: EXECUTIVO
             with tabs[4]:
-                st.markdown(f"<h3>{t['tab_comparison']}</h3>", unsafe_allow_html=True)
-                
-                if len(posicoes_selecionadas) >= 2:
-                    st.markdown(f"<h4>{t['position']}</h4>", unsafe_allow_html=True)
-                    
-                    col_comp1, col_comp2 = st.columns(2)
-                    
-                    with col_comp1:
-                        grupo1 = st.selectbox(
-                            f"{t['position']} 1:", 
-                            posicoes_selecionadas, 
-                            index=0, 
-                            key="grupo1_select",
-                            on_change=atualizar_grupos
-                        )
-                    with col_comp2:
-                        grupo2 = st.selectbox(
-                            f"{t['position']} 2:", 
-                            posicoes_selecionadas, 
-                            index=min(1, len(posicoes_selecionadas)-1), 
-                            key="grupo2_select",
-                            on_change=atualizar_grupos
-                        )
-                    
-                    # Usar os valores armazenados em session_state
-                    grupo1_atual = st.session_state.grupo1 if st.session_state.grupo1 is not None else grupo1
-                    grupo2_atual = st.session_state.grupo2 if st.session_state.grupo2 is not None else grupo2
-                    
-                    if grupo1_atual and grupo2_atual and grupo1_atual != grupo2_atual:
-                        resultado = comparar_grupos(df_filtrado, variavel_analise, grupo1_atual, grupo2_atual)
-                        
-                        if resultado:
-                            st.markdown(f"""
-                            <div class="metric-container">
-                                <h4>📊 {t['tab_comparison']}</h4>
-                                <hr style="border-color: #334155;">
-                                <p><strong>{t['position']} 1 ({grupo1_atual}):</strong> {resultado['media_g1']:.2f} ± {resultado['std_g1']:.2f} (n={resultado['n_g1']})</p>
-                                <p><strong>{t['position']} 2 ({grupo2_atual}):</strong> {resultado['media_g2']:.2f} ± {resultado['std_g2']:.2f} (n={resultado['n_g2']})</p>
-                                <p><strong>Teste:</strong> {resultado['teste']}</p>
-                                <p><strong>p-valor:</strong> {resultado['p_valor']:.4f}</p>
-                                <p><strong>Diferença:</strong> {resultado['media_g1'] - resultado['media_g2']:.2f}</p>
-                                <p><strong>{'✅ Significativo' if resultado['significativo'] else '❌ Não significativo'}</strong></p>
-                            </div>
-                            """, unsafe_allow_html=True)
-                            
-                            fig_comp = go.Figure()
-                            
-                            dados_comp1 = df_filtrado[df_filtrado['Posição'] == grupo1_atual][variavel_analise]
-                            dados_comp2 = df_filtrado[df_filtrado['Posição'] == grupo2_atual][variavel_analise]
-                            
-                            fig_comp.add_trace(go.Box(
-                                y=dados_comp1,
-                                name=grupo1_atual,
-                                boxmean='sd',
-                                marker_color='#3b82f6',
-                                line_color='white'
-                            ))
-                            
-                            fig_comp.add_trace(go.Box(
-                                y=dados_comp2,
-                                name=grupo2_atual,
-                                boxmean='sd',
-                                marker_color='#ef4444',
-                                line_color='white'
-                            ))
-                            
-                            fig_comp.update_layout(
-                                title=f"{grupo1_atual} vs {grupo2_atual} - {variavel_analise}",
-                                plot_bgcolor='rgba(30, 41, 59, 0.8)',
-                                paper_bgcolor='rgba(0,0,0,0)',
-                                font=dict(color='white', size=11),
-                                title_font=dict(color='#3b82f6', size=16),
-                                yaxis_title=variavel_analise
-                            )
-                            fig_comp.update_xaxes(gridcolor='#334155', tickfont=dict(color='white'))
-                            fig_comp.update_yaxes(gridcolor='#334155', tickfont=dict(color='white'))
-                            
-                            st.plotly_chart(fig_comp, use_container_width=True)
-                        else:
-                            st.warning("⚠️ " + ("Dados insuficientes para comparação" if st.session_state.idioma == 'pt' else 
-                                              "Insufficient data for comparison" if st.session_state.idioma == 'en' else
-                                              "Datos insuficientes para comparación"))
-                    else:
-                        st.info("ℹ️ " + ("Selecione grupos diferentes" if st.session_state.idioma == 'pt' else 
-                                       "Select different groups" if st.session_state.idioma == 'en' else
-                                       "Seleccione grupos diferentes"))
-                else:
-                    st.info("ℹ️ " + ("Selecione pelo menos 2 posições" if st.session_state.idioma == 'pt' else 
-                                   "Select at least 2 positions" if st.session_state.idioma == 'en' else
-                                   "Seleccione al menos 2 posiciones"))
-            
-            # ABA 6: EXECUTIVO
-            with tabs[5]:
                 st.markdown(f"<h3>{t['tab_executive']}</h3>", unsafe_allow_html=True)
                 
                 # Comparação de atletas
