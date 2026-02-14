@@ -982,95 +982,85 @@ def comparar_grupos(df, variavel, grupo1, grupo2):
         return None
 
 # ============================================================================
-# FUNÇÃO CORRIGIDA: criar_timeline_completa - SEM LINHAS VERTICAIS PROBLEMÁTICAS
+# FUNÇÃO CORRIGIDA: criar_timeline_por_atleta - USA ATLETAS DA SIDEBAR
 # ============================================================================
 
-def criar_timeline_completa(df_completo, variavel, t):
+def criar_timeline_por_atleta(df_completo, atletas_selecionados, variavel, t):
     """
-    Timeline que mostra TODOS os períodos do atleta selecionado
+    Timeline que mostra TODOS os períodos dos atletas selecionados na sidebar
     Independentemente dos filtros de período aplicados
-    VERSÃO CORRIGIDA - sem anotações problemáticas
     """
-    # Obter lista única de atletas
-    atletas = sorted(df_completo['Nome'].unique())
-    
-    if not atletas:
-        return None, None
-    
-    # Seletor de atleta
-    atleta_selecionado = st.selectbox(
-        "Selecione o atleta para visualizar a evolução temporal completa:",
-        atletas,
-        key="timeline_atleta"
-    )
-    
-    # Filtrar apenas o atleta selecionado (sem filtro de período)
-    df_atleta = df_completo[df_completo['Nome'] == atleta_selecionado].copy()
-    df_atleta = df_atleta.sort_values('Minuto').reset_index(drop=True)
-    
-    if df_atleta.empty:
-        return None, atleta_selecionado
+    if not atletas_selecionados:
+        return None
     
     fig = go.Figure()
     
-    # Obter períodos únicos para este atleta
-    periodos = df_atleta['Período'].unique()
+    # Cores para cada atleta
     cores = px.colors.qualitative.Set2
     
-    # Calcular média móvel global
-    media_movevel = df_atleta[variavel].rolling(window=5, min_periods=1).mean()
-    
-    # Plotar cada período com cor diferente
-    for i, periodo in enumerate(periodos):
-        df_periodo = df_atleta[df_atleta['Período'] == periodo]
-        cor = cores[i % len(cores)]
+    # Para cada atleta selecionado, plotar seus dados
+    for i, atleta in enumerate(atletas_selecionados):
+        # Filtrar dados do atleta (sem filtro de período)
+        df_atleta = df_completo[df_completo['Nome'] == atleta].copy()
+        df_atleta = df_atleta.sort_values('Minuto').reset_index(drop=True)
         
-        fig.add_trace(go.Scatter(
-            x=df_periodo['Minuto'],
-            y=df_periodo[variavel],
-            mode='lines+markers',
-            name=periodo,
-            line=dict(color=cor, width=2.5),
-            marker=dict(size=8, color=cor, line=dict(color='white', width=1)),
-            hovertemplate='<b>Minuto:</b> %{x}<br>' +
-                          '<b>Valor:</b> %{y:.2f}<br>' +
-                          '<b>Período:</b> ' + periodo + '<extra></extra>'
-        ))
+        if df_atleta.empty:
+            continue
+        
+        # Obter períodos únicos para este atleta
+        periodos = df_atleta['Período'].unique()
+        
+        # Plotar cada período com uma tonalidade da cor do atleta
+        for j, periodo in enumerate(periodos):
+            df_periodo = df_atleta[df_atleta['Período'] == periodo]
+            
+            # Variar a opacidade para diferentes períodos
+            opacity = 0.5 + (j / len(periodos)) * 0.5
+            
+            fig.add_trace(go.Scatter(
+                x=df_periodo['Minuto'],
+                y=df_periodo[variavel],
+                mode='lines+markers',
+                name=f"{atleta} - {periodo}",
+                line=dict(color=cores[i % len(cores)], width=2),
+                marker=dict(size=6, color=cores[i % len(cores)], opacity=opacity),
+                hovertemplate='<b>Atleta:</b> ' + atleta + '<br>' +
+                              '<b>Período:</b> ' + periodo + '<br>' +
+                              '<b>Minuto:</b> %{x}<br>' +
+                              '<b>Valor:</b> %{y:.2f}<extra></extra>'
+            ))
     
-    # Linha de média móvel global
-    fig.add_trace(go.Scatter(
-        x=df_atleta['Minuto'],
-        y=media_movevel,
-        mode='lines',
-        name='Média Móvel (5)',
-        line=dict(color='white', width=2, dash='dot')
-    ))
+    # Se não houver dados, retornar None
+    if len(fig.data) == 0:
+        return None
     
-    # Linhas de referência
-    media = df_atleta[variavel].mean()
-    desvio = df_atleta[variavel].std()
-    
-    fig.add_hline(
-        y=media, 
-        line_dash="dash", 
-        line_color="#94a3b8",
-        annotation_text=f"Média: {media:.2f}", 
-        annotation_position="top left",
-        annotation_font=dict(color="white")
-    )
-    
-    fig.add_hrect(
-        y0=media-desvio, 
-        y1=media+desvio,
-        fillcolor="#3b82f6", 
-        opacity=0.1, 
-        line_width=0,
-        annotation_text="±1 DP",
-        annotation_position="top right"
-    )
+    # Calcular média global dos atletas selecionados
+    df_global = df_completo[df_completo['Nome'].isin(atletas_selecionados)]
+    if not df_global.empty:
+        media_global = df_global[variavel].mean()
+        desvio_global = df_global[variavel].std()
+        
+        fig.add_hline(
+            y=media_global, 
+            line_dash="dash", 
+            line_color="#94a3b8",
+            annotation_text=f"Média Global: {media_global:.2f}", 
+            annotation_position="top left",
+            annotation_font=dict(color="white")
+        )
+        
+        fig.add_hrect(
+            y0=media_global-desvio_global, 
+            y1=media_global+desvio_global,
+            fillcolor="#3b82f6", 
+            opacity=0.1, 
+            line_width=0,
+            annotation_text="±1 DP Global",
+            annotation_position="top right"
+        )
     
     fig.update_layout(
-        title=f"Evolução Temporal Completa - {variavel} - {atleta_selecionado}",
+        title=f"Evolução Temporal - {variavel} ({len(atletas_selecionados)} atleta(s))",
         xaxis_title="Minuto",
         yaxis_title=variavel,
         hovermode='x unified',
@@ -1085,7 +1075,7 @@ def criar_timeline_completa(df_completo, variavel, t):
     fig.update_xaxes(gridcolor='#334155', tickfont=dict(color='white'))
     fig.update_yaxes(gridcolor='#334155', tickfont=dict(color='white'))
     
-    return fig, atleta_selecionado
+    return fig
 
 def criar_tabela_destaque(df, colunas_destaque):
     """Tabela com células destacadas baseado em valores"""
@@ -1734,7 +1724,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     hide_index=True
                 )
             
-            # ABA 2: ESTATÍSTICAS & TEMPORAL - COM CORREÇÃO DA TIMELINE
+            # ABA 2: ESTATÍSTICAS & TEMPORAL - COM CORREÇÃO (USA ATLETAS DA SIDEBAR)
             with tabs[1]:
                 st.markdown(f"<h3>{t['tab_temporal']}</h3>", unsafe_allow_html=True)
                 
@@ -1799,28 +1789,14 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                             """, unsafe_allow_html=True)
                 
                 st.markdown("---")
-                st.markdown(f"<h4>⏱️ Evolução Temporal Completa por Atleta</h4>", unsafe_allow_html=True)
-                st.caption("Visualize todos os períodos de um atleta específico, independentemente dos filtros aplicados.")
+                st.markdown(f"<h4>⏱️ Evolução Temporal - Todos os Períodos</h4>", unsafe_allow_html=True)
+                st.caption("Visualizando TODOS os períodos dos atletas selecionados na sidebar (independente dos filtros de período).")
                 
-                # USAR A NOVA FUNÇÃO CORRIGIDA QUE MOSTRA TODOS OS PERÍODOS
-                fig_tempo_completa, atleta_visualizado = criar_timeline_completa(df_completo, variavel_analise, t)
+                # USAR A NOVA FUNÇÃO QUE USA OS ATLETAS DA SIDEBAR
+                fig_tempo_completa = criar_timeline_por_atleta(df_completo, atletas_selecionados, variavel_analise, t)
                 
                 if fig_tempo_completa:
                     st.plotly_chart(fig_tempo_completa, use_container_width=True)
-                    
-                    # Estatísticas do atleta visualizado
-                    if atleta_visualizado:
-                        df_atleta_stats = df_completo[df_completo['Nome'] == atleta_visualizado]
-                        st.markdown(f"##### Estatísticas de {atleta_visualizado}:")
-                        col_s1, col_s2, col_s3, col_s4 = st.columns(4)
-                        with col_s1:
-                            st.metric("Média", f"{df_atleta_stats[variavel_analise].mean():.2f}")
-                        with col_s2:
-                            st.metric("Máximo", f"{df_atleta_stats[variavel_analise].max():.2f}")
-                        with col_s3:
-                            st.metric("Mínimo", f"{df_atleta_stats[variavel_analise].min():.2f}")
-                        with col_s4:
-                            st.metric("Total Períodos", f"{df_atleta_stats['Período'].nunique()}")
                 else:
                     st.warning("Sem dados para exibir")
                 
