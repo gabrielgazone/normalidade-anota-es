@@ -982,13 +982,13 @@ def comparar_grupos(df, variavel, grupo1, grupo2):
         return None
 
 # ============================================================================
-# FUNÇÃO CORRIGIDA: criar_timeline_por_atleta - AGORA RESPEITA A RELAÇÃO ATLETA-PERÍODO
+# FUNÇÃO DEFINITIVA: criar_timeline_filtrada - MOSTRA APENAS DADOS VÁLIDOS
 # ============================================================================
 
-def criar_timeline_por_atleta(df_completo, atletas_selecionados, periodos_selecionados, variavel, t):
+def criar_timeline_filtrada(df_completo, atletas_selecionados, periodos_selecionados, variavel, t):
     """
-    Timeline que mostra os períodos onde cada atleta efetivamente participou
-    Garante que cada atleta só mostre os períodos em que tem dados
+    Timeline que mostra APENAS os períodos onde cada atleta realmente tem dados
+    Garantindo que não apareçam linhas para combinações atleta-período inexistentes
     """
     if not atletas_selecionados:
         return None
@@ -998,58 +998,68 @@ def criar_timeline_por_atleta(df_completo, atletas_selecionados, periodos_seleci
     # Cores para cada atleta
     cores = px.colors.qualitative.Set2
     
-    # Para cada atleta selecionado, verificar em quais períodos ele realmente participou
-    for i, atleta in enumerate(atletas_selecionados):
-        # Filtrar dados do atleta
-        df_atleta = df_completo[df_completo['Nome'] == atleta].copy()
+    # Dicionário para rastrear combinações válidas
+    combinacoes_validas = []
+    
+    # Primeiro, identificar todas as combinações válidas
+    for atleta in atletas_selecionados:
+        # Períodos em que este atleta realmente tem dados
+        periodos_do_atleta = df_completo[df_completo['Nome'] == atleta]['Período'].unique()
         
-        if df_atleta.empty:
-            continue
-        
-        # Obter os períodos em que este atleta realmente tem dados
-        periodos_do_atleta = df_atleta['Período'].unique()
-        
-        # Filtrar apenas os períodos que estão selecionados E que o atleta participou
+        # Interseção com os períodos selecionados
         periodos_validos = [p for p in periodos_selecionados if p in periodos_do_atleta]
         
-        if not periodos_validos:
-            continue
-        
-        # Ordenar por minuto
-        df_atleta = df_atleta.sort_values('Minuto').reset_index(drop=True)
-        
-        # Plotar apenas os períodos válidos para este atleta
-        for j, periodo in enumerate(periodos_validos):
-            df_periodo = df_atleta[df_atleta['Período'] == periodo]
-            
-            if df_periodo.empty:
-                continue
-            
-            # Variar a opacidade para diferentes períodos (opcional)
-            opacity = 0.7 + (j / len(periodos_validos)) * 0.3
-            
-            fig.add_trace(go.Scatter(
-                x=df_periodo['Minuto'],
-                y=df_periodo[variavel],
-                mode='lines+markers',
-                name=f"{atleta} - {periodo}",
-                line=dict(color=cores[i % len(cores)], width=2.5),
-                marker=dict(size=8, color=cores[i % len(cores)], opacity=opacity, line=dict(color='white', width=1)),
-                hovertemplate='<b>Atleta:</b> ' + atleta + '<br>' +
-                              '<b>Período:</b> ' + periodo + '<br>' +
-                              '<b>Minuto:</b> %{x}<br>' +
-                              '<b>Valor:</b> %{y:.2f}<extra></extra>'
-            ))
+        for periodo in periodos_validos:
+            combinacoes_validas.append((atleta, periodo))
     
-    # Se não houver dados, retornar None
-    if len(fig.data) == 0:
+    # Se não houver combinações válidas, retornar None
+    if not combinacoes_validas:
         return None
     
+    # Plotar apenas as combinações válidas
+    for i, (atleta, periodo) in enumerate(combinacoes_validas):
+        # Filtrar dados específicos para esta combinação
+        df_combo = df_completo[
+            (df_completo['Nome'] == atleta) & 
+            (df_completo['Período'] == periodo)
+        ].copy().sort_values('Minuto')
+        
+        if df_combo.empty:
+            continue
+        
+        # Determinar a cor baseada no atleta
+        cor_atleta = cores[atletas_selecionados.index(atleta) % len(cores)]
+        
+        # Variar opacidade baseado no período (opcional)
+        indice_periodo = periodos_selecionados.index(periodo) if periodo in periodos_selecionados else 0
+        opacity = 0.6 + (indice_periodo / len(periodos_selecionados)) * 0.4
+        
+        fig.add_trace(go.Scatter(
+            x=df_combo['Minuto'],
+            y=df_combo[variavel],
+            mode='lines+markers',
+            name=f"{atleta} - {periodo}",
+            line=dict(color=cor_atleta, width=2.5),
+            marker=dict(
+                size=8, 
+                color=cor_atleta, 
+                opacity=opacity,
+                line=dict(color='white', width=1)
+            ),
+            hovertemplate='<b>Atleta:</b> ' + atleta + '<br>' +
+                          '<b>Período:</b> ' + periodo + '<br>' +
+                          '<b>Minuto:</b> %{x}<br>' +
+                          '<b>Valor:</b> %{y:.2f}<extra></extra>'
+        ))
+    
     # Calcular média global apenas dos dados válidos
-    df_validos = df_completo[
-        df_completo['Nome'].isin(atletas_selecionados) & 
-        df_completo['Período'].isin(periodos_selecionados)
-    ]
+    df_validos = pd.DataFrame()
+    for atleta, periodo in combinacoes_validas:
+        df_temp = df_completo[
+            (df_completo['Nome'] == atleta) & 
+            (df_completo['Período'] == periodo)
+        ]
+        df_validos = pd.concat([df_validos, df_temp])
     
     if not df_validos.empty:
         media_global = df_validos[variavel].mean()
@@ -1075,7 +1085,7 @@ def criar_timeline_por_atleta(df_completo, atletas_selecionados, periodos_seleci
         )
     
     fig.update_layout(
-        title=f"Evolução Temporal - {variavel} ({len(atletas_selecionados)} atleta(s))",
+        title=f"Evolução Temporal - {variavel} ({len(combinacoes_validas)} combinações atleta-período)",
         xaxis_title="Minuto",
         yaxis_title=variavel,
         hovermode='x unified',
@@ -1084,13 +1094,23 @@ def criar_timeline_por_atleta(df_completo, atletas_selecionados, periodos_seleci
         font=dict(color='white', size=12),
         title_font=dict(color='#3b82f6', size=20),
         showlegend=True,
-        legend=dict(font=dict(color='white'), orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+        legend=dict(
+            font=dict(color='white', size=10),
+            orientation="v",
+            yanchor="top",
+            y=0.99,
+            xanchor="left",
+            x=1.02,
+            bgcolor='rgba(30,41,59,0.8)',
+            bordercolor='#334155',
+            borderwidth=1
+        )
     )
     
-    fig.update_xaxes(gridcolor='#334155', tickfont=dict(color='white'))
+    fig.update_xaxes(gridcolor='#334155', tickfont=dict(color='white'), tickangle=-45)
     fig.update_yaxes(gridcolor='#334155', tickfont=dict(color='white'))
     
-    return fig
+    return fig, combinacoes_validas
 
 def criar_tabela_destaque(df, colunas_destaque):
     """Tabela com células destacadas baseado em valores"""
@@ -1739,7 +1759,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     hide_index=True
                 )
             
-            # ABA 2: ESTATÍSTICAS & TEMPORAL - CORRIGIDA
+            # ABA 2: ESTATÍSTICAS & TEMPORAL - VERSÃO DEFINITIVA
             with tabs[1]:
                 st.markdown(f"<h3>{t['tab_temporal']}</h3>", unsafe_allow_html=True)
                 
@@ -1804,11 +1824,11 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                             """, unsafe_allow_html=True)
                 
                 st.markdown("---")
-                st.markdown(f"<h4>⏱️ Evolução Temporal por Atleta</h4>", unsafe_allow_html=True)
-                st.caption("Cada atleta só mostra os períodos em que efetivamente participou.")
+                st.markdown(f"<h4>⏱️ Evolução Temporal (Apenas Dados Válidos)</h4>", unsafe_allow_html=True)
+                st.caption("Mostrando APENAS as combinações atleta-período onde existem dados reais.")
                 
-                # USAR A FUNÇÃO CORRIGIDA QUE RESPEITA A RELAÇÃO ATLETA-PERÍODO
-                fig_tempo_corrigida = criar_timeline_por_atleta(
+                # USAR A FUNÇÃO DEFINITIVA QUE MOSTRA APENAS DADOS VÁLIDOS
+                resultado = criar_timeline_filtrada(
                     df_completo, 
                     atletas_selecionados, 
                     periodos_selecionados, 
@@ -1816,16 +1836,26 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     t
                 )
                 
-                if fig_tempo_corrigida:
-                    st.plotly_chart(fig_tempo_corrigida, use_container_width=True)
+                if resultado:
+                    fig_tempo_filtrada, combinacoes = resultado
+                    st.plotly_chart(fig_tempo_filtrada, use_container_width=True)
                     
-                    # Mostrar legenda explicativa
-                    st.info("""
-                    ℹ️ **Nota:** Cada atleta é representado por uma cor. As diferentes tonalidades representam diferentes períodos.
-                    Atletas só aparecem nos períodos em que realmente participaram.
-                    """)
+                    # Mostrar estatísticas das combinações
+                    st.success(f"✅ **{len(combinacoes)} combinações atleta-período com dados válidos**")
+                    
+                    # Tabela de combinações válidas
+                    df_combinacoes = pd.DataFrame(combinacoes, columns=['Atleta', 'Período'])
+                    df_combinacoes = df_combinacoes.sort_values(['Atleta', 'Período']).reset_index(drop=True)
+                    
+                    with st.expander("📋 Ver combinações com dados válidos"):
+                        st.dataframe(df_combinacoes, use_container_width=True, hide_index=True)
+                    
+                    # Aviso sobre combinações inválidas
+                    total_possiveis = len(atletas_selecionados) * len(periodos_selecionados)
+                    if len(combinacoes) < total_possiveis:
+                        st.info(f"ℹ️ {total_possiveis - len(combinacoes)} combinações atleta-período não possuem dados e foram omitidas do gráfico.")
                 else:
-                    st.warning("Sem dados para exibir - verifique se os atletas selecionados participam dos períodos escolhidos.")
+                    st.warning("⚠️ Nenhuma combinação atleta-período válida encontrada. Verifique se os atletas selecionados participam dos períodos escolhidos.")
                 
                 st.markdown("---")
                 st.markdown(f"<h4>{t['descriptive_stats']}</h4>", unsafe_allow_html=True)
