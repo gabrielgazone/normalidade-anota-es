@@ -19,7 +19,7 @@ st.set_page_config(
 )
 
 # ============================================================================
-# INICIALIZAÇÃO DO SESSION STATE - COMPLETA E CORRIGIDA
+# INICIALIZAÇÃO DO SESSION STATE - COMPLETA
 # ============================================================================
 
 def init_session_state():
@@ -2756,7 +2756,6 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                                 marker_color='#3b82f6',
                                 line_color='white'
                             ))
-                            
                             fig_comp.add_trace(go.Box(
                                 y=dados_comp2,
                                 name=grupo2,
