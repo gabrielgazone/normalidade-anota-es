@@ -982,13 +982,14 @@ def comparar_grupos(df, variavel, grupo1, grupo2):
         return None
 
 # ============================================================================
-# NOVA FUNÇÃO: criar_timeline_completa - MOSTRA TODOS OS PERÍODOS DO ATLETA
+# FUNÇÃO CORRIGIDA: criar_timeline_completa - SEM LINHAS VERTICAIS PROBLEMÁTICAS
 # ============================================================================
 
 def criar_timeline_completa(df_completo, variavel, t):
     """
     Timeline que mostra TODOS os períodos do atleta selecionado
     Independentemente dos filtros de período aplicados
+    VERSÃO CORRIGIDA - sem anotações problemáticas
     """
     # Obter lista única de atletas
     atletas = sorted(df_completo['Nome'].unique())
@@ -1067,20 +1068,6 @@ def criar_timeline_completa(df_completo, variavel, t):
         annotation_text="±1 DP",
         annotation_position="top right"
     )
-    
-    # Adicionar linhas verticais para marcar mudanças de período
-    for i, periodo in enumerate(periodos[1:], 1):  # Pula o primeiro
-        df_periodo = df_atleta[df_atleta['Período'] == periodo]
-        if not df_periodo.empty:
-            primeiro_minuto = df_periodo.iloc[0]['Minuto']
-            fig.add_vline(
-                x=primeiro_minuto,
-                line_dash="dot",
-                line_color=cores[i % len(cores)],
-                line_width=1,
-                annotation_text=periodo,
-                annotation_position="top"
-            )
     
     fig.update_layout(
         title=f"Evolução Temporal Completa - {variavel} - {atleta_selecionado}",
@@ -1815,7 +1802,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 st.markdown(f"<h4>⏱️ Evolução Temporal Completa por Atleta</h4>", unsafe_allow_html=True)
                 st.caption("Visualize todos os períodos de um atleta específico, independentemente dos filtros aplicados.")
                 
-                # USAR A NOVA FUNÇÃO QUE MOSTRA TODOS OS PERÍODOS
+                # USAR A NOVA FUNÇÃO CORRIGIDA QUE MOSTRA TODOS OS PERÍODOS
                 fig_tempo_completa, atleta_visualizado = criar_timeline_completa(df_completo, variavel_analise, t)
                 
                 if fig_tempo_completa:
