@@ -19,7 +19,7 @@ st.set_page_config(
 )
 
 # ============================================================================
-# INICIALIZAÇÃO DO SESSION STATE - COMPLETA
+# INICIALIZAÇÃO DO SESSION STATE - COMPLETA E CORRIGIDA
 # ============================================================================
 
 def init_session_state():
