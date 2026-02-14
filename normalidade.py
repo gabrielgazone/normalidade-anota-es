@@ -18,17 +18,9 @@ st.set_page_config(
 
 st.write("✅ Configuração da página OK")
 
-# CSS básico
-st.markdown("""
-<style>
-    .stApp {
-        background: #0a0f1f;
-    }
-    h1 {
-        color: #00ffff;
-    }
-</style>
-""", unsafe_allow_html=True)
+# CSS 
+
+st.markdown("<style>body{background:#0a0f1f;}</style>", unsafe_allow_html=True)
 
 st.write("✅ CSS carregado")
 
