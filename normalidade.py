@@ -982,13 +982,13 @@ def comparar_grupos(df, variavel, grupo1, grupo2):
         return None
 
 # ============================================================================
-# FUNÇÃO CORRIGIDA: criar_timeline_por_atleta - USA ATLETAS DA SIDEBAR
+# FUNÇÃO CORRIGIDA: criar_timeline_por_atleta - AGORA RESPEITA A RELAÇÃO ATLETA-PERÍODO
 # ============================================================================
 
-def criar_timeline_por_atleta(df_completo, atletas_selecionados, variavel, t):
+def criar_timeline_por_atleta(df_completo, atletas_selecionados, periodos_selecionados, variavel, t):
     """
-    Timeline que mostra TODOS os períodos dos atletas selecionados na sidebar
-    Independentemente dos filtros de período aplicados
+    Timeline que mostra os períodos onde cada atleta efetivamente participou
+    Garante que cada atleta só mostre os períodos em que tem dados
     """
     if not atletas_selecionados:
         return None
@@ -998,32 +998,43 @@ def criar_timeline_por_atleta(df_completo, atletas_selecionados, variavel, t):
     # Cores para cada atleta
     cores = px.colors.qualitative.Set2
     
-    # Para cada atleta selecionado, plotar seus dados
+    # Para cada atleta selecionado, verificar em quais períodos ele realmente participou
     for i, atleta in enumerate(atletas_selecionados):
-        # Filtrar dados do atleta (sem filtro de período)
+        # Filtrar dados do atleta
         df_atleta = df_completo[df_completo['Nome'] == atleta].copy()
-        df_atleta = df_atleta.sort_values('Minuto').reset_index(drop=True)
         
         if df_atleta.empty:
             continue
         
-        # Obter períodos únicos para este atleta
-        periodos = df_atleta['Período'].unique()
+        # Obter os períodos em que este atleta realmente tem dados
+        periodos_do_atleta = df_atleta['Período'].unique()
         
-        # Plotar cada período com uma tonalidade da cor do atleta
-        for j, periodo in enumerate(periodos):
+        # Filtrar apenas os períodos que estão selecionados E que o atleta participou
+        periodos_validos = [p for p in periodos_selecionados if p in periodos_do_atleta]
+        
+        if not periodos_validos:
+            continue
+        
+        # Ordenar por minuto
+        df_atleta = df_atleta.sort_values('Minuto').reset_index(drop=True)
+        
+        # Plotar apenas os períodos válidos para este atleta
+        for j, periodo in enumerate(periodos_validos):
             df_periodo = df_atleta[df_atleta['Período'] == periodo]
             
-            # Variar a opacidade para diferentes períodos
-            opacity = 0.5 + (j / len(periodos)) * 0.5
+            if df_periodo.empty:
+                continue
+            
+            # Variar a opacidade para diferentes períodos (opcional)
+            opacity = 0.7 + (j / len(periodos_validos)) * 0.3
             
             fig.add_trace(go.Scatter(
                 x=df_periodo['Minuto'],
                 y=df_periodo[variavel],
                 mode='lines+markers',
                 name=f"{atleta} - {periodo}",
-                line=dict(color=cores[i % len(cores)], width=2),
-                marker=dict(size=6, color=cores[i % len(cores)], opacity=opacity),
+                line=dict(color=cores[i % len(cores)], width=2.5),
+                marker=dict(size=8, color=cores[i % len(cores)], opacity=opacity, line=dict(color='white', width=1)),
                 hovertemplate='<b>Atleta:</b> ' + atleta + '<br>' +
                               '<b>Período:</b> ' + periodo + '<br>' +
                               '<b>Minuto:</b> %{x}<br>' +
@@ -1034,11 +1045,15 @@ def criar_timeline_por_atleta(df_completo, atletas_selecionados, variavel, t):
     if len(fig.data) == 0:
         return None
     
-    # Calcular média global dos atletas selecionados
-    df_global = df_completo[df_completo['Nome'].isin(atletas_selecionados)]
-    if not df_global.empty:
-        media_global = df_global[variavel].mean()
-        desvio_global = df_global[variavel].std()
+    # Calcular média global apenas dos dados válidos
+    df_validos = df_completo[
+        df_completo['Nome'].isin(atletas_selecionados) & 
+        df_completo['Período'].isin(periodos_selecionados)
+    ]
+    
+    if not df_validos.empty:
+        media_global = df_validos[variavel].mean()
+        desvio_global = df_validos[variavel].std()
         
         fig.add_hline(
             y=media_global, 
@@ -1724,7 +1739,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     hide_index=True
                 )
             
-            # ABA 2: ESTATÍSTICAS & TEMPORAL - COM CORREÇÃO (USA ATLETAS DA SIDEBAR)
+            # ABA 2: ESTATÍSTICAS & TEMPORAL - CORRIGIDA
             with tabs[1]:
                 st.markdown(f"<h3>{t['tab_temporal']}</h3>", unsafe_allow_html=True)
                 
@@ -1789,16 +1804,28 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                             """, unsafe_allow_html=True)
                 
                 st.markdown("---")
-                st.markdown(f"<h4>⏱️ Evolução Temporal - Todos os Períodos</h4>", unsafe_allow_html=True)
-                st.caption("Visualizando TODOS os períodos dos atletas selecionados na sidebar (independente dos filtros de período).")
+                st.markdown(f"<h4>⏱️ Evolução Temporal por Atleta</h4>", unsafe_allow_html=True)
+                st.caption("Cada atleta só mostra os períodos em que efetivamente participou.")
                 
-                # USAR A NOVA FUNÇÃO QUE USA OS ATLETAS DA SIDEBAR
-                fig_tempo_completa = criar_timeline_por_atleta(df_completo, atletas_selecionados, variavel_analise, t)
+                # USAR A FUNÇÃO CORRIGIDA QUE RESPEITA A RELAÇÃO ATLETA-PERÍODO
+                fig_tempo_corrigida = criar_timeline_por_atleta(
+                    df_completo, 
+                    atletas_selecionados, 
+                    periodos_selecionados, 
+                    variavel_analise, 
+                    t
+                )
                 
-                if fig_tempo_completa:
-                    st.plotly_chart(fig_tempo_completa, use_container_width=True)
+                if fig_tempo_corrigida:
+                    st.plotly_chart(fig_tempo_corrigida, use_container_width=True)
+                    
+                    # Mostrar legenda explicativa
+                    st.info("""
+                    ℹ️ **Nota:** Cada atleta é representado por uma cor. As diferentes tonalidades representam diferentes períodos.
+                    Atletas só aparecem nos períodos em que realmente participaram.
+                    """)
                 else:
-                    st.warning("Sem dados para exibir")
+                    st.warning("Sem dados para exibir - verifique se os atletas selecionados participam dos períodos escolhidos.")
                 
                 st.markdown("---")
                 st.markdown(f"<h4>{t['descriptive_stats']}</h4>", unsafe_allow_html=True)
