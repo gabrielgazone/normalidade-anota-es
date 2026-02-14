@@ -5,7 +5,6 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import scipy.stats as stats
-from scipy import signal
 import io
 import base64
 from datetime import datetime, timedelta
@@ -437,40 +436,6 @@ st.markdown("""
         text-shadow: 0 0 30px rgba(59, 130, 246, 0.3);
     }
     
-    /* Cards de métricas com efeito 3D */
-    .metric-card {
-        background: rgba(30, 41, 59, 0.7);
-        backdrop-filter: blur(10px);
-        padding: 25px;
-        border-radius: 20px;
-        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(59, 130, 246, 0.2) inset;
-        text-align: center;
-        color: white;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        border: 1px solid rgba(59, 130, 246, 0.1);
-        position: relative;
-        transform-style: preserve-3d;
-        perspective: 1000px;
-    }
-    
-    .metric-card:hover {
-        transform: rotateX(5deg) rotateY(5deg) translateZ(20px);
-        box-shadow: 0 25px 45px -10px #3b82f6, 0 0 0 2px rgba(59, 130, 246, 0.3) inset;
-    }
-    
-    .metric-card .icon {
-        font-size: 3rem;
-        margin-bottom: 15px;
-        filter: drop-shadow(0 0 20px #3b82f6);
-        animation: pulse 2s infinite;
-    }
-    
-    @keyframes pulse {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.1); }
-        100% { transform: scale(1); }
-    }
-    
     /* Timeline cards com gradiente dinâmico */
     .time-metric-card {
         background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
@@ -483,23 +448,6 @@ st.markdown("""
         transition: all 0.3s ease;
         position: relative;
         overflow: hidden;
-    }
-    
-    .time-metric-card::after {
-        content: "";
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: linear-gradient(45deg, transparent, rgba(59, 130, 246, 0.1), transparent);
-        transform: rotate(45deg);
-        animation: shine 3s infinite;
-    }
-    
-    @keyframes shine {
-        0% { transform: translateX(-100%) rotate(45deg); }
-        100% { transform: translateX(100%) rotate(45deg); }
     }
     
     /* Warning card com efeito de alerta */
@@ -521,16 +469,6 @@ st.markdown("""
         0% { box-shadow: 0 0 30px rgba(220, 38, 38, 0.3); }
         50% { box-shadow: 0 0 50px rgba(220, 38, 38, 0.6); }
         100% { box-shadow: 0 0 30px rgba(220, 38, 38, 0.3); }
-    }
-    
-    .warning-card::before {
-        content: "⚠️";
-        position: absolute;
-        top: -10px;
-        right: -10px;
-        font-size: 2rem;
-        opacity: 0.3;
-        transform: rotate(15deg);
     }
     
     /* Zone cards com design moderno */
@@ -637,23 +575,6 @@ st.markdown("""
         overflow: hidden;
     }
     
-    .stTabs [data-baseweb="tab"]::before {
-        content: "";
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 0;
-        height: 0;
-        background: radial-gradient(circle, rgba(59, 130, 246, 0.3), transparent);
-        transform: translate(-50%, -50%);
-        transition: width 0.6s, height 0.6s;
-    }
-    
-    .stTabs [data-baseweb="tab"]:hover::before {
-        width: 200px;
-        height: 200px;
-    }
-    
     .stTabs [aria-selected="true"] {
         background: linear-gradient(135deg, #3b82f6, #8b5cf6) !important;
         color: white !important;
@@ -694,23 +615,6 @@ st.markdown("""
         box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
         position: relative;
         overflow: hidden;
-    }
-    
-    .stButton > button::after {
-        content: "";
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: linear-gradient(45deg, transparent, rgba(255,255,255,0.2), transparent);
-        transform: rotate(45deg);
-        animation: buttonShine 3s infinite;
-    }
-    
-    @keyframes buttonShine {
-        0% { transform: translateX(-100%) rotate(45deg); }
-        100% { transform: translateX(100%) rotate(45deg); }
     }
     
     /* Scrollbar científica */
@@ -839,10 +743,10 @@ def interpretar_teste(p_valor, nome_teste, t):
         p_text = f"{p_valor:.5f}"
     
     if p_valor > 0.05:
-        status = f"✅ {t['normality_test'].split('🧪')[1] if '🧪' in t['normality_test'] else 'Dados normais'}"
+        status = f"✅ {t['normality_test']}"
         cor = "#10b981"
     else:
-        status = f"⚠️ {t['normality_test'].split('🧪')[1] if '🧪' in t['normality_test'] else 'Dados não normais'}"
+        status = f"⚠️ {t['normality_test']}"
         cor = "#ef4444"
     
     st.markdown(f"""
@@ -856,15 +760,28 @@ def interpretar_teste(p_valor, nome_teste, t):
 def extrair_periodo(texto):
     try:
         texto = str(texto)
-        primeiro_hifen = texto.find('-')
-        
-        if primeiro_hifen == -1:
-            return ""
-        if len(texto) < 13:
-            return ""
-        
-        periodo = texto[primeiro_hifen + 1:-13].strip()
-        return periodo
+        partes = texto.split('-')
+        if len(partes) >= 3:
+            return partes[1].strip()
+        return ""
+    except:
+        return ""
+
+def extrair_minuto(texto):
+    try:
+        texto = str(texto)
+        partes = texto.split('-')
+        if len(partes) >= 3:
+            return partes[2].strip()
+        return ""
+    except:
+        return ""
+
+def extrair_nome(texto):
+    try:
+        texto = str(texto)
+        partes = texto.split('-')
+        return partes[0].strip()
     except:
         return ""
 
@@ -900,15 +817,6 @@ def executive_card(titulo, valor, delta, icone, cor_status="#3b82f6"):
     </div>
     """, unsafe_allow_html=True)
 
-def metric_card(titulo, valor, icone, cor_gradiente):
-    st.markdown(f"""
-    <div class="metric-card">
-        <div class="icon">{icone}</div>
-        <h3>{titulo}</h3>
-        <h2>{valor}</h2>
-    </div>
-    """, unsafe_allow_html=True)
-
 def time_metric_card(label, valor, sub_label="", cor="#3b82f6"):
     st.markdown(f"""
     <div class="time-metric-card" style="border-left-color: {cor};">
@@ -937,22 +845,17 @@ def extrair_minuto_do_extremo(df, coluna_valor, coluna_minuto, extremo='max'):
         if df.empty or len(df) == 0:
             return "N/A"
         
-        df_reset = df.reset_index(drop=True)
         if extremo == 'max':
-            idx_extremo = df_reset[coluna_valor].idxmax()
+            idx_extremo = df[coluna_valor].idxmax()
         else:
-            idx_extremo = df_reset[coluna_valor].idxmin()
+            idx_extremo = df[coluna_valor].idxmin()
         
-        if pd.notna(idx_extremo) and idx_extremo < len(df_reset):
-            return df_reset.loc[idx_extremo, coluna_minuto]
+        if pd.notna(idx_extremo):
+            return df.loc[idx_extremo, coluna_minuto]
         
         return "N/A"
     except:
-        try:
-            df_sorted = df.sort_values(coluna_valor, ascending=(extremo=='min'))
-            return df_sorted.iloc[0][coluna_minuto]
-        except:
-            return "N/A"
+        return "N/A"
 
 def criar_zonas_intensidade(df, variavel, metodo='percentis'):
     if metodo == 'percentis':
@@ -1010,7 +913,7 @@ def calcular_media_movel(df, variavel, window):
     return df[variavel].rolling(window=window, min_periods=1, center=True).mean()
 
 # ============================================================================
-# FUNÇÃO CORRIGIDA: criar_timeline_filtrada COM MÉDIA MÓVEL E MARCADORES NO EIXO X
+# FUNÇÃO CORRIGIDA: criar_timeline_filtrada
 # ============================================================================
 
 def criar_timeline_filtrada(df_completo, atletas_selecionados, periodos_selecionados, variavel, window_size, t):
@@ -1022,7 +925,7 @@ def criar_timeline_filtrada(df_completo, atletas_selecionados, periodos_selecion
     - Média móvel (linha tracejada branca)
     """
     if not atletas_selecionados or not periodos_selecionados:
-        return None, []
+        return None, [], []
     
     # Filtrar dados apenas para combinações válidas
     df_filtrado = df_completo[
@@ -1031,7 +934,7 @@ def criar_timeline_filtrada(df_completo, atletas_selecionados, periodos_selecion
     ].copy()
     
     if df_filtrado.empty:
-        return None, []
+        return None, [], []
     
     # Ordenar por minuto para garantir sequência temporal
     df_filtrado = df_filtrado.sort_values('Minuto')
@@ -1059,10 +962,6 @@ def criar_timeline_filtrada(df_completo, atletas_selecionados, periodos_selecion
         annotation_position="top left",
         annotation_font=dict(color="white", size=12)
     )
-    
-    # Coletar todos os minutos para análise global
-    todos_minutos = df_filtrado['Minuto'].values
-    todos_valores = df_filtrado[variavel].values
     
     # Calcular média móvel global
     df_filtrado['Media_Movel'] = calcular_media_movel(df_filtrado, variavel, window_size)
@@ -1148,43 +1047,47 @@ def criar_timeline_filtrada(df_completo, atletas_selecionados, periodos_selecion
         
         # Plotar pontos críticos em VERMELHO
         if not df_critico.empty:
-            fig.add_trace(go.Scatter(
-                x=df_critico['Minuto'],
-                y=df_critico[variavel],
-                mode='markers',
-                name=f"{atleta} - {periodo} (crítico)",
-                marker=dict(
-                    size=12,
-                    color='#ef4444',
-                    symbol='circle',
-                    opacity=1,
-                    line=dict(color='white', width=2)
-                ),
-                legendgroup=f"{atleta}_{periodo}",
-                showlegend=False,
-                hovertemplate='<b style="color:red;">⚠️ EVENTO CRÍTICO</b><br>' +
-                              '<b>Atleta:</b> ' + atleta + '<br>' +
-                              '<b>Período:</b> ' + periodo + '<br>' +
-                              '<b>Minuto:</b> %{x}<br>' +
-                              '<b>Valor:</b> %{y:.2f}<br>' +
-                              '<b>Acima do limiar:</b> {:.2f}%<extra></extra>'.format(
-                                  ((df_critico[variavel].iloc[0] / limiar_80) - 1) * 100 if not df_critico.empty else 0
-                              )
-            ))
+            for _, row in df_critico.iterrows():
+                percent_acima = ((row[variavel] / limiar_80) - 1) * 100
+                fig.add_trace(go.Scatter(
+                    x=[row['Minuto']],
+                    y=[row[variavel]],
+                    mode='markers',
+                    name=f"{atleta} - {periodo} (crítico)",
+                    marker=dict(
+                        size=12,
+                        color='#ef4444',
+                        symbol='circle',
+                        opacity=1,
+                        line=dict(color='white', width=2)
+                    ),
+                    legendgroup=f"{atleta}_{periodo}",
+                    showlegend=False,
+                    hovertemplate='<b style="color:red;">⚠️ EVENTO CRÍTICO</b><br>' +
+                                  '<b>Atleta:</b> ' + atleta + '<br>' +
+                                  '<b>Período:</b> ' + periodo + '<br>' +
+                                  '<b>Minuto:</b> %{x}<br>' +
+                                  '<b>Valor:</b> %{y:.2f}<br>' +
+                                  f'<b>Acima do limiar:</b> {percent_acima:.1f}%<extra></extra>'
+                ))
     
     # Adicionar marcadores vermelhos no eixo X para eventos críticos
     if minutos_criticos:
-        # Criar traço invisível com marcadores no eixo X
+        # Encontrar o valor mínimo para posicionar os marcadores
+        y_min = df_filtrado[variavel].min()
+        y_range = df_filtrado[variavel].max() - y_min
+        y_pos = y_min - (y_range * 0.05)  # Posicionar 5% abaixo do mínimo
+        
         fig.add_trace(go.Scatter(
             x=minutos_criticos,
-            y=[df_filtrado[variavel].min() * 0.95] * len(minutos_criticos),  # Posicionar próximo ao eixo X
+            y=[y_pos] * len(minutos_criticos),
             mode='markers',
-            name='Eventos Críticos',
+            name='Eventos Críticos (eixo X)',
             marker=dict(
-                size=15,
+                size=12,
                 color='#ef4444',
                 symbol='triangle-down',
-                opacity=1,
+                opacity=0.8,
                 line=dict(color='white', width=1)
             ),
             showlegend=True,
@@ -1193,7 +1096,7 @@ def criar_timeline_filtrada(df_completo, atletas_selecionados, periodos_selecion
                           '<b>Valor acima do limiar</b><extra></extra>'
         ))
         
-        # Adicionar linhas verticais vermelhas nos minutos críticos
+        # Adicionar linhas verticais tracejadas nos minutos críticos
         for minuto in minutos_criticos:
             fig.add_vline(
                 x=minuto,
@@ -1250,9 +1153,7 @@ def criar_timeline_filtrada(df_completo, atletas_selecionados, periodos_selecion
             x=1.02,
             bgcolor='rgba(30,41,59,0.9)',
             bordercolor='#3b82f6',
-            borderwidth=2,
-            itemclick="toggle",
-            itemdoubleclick="toggleothers"
+            borderwidth=2
         ),
         height=700,
         margin=dict(l=50, r=150, t=80, b=50),
@@ -1294,15 +1195,6 @@ def criar_tabela_destaque(df, colunas_destaque):
                 subset=[col],
                 cmap='viridis'
             )
-    
-    # Destacar linha do melhor atleta (maior média)
-    if 'Média' in df.columns:
-        def highlight_max_row(row):
-            if row.name == df['Média'].idxmax():
-                return ['background-color: rgba(16, 185, 129, 0.2)'] * len(row)
-            return [''] * len(row)
-        
-        styled_df = styled_df.apply(highlight_max_row, axis=1)
     
     return styled_df
 
@@ -1369,9 +1261,9 @@ def sistema_anotacoes(t):
         # Listar anotações
         for i, anotacao in enumerate(reversed(st.session_state.anotacoes)):
             st.markdown(f"""
-            <div class="note-card" style="background: #1e293b; padding: 12px; border-radius: 10px; margin: 5px 0; border-left: 4px solid #3b82f6;">
-                <p class="note-date" style="color: #94a3b8; font-size: 0.85rem;">{anotacao['data']}</p>
-                <p class="note-text" style="color: white; margin: 5px 0;">{anotacao['texto']}</p>
+            <div style="background: #1e293b; padding: 12px; border-radius: 10px; margin: 5px 0; border-left: 4px solid #3b82f6;">
+                <p style="color: #94a3b8; font-size: 0.85rem;">{anotacao['data']}</p>
+                <p style="color: white; margin: 5px 0;">{anotacao['texto']}</p>
             </div>
             """, unsafe_allow_html=True)
 
@@ -1508,8 +1400,8 @@ with st.sidebar:
                         primeira_coluna = data.iloc[:, 0].astype(str)
                         segunda_coluna = data.iloc[:, 1].astype(str)
                         
-                        nomes = primeira_coluna.str.split('-').str[0].str.strip()
-                        minutos = primeira_coluna.str[-13:].str.strip()
+                        nomes = primeira_coluna.apply(extrair_nome)
+                        minutos = primeira_coluna.apply(extrair_minuto)
                         periodos = primeira_coluna.apply(extrair_periodo)
                         
                         periodos_unicos = sorted([p for p in periodos.unique() if p and p.strip() != ""])
@@ -1679,12 +1571,6 @@ with st.sidebar:
         if selecionar_todos_atletas:
             if st.session_state.atletas_selecionados != atletas_disponiveis:
                 st.session_state.atletas_selecionados = atletas_disponiveis
-                st.session_state.dados_processados = False
-                st.rerun()
-        else:
-            # Se não estiver selecionando todos e a lista estiver vazia, manter pelo menos um
-            if len(st.session_state.atletas_selecionados) == 0 and atletas_disponiveis:
-                st.session_state.atletas_selecionados = [atletas_disponiveis[0]]
                 st.session_state.dados_processados = False
                 st.rerun()
         
@@ -1866,10 +1752,6 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     
                     z = np.polyfit(quantis_teoricos, quantis_observados, 1)
                     linha_ref = np.poly1d(z)
-                    residuos = quantis_observados - linha_ref(quantis_teoricos)
-                    ss_res = np.sum(residuos**2)
-                    ss_tot = np.sum((quantis_observados - np.mean(quantis_observados))**2)
-                    r2 = 1 - (ss_res / ss_tot) if ss_tot != 0 else 0
                     
                     fig_qq = go.Figure()
                     
@@ -1885,7 +1767,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                         x=quantis_teoricos,
                         y=linha_ref(quantis_teoricos),
                         mode='lines',
-                        name=f'Referência (R² = {r2:.3f})',
+                        name='Referência',
                         line=dict(color='#ef4444', width=2)
                     ))
                     
@@ -1904,7 +1786,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     st.plotly_chart(fig_qq, use_container_width=True)
                 
                 st.markdown("---")
-                st.markdown(f"<h4>📋 {t['tab_distribution'].replace('📊 ', '')} ({n_classes} classes)</h4>", unsafe_allow_html=True)
+                st.markdown(f"<h4>📋 {t['tab_distribution']} ({n_classes} classes)</h4>", unsafe_allow_html=True)
                 
                 minimo = df_filtrado[variavel_analise].min()
                 maximo = df_filtrado[variavel_analise].max()
@@ -1936,7 +1818,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     hide_index=True
                 )
             
-            # ABA 2: ESTATÍSTICAS & TEMPORAL - VERSÃO CORRIGIDA
+            # ABA 2: ESTATÍSTICAS & TEMPORAL
             with tabs[1]:
                 st.markdown(f"<h3>{t['tab_temporal']}</h3>", unsafe_allow_html=True)
                 
@@ -2037,15 +1919,22 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     # Lista de minutos críticos
                     if minutos_criticos:
                         with st.expander("⚠️ Minutos com eventos críticos"):
-                            df_criticos = pd.DataFrame({
-                                'Minuto': minutos_criticos,
-                                'Valor': [df_filtrado[df_filtrado['Minuto'] == m][variavel_analise].values[0] for m in minutos_criticos],
-                                'Acima do limiar (%)': [((df_filtrado[df_filtrado['Minuto'] == m][variavel_analise].values[0] / limiar_80) - 1) * 100 for m in minutos_criticos]
-                            }).drop_duplicates().sort_values('Minuto')
-                            st.dataframe(df_criticos.style.format({
-                                'Valor': '{:.2f}',
-                                'Acima do limiar (%)': '{:.1f}'
-                            }), use_container_width=True, hide_index=True)
+                            dados_criticos = []
+                            for m in set(minutos_criticos):
+                                valor = df_filtrado[df_filtrado['Minuto'] == m][variavel_analise].values
+                                if len(valor) > 0:
+                                    percent_acima = ((valor[0] / limiar_80) - 1) * 100
+                                    dados_criticos.append({
+                                        'Minuto': m,
+                                        'Valor': valor[0],
+                                        'Acima do limiar (%)': percent_acima
+                                    })
+                            df_criticos = pd.DataFrame(dados_criticos).sort_values('Minuto')
+                            if not df_criticos.empty:
+                                st.dataframe(df_criticos.style.format({
+                                    'Valor': '{:.2f}',
+                                    'Acima do limiar (%)': '{:.1f}'
+                                }), use_container_width=True, hide_index=True)
                     
                     # Estatísticas adicionais
                     st.info(f"ℹ️ Estatísticas: Média={media_tempo:.2f} | Desvio={df_tempo[variavel_analise].std():.2f} | Limiar 80%={limiar_80:.2f}")
@@ -2412,7 +2301,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 
                 if len(st.session_state.variaveis_quantitativas) > 1:
                     vars_corr = st.multiselect(
-                        t['tab_correlation'].replace('🔥', '').strip(),
+                        t['tab_correlation'],
                         options=st.session_state.variaveis_quantitativas,
                         default=st.session_state.variaveis_quantitativas[:min(5, len(st.session_state.variaveis_quantitativas))],
                         key="vars_corr_multiselect"
@@ -2717,7 +2606,7 @@ elif st.session_state.dados_processados:
         
         st.dataframe(st.session_state.df_completo.head(10), use_container_width=True)
         st.caption(f"**{t['observations']}:** {len(st.session_state.df_completo)}")
-        st.caption(f"**{t['variable']}s:** {', '.join(st.session_state.variaveis_quantitativas)}")
+        st.caption(f"**{t['variable']}s:** {', '.join(st.session_session.variaveis_quantitativas)}")
         if st.session_state.todos_posicoes:
             st.caption(f"**{t['positions']}:** {', '.join(st.session_state.todos_posicoes)}")
         if st.session_state.todos_periodos:
