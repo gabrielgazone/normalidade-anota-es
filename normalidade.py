@@ -12,8 +12,8 @@ warnings.filterwarnings('ignore')
 
 # CONFIGURAÇÃO DA PÁGINA - PRIMEIRA INSTRUÇÃO
 st.set_page_config(
-    page_title="🏃 Sports Science Analytics Pro | Professional Edition",
-    page_icon="🏃",
+    page_title="⚡ SPORTS SCIENCE PRO | DARK EDITION",
+    page_icon="⚡",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -51,7 +51,10 @@ def init_session_state():
         'window_size': 3,
         'show_critical_markers': True,
         'show_moving_average': True,
-        'confidence_level': 0.95
+        'confidence_level': 0.95,
+        'gamification_level': 1,
+        'xp_points': 0,
+        'achievements': []
     }
     
     for key, value in defaults.items():
@@ -61,294 +64,382 @@ def init_session_state():
 init_session_state()
 
 # ============================================================================
-# CSS PROFISSIONAL - DESIGN CIENTÍFICO MODERNO
+# CSS DARK INOVADOR COM TOQUE DE GAMIFICAÇÃO
 # ============================================================================
 
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap');
     @import url('https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&display=swap');
     
     * {
-        font-family: 'Inter', sans-serif;
+        font-family: 'Rajdhani', sans-serif;
     }
     
-    h1, h2, h3, h4, h5 {
-        font-family: 'Inter', sans-serif !important;
-        font-weight: 600 !important;
+    h1, h2, h3, h4 {
+        font-family: 'Orbitron', sans-serif !important;
+        letter-spacing: 1px;
     }
     
-    /* Background profissional */
+    /* Background escuro com efeito de grade */
     .stApp {
-        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        background: radial-gradient(circle at 50% 50%, #0a0f1f 0%, #030614 100%);
+        position: relative;
     }
     
-    /* Sidebar profissional */
+    /* Efeito de grid futurista */
+    .stApp::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: 
+            linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 255, 255, 0.03) 1px, transparent 1px);
+        background-size: 50px 50px;
+        pointer-events: none;
+        z-index: 0;
+    }
+    
+    /* Sidebar dark futurista */
     section[data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%) !important;
-        border-right: 1px solid #e2e8f0;
-        box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+        background: linear-gradient(180deg, #0f1425 0%, #070b1a 100%) !important;
+        border-right: 2px solid #00ffff;
+        box-shadow: 5px 0 30px rgba(0, 255, 255, 0.2);
     }
     
     .sidebar-title {
+        font-family: 'Orbitron', sans-serif;
         font-size: 1.1rem;
         font-weight: 600;
-        color: #0f172a;
+        color: #00ffff;
         text-align: center;
         padding: 15px;
-        margin: 10px 0;
-        background: linear-gradient(135deg, #f1f5f9, #ffffff);
-        border-radius: 8px;
-        border: 1px solid #e2e8f0;
-        letter-spacing: 0.5px;
+        margin: 15px 0;
+        border: 2px solid #00ffff;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #0f1425, #1a1f35);
+        text-shadow: 0 0 10px #00ffff;
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        animation: borderGlow 2s infinite;
     }
     
-    /* Cards profissionais */
-    .metric-card {
-        background: white;
-        border-radius: 12px;
-        padding: 20px;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
-        transition: all 0.2s ease;
+    @keyframes borderGlow {
+        0% { border-color: #00ffff; box-shadow: 0 0 20px rgba(0, 255, 255, 0.3); }
+        50% { border-color: #ff00ff; box-shadow: 0 0 30px rgba(255, 0, 255, 0.5); }
+        100% { border-color: #00ffff; box-shadow: 0 0 20px rgba(0, 255, 255, 0.3); }
     }
     
-    .metric-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
-        border-color: #3b82f6;
+    /* Cards científicos com efeito neon */
+    .sci-card {
+        background: linear-gradient(135deg, #1a1f35, #0f1425);
+        border-radius: 15px;
+        padding: 25px;
+        border: 2px solid transparent;
+        border-image: linear-gradient(135deg, #00ffff, #ff00ff) 1;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 30px rgba(0, 255, 255, 0.2);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
     }
     
-    .metric-card .label {
-        color: #64748b;
+    .sci-card::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(45deg, transparent, rgba(0, 255, 255, 0.1), transparent);
+        transform: rotate(45deg);
+        animation: shine 3s infinite;
+    }
+    
+    @keyframes shine {
+        0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+        100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+    }
+    
+    .sci-card:hover {
+        transform: translateY(-5px) scale(1.02);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 50px rgba(0, 255, 255, 0.4);
+    }
+    
+    .sci-card .label {
+        color: #8a8f9c;
         font-size: 0.85rem;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 2px;
         font-weight: 500;
     }
     
-    .metric-card .value {
+    .sci-card .value {
         font-family: 'Source Code Pro', monospace;
-        font-size: 2rem;
-        font-weight: 600;
-        color: #0f172a;
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: #00ffff;
+        text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
         margin: 5px 0;
     }
     
-    .metric-card .delta {
+    .sci-card .delta {
         font-size: 0.9rem;
-        color: #10b981;
+        color: #ff00ff;
     }
     
-    /* Warning card */
+    /* Warning card com efeito de alerta */
     .warning-card {
-        background: linear-gradient(135deg, #fee2e2, #fecaca);
-        border-radius: 12px;
+        background: linear-gradient(135deg, #330000, #1a0000);
+        border-radius: 15px;
         padding: 20px;
-        border: 1px solid #ef4444;
+        border: 2px solid #ff4444;
         text-align: center;
+        animation: alertPulse 1.5s infinite;
+        box-shadow: 0 0 30px rgba(255, 68, 68, 0.3);
+    }
+    
+    @keyframes alertPulse {
+        0% { border-color: #ff4444; box-shadow: 0 0 30px rgba(255, 68, 68, 0.3); }
+        50% { border-color: #ff8888; box-shadow: 0 0 50px rgba(255, 68, 68, 0.6); }
+        100% { border-color: #ff4444; box-shadow: 0 0 30px rgba(255, 68, 68, 0.3); }
     }
     
     .warning-card .label {
-        color: #b91c1c;
-        font-size: 0.85rem;
+        color: #ff8888;
+        font-size: 0.9rem;
         text-transform: uppercase;
         font-weight: 600;
     }
     
     .warning-card .value {
         font-family: 'Source Code Pro', monospace;
-        font-size: 2.2rem;
+        font-size: 2.5rem;
         font-weight: 700;
-        color: #b91c1c;
+        color: #ff4444;
+        text-shadow: 0 0 20px rgba(255, 68, 68, 0.5);
     }
     
-    /* Zone cards */
+    /* Zone cards neon */
     .zone-card {
-        background: white;
-        border-radius: 10px;
-        padding: 15px;
-        margin: 5px 0;
+        background: linear-gradient(135deg, #1a1f35, #0f1425);
+        border-radius: 12px;
+        padding: 18px;
+        margin: 8px 0;
         border-left: 6px solid;
-        border-right: 1px solid #e2e8f0;
-        border-top: 1px solid #e2e8f0;
-        border-bottom: 1px solid #e2e8f0;
-        transition: all 0.2s ease;
+        border-right: 1px solid rgba(0, 255, 255, 0.2);
+        border-top: 1px solid rgba(0, 255, 255, 0.2);
+        border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+        transition: all 0.3s ease;
     }
     
     .zone-card:hover {
-        transform: translateX(5px);
-        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        transform: translateX(10px);
+        box-shadow: -10px 10px 30px rgba(0,0,0,0.5);
+        border-right-color: #00ffff;
     }
     
     .zone-card .zone-name {
-        font-size: 0.9rem;
-        color: #64748b;
+        font-size: 1rem;
+        color: #8a8f9c;
         text-transform: uppercase;
         font-weight: 500;
+        letter-spacing: 1px;
     }
     
     .zone-card .zone-value {
         font-family: 'Source Code Pro', monospace;
-        font-size: 1.4rem;
+        font-size: 1.6rem;
         font-weight: 600;
-        color: #0f172a;
+        color: white;
     }
     
     .zone-card .zone-count {
-        font-size: 1rem;
-        color: #3b82f6;
+        font-size: 1.1rem;
+        color: #00ffff;
         font-weight: 500;
     }
     
-    /* Tabs profissionais */
+    /* Tabs neon */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
-        background: white;
+        gap: 10px;
+        background: rgba(26, 31, 53, 0.8);
+        backdrop-filter: blur(10px);
         padding: 8px;
-        border-radius: 10px;
-        border: 1px solid #e2e8f0;
+        border-radius: 15px;
+        border: 2px solid #00ffff;
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
     }
     
     .stTabs [data-baseweb="tab"] {
-        border-radius: 8px;
-        padding: 10px 20px;
-        font-weight: 500;
-        color: #64748b !important;
-        transition: all 0.2s ease;
+        border-radius: 10px;
+        padding: 12px 25px;
+        font-weight: 600;
+        color: #8a8f9c !important;
+        transition: all 0.3s ease;
+        font-size: 1rem;
     }
     
     .stTabs [aria-selected="true"] {
-        background: #3b82f6 !important;
+        background: linear-gradient(135deg, #00ffff, #ff00ff) !important;
         color: white !important;
+        transform: scale(1.05);
+        box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
     }
     
-    /* Botões profissionais */
+    /* Botões neon */
     .stButton > button {
-        background: #3b82f6;
+        background: linear-gradient(135deg, #00ffff, #ff00ff);
         color: white;
         border: none;
-        border-radius: 8px;
-        padding: 12px 25px;
-        font-weight: 500;
-        transition: all 0.2s ease;
-        border: 1px solid #3b82f6;
+        border-radius: 10px;
+        padding: 12px 30px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        font-size: 1rem;
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
     }
     
     .stButton > button:hover {
-        background: #2563eb;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        transform: translateY(-2px) scale(1.05);
+        box-shadow: 0 0 40px rgba(255, 0, 255, 0.5);
+        border-color: white;
     }
     
-    /* Dataframe profissional */
-    .dataframe {
-        background: white !important;
-        border-radius: 12px !important;
-        border: 1px solid #e2e8f0 !important;
-    }
-    
-    .dataframe th {
-        background: #f8fafc !important;
-        color: #0f172a !important;
-        font-weight: 600;
-        padding: 12px !important;
-        border-bottom: 2px solid #e2e8f0 !important;
-    }
-    
-    .dataframe td {
-        background: white !important;
-        color: #334155 !important;
-        border-color: #e2e8f0 !important;
-        padding: 10px !important;
-    }
-    
-    /* Containers de métricas */
+    /* Containers de estatísticas */
     .stat-container {
-        background: white;
-        border-radius: 10px;
+        background: linear-gradient(135deg, #1a1f35, #0f1425);
+        border-radius: 12px;
         padding: 20px;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        border: 1px solid #00ffff;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        margin: 10px 0;
     }
     
     .stat-container h4 {
-        color: #0f172a;
+        color: #00ffff;
         font-size: 1.1rem;
         margin-bottom: 15px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }
     
     .stat-container p {
-        color: #334155;
+        color: #e2e8f0;
         margin: 8px 0;
     }
     
     .stat-container strong {
-        color: #3b82f6;
+        color: #ff00ff;
     }
     
-    /* Note card */
+    /* Note cards */
     .note-card {
-        background: #f8fafc;
+        background: linear-gradient(135deg, #1a1f35, #0f1425);
         padding: 15px;
-        border-radius: 10px;
+        border-radius: 12px;
         margin: 10px 0;
-        border-left: 4px solid #3b82f6;
-        border: 1px solid #e2e8f0;
+        border-left: 4px solid #00ffff;
+        border-right: 1px solid rgba(0, 255, 255, 0.2);
+        border-top: 1px solid rgba(0, 255, 255, 0.2);
+        border-bottom: 1px solid rgba(0, 255, 255, 0.2);
     }
     
     .note-card .note-date {
-        color: #64748b;
+        color: #8a8f9c;
         font-size: 0.85rem;
     }
     
     .note-card .note-text {
-        color: #0f172a;
+        color: white;
         margin: 5px 0;
-    }
-    
-    /* Scrollbar */
-    ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-    }
-    
-    ::-webkit-scrollbar-track {
-        background: #f1f5f9;
-    }
-    
-    ::-webkit-scrollbar-thumb {
-        background: #94a3b8;
-        border-radius: 4px;
-    }
-    
-    ::-webkit-scrollbar-thumb:hover {
-        background: #64748b;
     }
     
     /* Headers */
     h1 {
-        font-size: 2.5rem;
-        font-weight: 700;
-        color: #0f172a;
+        font-size: 3rem;
+        font-weight: 800;
+        color: white;
         text-align: center;
         margin-bottom: 10px;
+        text-shadow: 0 0 30px #00ffff, 0 0 60px #ff00ff;
+        animation: titleGlow 3s infinite;
+    }
+    
+    @keyframes titleGlow {
+        0% { text-shadow: 0 0 30px #00ffff, 0 0 60px #ff00ff; }
+        50% { text-shadow: 0 0 50px #ff00ff, 0 0 80px #00ffff; }
+        100% { text-shadow: 0 0 30px #00ffff, 0 0 60px #ff00ff; }
     }
     
     h2 {
-        font-size: 1.8rem;
-        font-weight: 600;
-        color: #0f172a;
-        border-bottom: 2px solid #3b82f6;
+        font-size: 2rem;
+        font-weight: 700;
+        color: white;
+        border-bottom: 3px solid;
+        border-image: linear-gradient(90deg, #00ffff, #ff00ff) 1;
         padding-bottom: 10px;
-        margin-bottom: 20px;
+        margin-bottom: 25px;
     }
     
     h3 {
-        font-size: 1.4rem;
+        font-size: 1.6rem;
         font-weight: 600;
-        color: #3b82f6;
-        margin-bottom: 15px;
+        color: #00ffff;
+        margin-bottom: 20px;
+    }
+    
+    /* Dataframe */
+    .dataframe {
+        background: #1a1f35 !important;
+        border-radius: 15px !important;
+        border: 2px solid #00ffff !important;
+    }
+    
+    .dataframe th {
+        background: linear-gradient(135deg, #00ffff, #ff00ff) !important;
+        color: white !important;
+        font-weight: 600;
+        padding: 15px !important;
+        font-size: 0.95rem;
+    }
+    
+    .dataframe td {
+        background: #0f1425 !important;
+        color: #e2e8f0 !important;
+        border-color: #00ffff !important;
+        padding: 12px !important;
+    }
+    
+    /* Progress bars */
+    .stProgress > div > div {
+        background: linear-gradient(90deg, #00ffff, #ff00ff) !important;
+        border-radius: 10px;
+        border: 1px solid white;
+    }
+    
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: #0f1425;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #00ffff, #ff00ff);
+        border-radius: 5px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, #ff00ff, #00ffff);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -369,17 +460,52 @@ mobile = is_mobile()
 n_colunas = 1 if mobile else 4
 
 # ============================================================================
-# HEADER PROFISSIONAL
+# HEADER CIENTÍFICO
 # ============================================================================
 
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
     st.markdown("""
     <div style="text-align: center; padding: 20px 0;">
-        <h1>🏃 SPORTS SCIENCE ANALYTICS PRO</h1>
-        <p style="color: #3b82f6; font-size: 1.1rem; letter-spacing: 1px;">
-            Professional Sports Performance Analysis Platform
+        <h1>⚡ SPORTS SCIENCE ANALYTICS PRO</h1>
+        <p style="color: #00ffff; font-size: 1.2rem; letter-spacing: 3px; font-family: 'Orbitron', sans-serif;">
+            QUANTUM NEURAL PERFORMANCE ANALYZER
         </p>
+        <div style="display: flex; justify-content: center; gap: 15px; margin-top: 20px;">
+            <span style="background: linear-gradient(135deg, #00ffff20, #ff00ff20); color: #00ffff; padding: 8px 20px; border-radius: 20px; border: 1px solid #00ffff;">⚡ NEURAL CORE</span>
+            <span style="background: linear-gradient(135deg, #ff00ff20, #00ffff20); color: #ff00ff; padding: 8px 20px; border-radius: 20px; border: 1px solid #ff00ff;">🔬 QUANTUM LAB</span>
+            <span style="background: linear-gradient(135deg, #00ffff20, #ff00ff20); color: #00ffff; padding: 8px 20px; border-radius: 20px; border: 1px solid #00ffff;">📊 DEEP ANALYTICS</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+# Sistema de gamificação sutil
+col1, col2, col3 = st.columns(3)
+with col1:
+    st.markdown(f"""
+    <div class="sci-card" style="padding: 10px;">
+        <p class="label">🎮 LEVEL</p>
+        <p class="value" style="font-size: 1.5rem;">{st.session_state.gamification_level}</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col2:
+    xp_percent = st.session_state.xp_points % 100
+    st.markdown(f"""
+    <div class="sci-card" style="padding: 10px;">
+        <p class="label">⚡ XP</p>
+        <div style="background: #0f1425; border-radius: 10px; height: 20px; margin: 10px 0; border: 1px solid #00ffff;">
+            <div style="width: {xp_percent}%; background: linear-gradient(90deg, #00ffff, #ff00ff); height: 100%; border-radius: 10px;"></div>
+        </div>
+        <p class="value" style="font-size: 1rem;">{st.session_state.xp_points} / 100</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col3:
+    st.markdown(f"""
+    <div class="sci-card" style="padding: 10px;">
+        <p class="label">🏆 ACHIEVEMENTS</p>
+        <p class="value" style="font-size: 1.5rem;">{len(st.session_state.achievements)}</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -468,7 +594,8 @@ translations = {
         'window_size': 'Janela',
         'critical_markers': 'Marcadores Críticos',
         'trend_analysis': 'Análise de Tendência',
-        'observations': 'Observações'
+        'observations': 'Observações',
+        'r_squared': 'R²'
     },
     'en': {
         'title': 'Sports Science Analytics Pro',
@@ -550,7 +677,8 @@ translations = {
         'window_size': 'Window',
         'critical_markers': 'Critical Markers',
         'trend_analysis': 'Trend Analysis',
-        'observations': 'Observations'
+        'observations': 'Observations',
+        'r_squared': 'R²'
     },
     'es': {
         'title': 'Sports Science Analytics Pro',
@@ -632,7 +760,8 @@ translations = {
         'window_size': 'Ventana',
         'critical_markers': 'Marcadores Críticos',
         'trend_analysis': 'Análisis de Tendencia',
-        'observations': 'Observaciones'
+        'observations': 'Observaciones',
+        'r_squared': 'R²'
     },
     'es-mx': {
         'title': 'Sports Science Analytics Pro',
@@ -714,7 +843,8 @@ translations = {
         'window_size': 'Ventana',
         'critical_markers': 'Marcadores Críticos',
         'trend_analysis': 'Análisis de Tendencia',
-        'observations': 'Observaciones'
+        'observations': 'Observaciones',
+        'r_squared': 'R²'
     }
 }
 
@@ -940,18 +1070,26 @@ def interpretar_teste(p_valor, nome_teste, t):
     st.markdown(f"""
     <div class="stat-container" style="border-left: 5px solid {cor};">
         <h4 style="color: {cor};">{status}</h4>
-        <p><strong>Teste:</strong> {nome_teste}</p>
-        <p><strong>p-valor:</strong> <span style="color: {cor};">{p_text}</span></p>
+        <p style="color: #e2e8f0;"><strong>Teste:</strong> {nome_teste}</p>
+        <p style="color: #e2e8f0;"><strong>p-valor:</strong> <span style="color: {cor};">{p_text}</span></p>
     </div>
     """, unsafe_allow_html=True)
 
-def executive_card(titulo, valor, delta, icone, cor_status="#3b82f6"):
+def add_xp(amount=5):
+    """Adiciona XP e verifica level up"""
+    st.session_state.xp_points += amount
+    if st.session_state.xp_points >= st.session_state.gamification_level * 100:
+        st.session_state.gamification_level += 1
+        st.balloons()
+        st.success(f"🎮 LEVEL UP! Agora você é nível {st.session_state.gamification_level}!")
+
+def executive_card(titulo, valor, delta, icone, cor_status="#00ffff"):
     """Card executivo com delta"""
     delta_icon = "▲" if delta > 0 else "▼"
     delta_color = "#10b981" if delta > 0 else "#ef4444"
     
     st.markdown(f"""
-    <div class="metric-card" style="border-left: 4px solid {cor_status};">
+    <div class="sci-card" style="border-left: 4px solid {cor_status};">
         <div style="display: flex; justify-content: space-between;">
             <div>
                 <p class="label">{titulo}</p>
@@ -963,13 +1101,13 @@ def executive_card(titulo, valor, delta, icone, cor_status="#3b82f6"):
     </div>
     """, unsafe_allow_html=True)
 
-def time_metric_card(label, valor, sub_label="", cor="#3b82f6"):
+def time_metric_card(label, valor, sub_label="", cor="#00ffff"):
     """Card para métricas temporais"""
     st.markdown(f"""
-    <div class="metric-card" style="border-left: 4px solid {cor};">
+    <div class="sci-card" style="border-left: 4px solid {cor};">
         <p class="label">{label}</p>
         <p class="value" style="font-size: 1.8rem;">{valor}</p>
-        <p style="color: #64748b;">{sub_label}</p>
+        <p style="color: #8a8f9c;">{sub_label}</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -979,7 +1117,7 @@ def warning_card(titulo, valor, subtitulo, icone="⚠️"):
     <div class="warning-card">
         <p class="label">{icone} {titulo}</p>
         <p class="value">{valor}</p>
-        <p style="color: #b91c1c;">{subtitulo}</p>
+        <p style="color: #ff8888;">{subtitulo}</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -998,8 +1136,8 @@ def comparar_atletas(df, atleta1, atleta2, variaveis, t):
                 cor = "#10b981" if delta > 0 else "#ef4444"
                 st.markdown(f"""
                 <div class="stat-container" style="border-left: 4px solid {cor};">
-                    <span style="color: #64748b;">{var}:</span>
-                    <span style="color: #0f172a; float: right; font-weight: bold;">{dados1[var]:.2f}</span>
+                    <span style="color: #8a8f9c;">{var}:</span>
+                    <span style="color: white; float: right; font-weight: bold;">{dados1[var]:.2f}</span>
                     <br>
                     <span style="color: {cor};">{delta:+.1f}%</span>
                 </div>
@@ -1012,8 +1150,8 @@ def comparar_atletas(df, atleta1, atleta2, variaveis, t):
                 cor = "#10b981" if delta > 0 else "#ef4444"
                 st.markdown(f"""
                 <div class="stat-container" style="border-left: 4px solid {cor};">
-                    <span style="color: #64748b;">{var}:</span>
-                    <span style="color: #0f172a; float: right; font-weight: bold;">{dados2[var]:.2f}</span>
+                    <span style="color: #8a8f9c;">{var}:</span>
+                    <span style="color: white; float: right; font-weight: bold;">{dados2[var]:.2f}</span>
                     <br>
                     <span style="color: {cor};">{delta:+.1f}%</span>
                 </div>
@@ -1036,6 +1174,7 @@ def sistema_anotacoes(t):
                         'data': datetime.now().strftime("%d/%m/%Y %H:%M"),
                         'texto': nova_anotacao
                     })
+                    add_xp(2)
                     st.rerun()
         
         for anotacao in reversed(st.session_state.anotacoes):
@@ -1083,7 +1222,7 @@ def criar_timeline_quantum(df_completo, atletas_selecionados, periodos_seleciona
             line_width=3,
             annotation_text=f"🔴 {t['threshold_80']}: {limiar_80:.2f}",
             annotation_position="top left",
-            annotation_font=dict(color="#0f172a", size=12)
+            annotation_font=dict(color="white", size=12)
         )
         
         if st.session_state.show_moving_average:
@@ -1093,7 +1232,7 @@ def criar_timeline_quantum(df_completo, atletas_selecionados, periodos_seleciona
                 y=df_filtrado['Media_Movel'],
                 mode='lines',
                 name=f"📈 {t['moving_average']} ({window_size})",
-                line=dict(color='#2563eb', width=3, dash='dash'),
+                line=dict(color='#ff00ff', width=3, dash='dash'),
                 opacity=0.9
             ))
         
@@ -1163,7 +1302,7 @@ def criar_timeline_quantum(df_completo, atletas_selecionados, periodos_seleciona
         fig.add_hline(
             y=media_global,
             line_dash="dash",
-            line_color="#94a3b8",
+            line_color="#00ffff",
             annotation_text=f"📊 {t['mean']}: {media_global:.2f}",
             annotation_position="bottom left"
         )
@@ -1171,23 +1310,23 @@ def criar_timeline_quantum(df_completo, atletas_selecionados, periodos_seleciona
         fig.add_hrect(
             y0=media_global - desvio_global,
             y1=media_global + desvio_global,
-            fillcolor="#3b82f6",
+            fillcolor="#00ffff",
             opacity=0.1,
             line_width=0
         )
         
         fig.update_layout(
             title=dict(
-                text=f"📈 {t['trend_analysis']} - {variavel}",
-                font=dict(size=20, color='#0f172a'),
+                text=f"⚡ {t['trend_analysis']} - {variavel}",
+                font=dict(size=20, color='#00ffff'),
                 x=0.5
             ),
             xaxis_title="⏱️ Minuto",
             yaxis_title=f"📊 {variavel}",
             hovermode='x unified',
-            plot_bgcolor='white',
-            paper_bgcolor='white',
-            font=dict(color='#334155'),
+            plot_bgcolor='#0f1425',
+            paper_bgcolor='#0f1425',
+            font=dict(color='#e2e8f0'),
             height=600,
             showlegend=True,
             legend=dict(
@@ -1196,14 +1335,14 @@ def criar_timeline_quantum(df_completo, atletas_selecionados, periodos_seleciona
                 y=0.99,
                 xanchor="left",
                 x=1.02,
-                bgcolor='white',
-                bordercolor='#e2e8f0',
+                bgcolor='#1a1f35',
+                bordercolor='#00ffff',
                 borderwidth=1
             )
         )
         
-        fig.update_xaxes(gridcolor='#e2e8f0', tickangle=-45, tickfont=dict(color='#64748b'))
-        fig.update_yaxes(gridcolor='#e2e8f0', tickfont=dict(color='#64748b'))
+        fig.update_xaxes(gridcolor='#2a2f45', tickangle=-45, tickfont=dict(color='#8a8f9c'))
+        fig.update_yaxes(gridcolor='#2a2f45', tickfont=dict(color='#8a8f9c'))
         
         return fig, combinacoes_list, minutos_criticos
         
@@ -1240,7 +1379,7 @@ with st.sidebar:
     )
     
     if uploaded_files and len(uploaded_files) > 0 and not st.session_state.upload_concluido:
-        with st.spinner('📊 Processando...'):
+        with st.spinner('⚡ Processando...'):
             df, vars_quant, periodos, posicoes, nomes = processar_upload(uploaded_files)
             
             if df is not None:
@@ -1258,6 +1397,7 @@ with st.sidebar:
                     st.session_state.variavel_selecionada = vars_quant[0]
                 
                 st.success(f"✅ {len(nomes)} {t['upload']}")
+                add_xp(10)
                 st.rerun()
     
     if st.session_state.df_completo is not None:
@@ -1351,7 +1491,6 @@ with st.sidebar:
         
         atletas_disp = sorted(df_temp['Nome'].unique())
         
-        # CORREÇÃO: Garantir que atletas_selecionados seja uma lista válida
         if not st.session_state.atletas_selecionados or len(st.session_state.atletas_selecionados) == 0:
             if atletas_disp:
                 st.session_state.atletas_selecionados = [atletas_disp[0]]
@@ -1376,12 +1515,11 @@ with st.sidebar:
                 label_visibility="collapsed",
                 key="atletas_selector"
             )
-            # CORREÇÃO: Verificar se a seleção mudou e atualizar
             if atl_sel != st.session_state.atletas_selecionados:
-                if len(atl_sel) > 0:  # Garantir que não fique vazio
+                if len(atl_sel) > 0:
                     st.session_state.atletas_selecionados = atl_sel
                 else:
-                    st.session_state.atletas_selecionados = [atletas_disp[0]]  # Manter pelo menos um
+                    st.session_state.atletas_selecionados = [atletas_disp[0]]
                 st.session_state.dados_processados = False
                 st.rerun()
         
@@ -1412,6 +1550,19 @@ with st.sidebar:
         
         st.markdown("---")
         
+        with st.expander("🏆 Conquistas"):
+            if len(st.session_state.achievements) > 0:
+                for ach in st.session_state.achievements:
+                    st.markdown(f"""
+                    <div class="zone-card" style="border-left-color: #00ffff;">
+                        <p class="zone-name">{ach}</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+            else:
+                st.info("Processe dados para ganhar conquistas!")
+        
+        st.markdown("---")
+        
         pode_processar = (st.session_state.variavel_selecionada and 
                          st.session_state.posicoes_selecionadas and 
                          st.session_state.periodos_selecionados and 
@@ -1428,7 +1579,7 @@ with st.sidebar:
 
 if st.session_state.processar_click and st.session_state.df_completo is not None:
     
-    with st.spinner('📊 Gerando análise...'):
+    with st.spinner('⚡ Gerando análise quântica...'):
         time.sleep(0.5)
         
         df = st.session_state.df_completo
@@ -1453,6 +1604,13 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
             st.session_state.dados_processados = True
             t = translations[st.session_state.idioma]
             
+            add_xp(5)
+            
+            if 'primeira_analise' not in st.session_state.achievements:
+                st.session_state.achievements.append('primeira_analise')
+                st.balloons()
+                st.success("🏆 Conquista desbloqueada: Primeira Análise!")
+            
             st.markdown(f"<h2>📊 {t['tab_executive']}</h2>", unsafe_allow_html=True)
             
             media_global = df_filtrado[variavel].mean()
@@ -1468,7 +1626,6 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
             with col3:
                 executive_card(t['min_value'], f"{valor_min:.2f}", 0, "📉")
             with col4:
-                # CORREÇÃO: Usar str() para converter o número para string
                 executive_card(t['observations'], str(len(df_filtrado)), 0, "👥")
             
             st.markdown("---")
@@ -1489,44 +1646,114 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 col1, col2 = st.columns(2)
                 
                 with col1:
+                    # Novo histograma com distribuição
                     fig_hist = go.Figure()
+                    
+                    # Histograma principal
                     fig_hist.add_trace(go.Histogram(
                         x=df_filtrado[variavel],
                         nbinsx=n_classes,
-                        marker_color='#3b82f6',
-                        opacity=0.8
+                        name='Frequência',
+                        marker_color='#00ffff',
+                        opacity=0.7,
+                        hovertemplate='<b>Valor:</b> %{x}<br><b>Frequência:</b> %{y}<extra></extra>'
                     ))
-                    fig_hist.add_vline(x=media_global, line_dash="dash", line_color="#ef4444")
-                    fig_hist.update_layout(
-                        title=f"Histograma - {variavel}",
-                        plot_bgcolor='white',
-                        paper_bgcolor='white',
-                        font=dict(color='#334155')
+                    
+                    # Linha da média
+                    fig_hist.add_vline(
+                        x=media_global,
+                        line_dash="dash",
+                        line_color="#ff00ff",
+                        line_width=2,
+                        annotation_text=f"{t['mean']}: {media_global:.2f}",
+                        annotation_position="top",
+                        annotation_font=dict(color="#ff00ff")
                     )
-                    fig_hist.update_xaxes(gridcolor='#e2e8f0')
-                    fig_hist.update_yaxes(gridcolor='#e2e8f0')
+                    
+                    # Linha da mediana
+                    mediana_val = df_filtrado[variavel].median()
+                    fig_hist.add_vline(
+                        x=mediana_val,
+                        line_dash="dot",
+                        line_color="#ffff00",
+                        line_width=2,
+                        annotation_text=f"{t['median']}: {mediana_val:.2f}",
+                        annotation_position="bottom",
+                        annotation_font=dict(color="#ffff00")
+                    )
+                    
+                    fig_hist.update_layout(
+                        title=f"Distribuição - {variavel}",
+                        plot_bgcolor='#0f1425',
+                        paper_bgcolor='#0f1425',
+                        font=dict(color='#e2e8f0'),
+                        xaxis_title=variavel,
+                        yaxis_title="Frequência",
+                        bargap=0.1,
+                        showlegend=False
+                    )
+                    fig_hist.update_xaxes(gridcolor='#2a2f45', tickfont=dict(color='#8a8f9c'))
+                    fig_hist.update_yaxes(gridcolor='#2a2f45', tickfont=dict(color='#8a8f9c'))
+                    
                     st.plotly_chart(fig_hist, use_container_width=True)
                 
                 with col2:
+                    # QQ Plot com linha R² perfeita
                     dados = df_filtrado[variavel].dropna()
                     quantis_teoricos = stats.norm.ppf(np.linspace(0.01, 0.99, len(dados)))
                     quantis_observados = np.sort(dados)
                     
+                    # Calcular R²
+                    z = np.polyfit(quantis_teoricos, quantis_observados, 1)
+                    p = np.poly1d(z)
+                    residuos = quantis_observados - p(quantis_teoricos)
+                    ss_res = np.sum(residuos**2)
+                    ss_tot = np.sum((quantis_observados - np.mean(quantis_observados))**2)
+                    r2 = 1 - (ss_res / ss_tot)
+                    
                     fig_qq = go.Figure()
+                    
+                    # Pontos dos dados
                     fig_qq.add_trace(go.Scatter(
                         x=quantis_teoricos,
                         y=quantis_observados,
                         mode='markers',
-                        marker=dict(color='#3b82f6', size=6)
+                        name='Dados',
+                        marker=dict(color='#00ffff', size=8, opacity=0.7),
+                        hovertemplate='<b>Quantil Teórico:</b> %{x:.3f}<br><b>Quantil Observado:</b> %{y:.3f}<extra></extra>'
                     ))
+                    
+                    # Linha de referência (R² perfeito)
+                    fig_qq.add_trace(go.Scatter(
+                        x=[quantis_teoricos.min(), quantis_teoricos.max()],
+                        y=[quantis_teoricos.min(), quantis_teoricos.max()],
+                        mode='lines',
+                        name=f'Referência (R² = 1.0)',
+                        line=dict(color='#ff00ff', width=2, dash='dash'),
+                        hovertemplate='<b>Linha de Referência</b><extra></extra>'
+                    ))
+                    
+                    # Linha de regressão (R² real)
+                    fig_qq.add_trace(go.Scatter(
+                        x=quantis_teoricos,
+                        y=p(quantis_teoricos),
+                        mode='lines',
+                        name=f'{t["r_squared"]} = {r2:.3f}',
+                        line=dict(color='#ffff00', width=2),
+                        hovertemplate=f'<b>{t["r_squared"]}:</b> {r2:.3f}<extra></extra>'
+                    ))
+                    
                     fig_qq.update_layout(
                         title=f"QQ Plot - {variavel}",
-                        plot_bgcolor='white',
-                        paper_bgcolor='white',
-                        font=dict(color='#334155')
+                        plot_bgcolor='#0f1425',
+                        paper_bgcolor='#0f1425',
+                        font=dict(color='#e2e8f0'),
+                        xaxis_title="Quantis Teóricos",
+                        yaxis_title="Quantis Observados"
                     )
-                    fig_qq.update_xaxes(gridcolor='#e2e8f0')
-                    fig_qq.update_yaxes(gridcolor='#e2e8f0')
+                    fig_qq.update_xaxes(gridcolor='#2a2f45', tickfont=dict(color='#8a8f9c'))
+                    fig_qq.update_yaxes(gridcolor='#2a2f45', tickfont=dict(color='#8a8f9c'))
+                    
                     st.plotly_chart(fig_qq, use_container_width=True)
             
             # ABA 2: TEMPORAL
@@ -1549,9 +1776,9 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 with col2:
                     time_metric_card(t['min_value'], f"{valor_min:.2f}", f"{t['minute_of_min']}: {minuto_min}", "#10b981")
                 with col3:
-                    time_metric_card(t['mean'], f"{media_global:.2f}", "", "#3b82f6")
+                    time_metric_card(t['mean'], f"{media_global:.2f}", "", "#00ffff")
                 with col4:
-                    time_metric_card(t['threshold_80'], f"{limiar_80:.2f}", "", "#f59e0b")
+                    time_metric_card(t['threshold_80'], f"{limiar_80:.2f}", "", "#ff00ff")
                 with col5:
                     warning_card(t['critical_events'], str(eventos_criticos), f"{percentual_critico:.1f}% {t['above_threshold']}")
                 
@@ -1569,7 +1796,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 st.session_state.metodo_zona = 'percentis' if metodo == t['percentiles'] else 'based_on_max'
                 
                 zonas = criar_zonas_intensidade(df_filtrado, variavel, st.session_state.metodo_zona)
-                cores_zonas = ['#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#10b981']
+                cores_zonas = ['#00ffff', '#ff00ff', '#ffff00', '#ef4444', '#10b981']
                 
                 cols_zone = st.columns(5)
                 for i, (zona, limite) in enumerate(zonas.items()):
@@ -1601,8 +1828,16 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     col1, col2, col3 = st.columns(3)
                     with col1:
                         st.success(f"✅ {len(combinacoes)} combinações")
+                        if len(combinacoes) > 5 and 'multi_atleta' not in st.session_state.achievements:
+                            st.session_state.achievements.append('multi_atleta')
+                            st.balloons()
+                            st.success("🏆 Conquista desbloqueada: Multi-Atleta!")
                     with col2:
                         st.warning(f"⚠️ {len(set(minutos_criticos))} minutos críticos")
+                        if len(set(minutos_criticos)) > 3 and 'critical_master' not in st.session_state.achievements:
+                            st.session_state.achievements.append('critical_master')
+                            st.balloons()
+                            st.success("🏆 Conquista desbloqueada: Mestre dos Críticos!")
                     with col3:
                         st.info(f"📊 {len(df_filtrado)} observações")
                 
@@ -1721,19 +1956,19 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                         x=['IC 95%'],
                         y=[media],
                         mode='markers',
-                        marker=dict(color='#3b82f6', size=20),
-                        error_y=dict(type='constant', value=(ic_sup - media), color='#ef4444', thickness=3, width=15)
+                        marker=dict(color='#00ffff', size=20),
+                        error_y=dict(type='constant', value=(ic_sup - media), color='#ff00ff', thickness=3, width=15)
                     ))
                     
                     fig_ic.update_layout(
                         title=t['confidence_interval'],
-                        plot_bgcolor='white',
-                        paper_bgcolor='white',
-                        font=dict(color='#334155'),
+                        plot_bgcolor='#0f1425',
+                        paper_bgcolor='#0f1425',
+                        font=dict(color='#e2e8f0'),
                         showlegend=False
                     )
-                    fig_ic.update_xaxes(gridcolor='#e2e8f0')
-                    fig_ic.update_yaxes(gridcolor='#e2e8f0')
+                    fig_ic.update_xaxes(gridcolor='#2a2f45')
+                    fig_ic.update_yaxes(gridcolor='#2a2f45')
                     
                     st.plotly_chart(fig_ic, use_container_width=True)
                 
@@ -1813,17 +2048,17 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                             y=dados,
                             name=pos,
                             boxmean='sd',
-                            marker_color='#3b82f6',
-                            line_color='#0f172a'
+                            marker_color='#00ffff',
+                            line_color='#ff00ff'
                         ))
                 
                 fig_box_pos.update_layout(
-                    plot_bgcolor='white',
-                    paper_bgcolor='white',
-                    font=dict(color='#334155')
+                    plot_bgcolor='#0f1425',
+                    paper_bgcolor='#0f1425',
+                    font=dict(color='#e2e8f0')
                 )
-                fig_box_pos.update_xaxes(gridcolor='#e2e8f0')
-                fig_box_pos.update_yaxes(gridcolor='#e2e8f0')
+                fig_box_pos.update_xaxes(gridcolor='#2a2f45')
+                fig_box_pos.update_yaxes(gridcolor='#2a2f45')
                 st.plotly_chart(fig_box_pos, use_container_width=True)
                 
                 st.markdown(f"<h4>👤 {t['athlete']}</h4>", unsafe_allow_html=True)
@@ -1836,18 +2071,18 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                             y=dados,
                             name=atl[:15] + "..." if len(atl) > 15 else atl,
                             boxmean='sd',
-                            marker_color='#8b5cf6',
-                            line_color='#0f172a'
+                            marker_color='#ff00ff',
+                            line_color='#00ffff'
                         ))
                 
                 fig_box_atl.update_layout(
-                    plot_bgcolor='white',
-                    paper_bgcolor='white',
-                    font=dict(color='#334155'),
+                    plot_bgcolor='#0f1425',
+                    paper_bgcolor='#0f1425',
+                    font=dict(color='#e2e8f0'),
                     height=max(400, len(atletas[:10]) * 30)
                 )
-                fig_box_atl.update_xaxes(gridcolor='#e2e8f0', tickangle=-45)
-                fig_box_atl.update_yaxes(gridcolor='#e2e8f0')
+                fig_box_atl.update_xaxes(gridcolor='#2a2f45', tickangle=-45)
+                fig_box_atl.update_yaxes(gridcolor='#2a2f45')
                 st.plotly_chart(fig_box_atl, use_container_width=True)
             
             # ABA 4: CORRELAÇÕES
@@ -1864,19 +2099,22 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     if len(vars_corr) >= 2:
                         df_corr = df_filtrado[vars_corr].corr()
                         
+                        # Heatmap com cores mais contrastantes
                         fig_corr = px.imshow(
                             df_corr,
                             text_auto='.2f',
                             aspect="auto",
-                            color_continuous_scale='RdBu_r',
+                            color_continuous_scale=[[0, '#000080'], [0.5, '#ffffff'], [1, '#8b0000']],
                             zmin=-1, zmax=1
                         )
                         fig_corr.update_layout(
-                            plot_bgcolor='white',
-                            paper_bgcolor='white',
-                            font=dict(color='#334155'),
+                            plot_bgcolor='#0f1425',
+                            paper_bgcolor='#0f1425',
+                            font=dict(color='#e2e8f0'),
                             height=500
                         )
+                        fig_corr.update_xaxes(tickfont=dict(color='#e2e8f0'))
+                        fig_corr.update_yaxes(tickfont=dict(color='#e2e8f0'))
                         st.plotly_chart(fig_corr, use_container_width=True)
                         
                         if len(vars_corr) == 2:
@@ -1891,6 +2129,11 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                             direcao = "positiva" if corr_valor > 0 else "negativa"
                             
                             st.info(f"Correlação {intensidade} {direcao} ({corr_valor:.3f})")
+                            
+                            if abs(corr_valor) > 0.8 and 'forte_correlacao' not in st.session_state.achievements:
+                                st.session_state.achievements.append('forte_correlacao')
+                                st.balloons()
+                                st.success("🏆 Conquista desbloqueada: Correlação Forte!")
             
             # ABA 5: COMPARAÇÕES
             with tabs[4]:
@@ -1974,7 +2217,7 @@ elif st.session_state.df_completo is None:
     
     with col2:
         st.markdown(f"""
-        <div class="metric-card">
+        <div class="sci-card">
             <h4>{t['components']}</h4>
             <p>{t['name_ex']}</p>
             <p>{t['period_ex']}</p>
