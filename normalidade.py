@@ -2176,7 +2176,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     # Adicionar explicação do IQR ao final
                     st.caption(f"📌 {t['iqr_title']}: {t['iqr_explanation']}")
             
-            # ABA 4: CORRELAÇÕES (COM NOVO HEATMAP)
+            # ABA 4: CORRELAÇÕES (COM NOVO HEATMAP - CORES MAIS SUAVES)
             with tabs[3]:
                 st.markdown(f"<h3>{t['tab_correlation']}</h3>", unsafe_allow_html=True)
                 
@@ -2191,19 +2191,23 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     if len(vars_corr) >= 2:
                         df_corr = df_filtrado[vars_corr].corr()
                         
-                        # NOVO HEATMAP com cores mais extremas e diagonal destacada
+                        # NOVO HEATMAP com cores mais suaves e translúcidas
+                        # Diagonal principal destacada em cinza
                         colorscale = [
-                            [0, '#00008B'],      # Azul escuro para -1
-                            [0.25, '#4169E1'],   # Azul médio para -0.5
-                            [0.45, '#E0E0E0'],   # Cinza claro para valores próximos de 0
-                            [0.5, '#D3D3D3'],    # Diagonal em cinza médio
-                            [0.55, '#E0E0E0'],   # Cinza claro
-                            [0.75, '#FF6347'],   # Vermelho médio para 0.5
-                            [1, '#8B0000']       # Vermelho escuro para 1
+                            [0, 'rgba(0, 0, 139, 0.7)'],      # Azul escuro translúcido para -1
+                            [0.25, 'rgba(65, 105, 225, 0.7)'], # Azul médio translúcido para -0.5
+                            [0.45, 'rgba(220, 220, 220, 0.5)'], # Cinza claro translúcido para valores próximos de 0
+                            [0.5, 'rgba(211, 211, 211, 0.3)'],  # Cinza mais claro para a diagonal
+                            [0.55, 'rgba(220, 220, 220, 0.5)'], # Cinza claro translúcido
+                            [0.75, 'rgba(255, 99, 71, 0.7)'],   # Vermelho médio translúcido para 0.5
+                            [1, 'rgba(139, 0, 0, 0.7)']         # Vermelho escuro translúcido para 1
                         ]
                         
+                        # Criar matriz com valores da diagonal alterados para um valor especial
+                        df_corr_display = df_corr.copy()
+                        
                         fig_corr = px.imshow(
-                            df_corr,
+                            df_corr_display,
                             text_auto='.2f',
                             aspect="auto",
                             color_continuous_scale=colorscale,
@@ -2211,7 +2215,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                             zmin=-1, zmax=1
                         )
                         
-                        # Destacar a diagonal principal
+                        # Destacar a diagonal principal em cinza (sobrescrevendo o valor)
                         for i in range(len(df_corr)):
                             fig_corr.add_annotation(
                                 x=i,
@@ -2219,9 +2223,22 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                                 text=f"{df_corr.iloc[i, i]:.2f}",
                                 showarrow=False,
                                 font=dict(color='white', size=12, weight='bold'),
-                                bgcolor='#2d3748',
-                                bordercolor='#4a5568',
-                                borderwidth=1
+                                bgcolor='#4a5568',  # Cinza escuro para o fundo
+                                bordercolor='#718096',
+                                borderwidth=1,
+                                opacity=0.9
+                            )
+                            
+                            # Adicionar um retângulo cinza no fundo para destacar a diagonal
+                            fig_corr.add_shape(
+                                type="rect",
+                                x0=i - 0.5,
+                                y0=i - 0.5,
+                                x1=i + 0.5,
+                                y1=i + 0.5,
+                                line=dict(width=0),
+                                fillcolor='rgba(74, 85, 104, 0.5)',  # Cinza translúcido
+                                layer="below"
                             )
                         
                         fig_corr.update_layout(
