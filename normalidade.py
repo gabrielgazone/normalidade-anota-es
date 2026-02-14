@@ -1423,46 +1423,57 @@ with st.sidebar:
                     st.session_state.dados_processados = False
                     st.rerun()
         
-        if st.session_state.atletas_selecionados:
-            st.markdown("---")
-            st.markdown(f"<h2 class='sidebar-title'>👤 {t['athlete']}</h2>", unsafe_allow_html=True)
-            
-            df_temp = st.session_state.df_completo.copy()
-            if st.session_state.posicoes_selecionadas:
-                df_temp = df_temp[df_temp['Posição'].isin(st.session_state.posicoes_selecionadas)]
-            if st.session_state.periodos_selecionados:
-                df_temp = df_temp[df_temp['Período'].isin(st.session_state.periodos_selecionados)]
-            
-            atletas_disponiveis = sorted(df_temp['Nome'].unique())
-            
-            # CORREÇÃO: Garantir que o multiselect sempre apareça
-            selecionar_todos_atletas = st.checkbox(
-                f"Selecionar todos os {t['athlete'].lower()}s" if st.session_state.idioma == 'pt' else
-                f"Select all {t['athlete'].lower()}s" if st.session_state.idioma == 'en' else
-                f"Seleccionar todos los {t['athlete'].lower()}s",
-                value=len(st.session_state.atletas_selecionados) == len(atletas_disponiveis) and len(atletas_disponiveis) > 0,
-                key="todos_atletas_check"
-            )
-            
-            if selecionar_todos_atletas:
-                if st.session_state.atletas_selecionados != atletas_disponiveis:
-                    st.session_state.atletas_selecionados = atletas_disponiveis
-                    st.session_state.dados_processados = False
-                    st.rerun()
-            
-            # O multiselect SEMPRE aparece, independente do checkbox
-            atletas_sel = st.multiselect(
-                "",
-                options=atletas_disponiveis,
-                default=st.session_state.atletas_selecionados if st.session_state.atletas_selecionados else atletas_disponiveis[:1] if atletas_disponiveis else [],
-                label_visibility="collapsed",
-                key="atletas_selector"
-            )
-            
-            if atletas_sel != st.session_state.atletas_selecionados:
-                st.session_state.atletas_selecionados = atletas_sel
+        # CORREÇÃO: Seção de atletas SEMPRE visível
+        st.markdown("---")
+        st.markdown(f"<h2 class='sidebar-title'>👤 {t['athlete']}</h2>", unsafe_allow_html=True)
+        
+        df_temp = st.session_state.df_completo.copy()
+        if st.session_state.posicoes_selecionadas:
+            df_temp = df_temp[df_temp['Posição'].isin(st.session_state.posicoes_selecionadas)]
+        if st.session_state.periodos_selecionados:
+            df_temp = df_temp[df_temp['Período'].isin(st.session_state.periodos_selecionados)]
+        
+        atletas_disponiveis = sorted(df_temp['Nome'].unique())
+        
+        # Inicializar atletas_selecionados se estiver vazio
+        if not st.session_state.atletas_selecionados and atletas_disponiveis:
+            st.session_state.atletas_selecionados = atletas_disponiveis.copy()
+            st.rerun()
+        
+        # Checkbox para selecionar todos
+        selecionar_todos_atletas = st.checkbox(
+            f"Selecionar todos os {t['athlete'].lower()}s" if st.session_state.idioma == 'pt' else
+            f"Select all {t['athlete'].lower()}s" if st.session_state.idioma == 'en' else
+            f"Seleccionar todos los {t['athlete'].lower()}s",
+            value=len(st.session_state.atletas_selecionados) == len(atletas_disponiveis) and len(atletas_disponiveis) > 0,
+            key="todos_atletas_check"
+        )
+        
+        if selecionar_todos_atletas:
+            if st.session_state.atletas_selecionados != atletas_disponiveis:
+                st.session_state.atletas_selecionados = atletas_disponiveis
                 st.session_state.dados_processados = False
                 st.rerun()
+        else:
+            # Se não estiver selecionando todos e a lista estiver vazia, manter pelo menos um
+            if len(st.session_state.atletas_selecionados) == 0 and atletas_disponiveis:
+                st.session_state.atletas_selecionados = [atletas_disponiveis[0]]
+                st.session_state.dados_processados = False
+                st.rerun()
+        
+        # Multiselect SEMPRE visível
+        atletas_sel = st.multiselect(
+            "",
+            options=atletas_disponiveis,
+            default=st.session_state.atletas_selecionados if st.session_state.atletas_selecionados else (atletas_disponiveis[:1] if atletas_disponiveis else []),
+            label_visibility="collapsed",
+            key="atletas_selector"
+        )
+        
+        if atletas_sel != st.session_state.atletas_selecionados:
+            st.session_state.atletas_selecionados = atletas_sel
+            st.session_state.dados_processados = False
+            st.rerun()
         
         st.markdown("---")
         st.markdown(f"<h2 class='sidebar-title'>⚙️ {t['config']}</h2>", unsafe_allow_html=True)
@@ -1692,7 +1703,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     hide_index=True
                 )
             
-            # ABA 2: ESTATÍSTICAS & TEMPORAL
+            # ABA 2: ESTATÍSTICAS & TEMPORAL - CV INCLUÍDO
             with tabs[1]:
                 st.markdown(f"<h3>{t['tab_temporal']}</h3>", unsafe_allow_html=True)
                 
@@ -1968,7 +1979,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 if resumo:
                     df_resumo = pd.DataFrame(resumo)
                     
-                    styled_df = criar_tabela_destaque(df_resumo, ['Média', f'Máx {variavel_analise}', f'Mín {variavel_analise}'])
+                    styled_df = criar_tabela_destaque(df_resumo, ['Média', f'Máx {variavel_analise}', f'Mín {variavel_analise}', 'CV (%)'])
                     
                     st.dataframe(
                         styled_df.format({
