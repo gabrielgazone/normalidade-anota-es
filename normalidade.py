@@ -33,7 +33,7 @@ st.markdown("""
 st.write("✅ CSS carregado")
 
 # ============================================================================
-# INICIALIZAÇÃO DO SESSION STATE - SIMPLIFICADA PARA TESTE
+# INICIALIZAÇÃO DO SESSION STATE
 # ============================================================================
 
 if 'df_completo' not in st.session_state:
@@ -58,5 +58,22 @@ if 'idioma' not in st.session_state:
     st.session_state.idioma = 'pt'
 
 st.write("✅ Session state inicializado")
+
+# ============================================================================
+# TRADUÇÕES (APENAS PORTUGUÊS PARA TESTE)
+# ============================================================================
+
+translations = {
+    'pt': {
+        'upload': 'Upload de Dados',
+        'variable': 'Variável',
+        'position': 'Posição',
+        'period': 'Período',
+        'athlete': 'Atleta',
+        'process': '⚡ PROCESSAR ANÁLISE',
+        'tip_text': 'Múltiplos arquivos CSV'
+    }
+}
+
+st.write("✅ Traduções carregadas")
 st.write("### App carregou corretamente!")
-st.write("Session state:", dict(st.session_state))
