@@ -18,9 +18,23 @@ st.set_page_config(
 
 st.write("✅ Configuração da página OK")
 
-# CSS 
-
-st.markdown("<style>body{background:#0a0f1f;}</style>", unsafe_allow_html=True)
+# CSS completo - PARTE 1
+st.markdown("""
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&display=swap');
+    
+    * {
+        font-family: 'Rajdhani', sans-serif;
+    }
+    
+    h1, h2, h3, h4 {
+        font-family: 'Orbitron', sans-serif !important;
+        letter-spacing: 1px;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 st.write("✅ CSS carregado")
 
