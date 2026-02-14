@@ -18,7 +18,7 @@ st.set_page_config(
 
 st.write("✅ Configuração da página OK")
 
-# CSS completo - PARTE 1
+# CSS COMPLETO
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap');
@@ -32,6 +32,354 @@ st.markdown("""
     h1, h2, h3, h4 {
         font-family: 'Orbitron', sans-serif !important;
         letter-spacing: 1px;
+    }
+    
+    .stApp {
+        background: radial-gradient(circle at 50% 50%, #0a0f1f 0%, #030614 100%);
+        position: relative;
+    }
+    
+    .stApp::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: 
+            linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 255, 255, 0.03) 1px, transparent 1px);
+        background-size: 50px 50px;
+        pointer-events: none;
+        z-index: 0;
+    }
+    
+    section[data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #0f1425 0%, #070b1a 100%) !important;
+        border-right: 2px solid #00ffff;
+        box-shadow: 5px 0 30px rgba(0, 255, 255, 0.2);
+    }
+    
+    .sidebar-title {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #00ffff;
+        text-align: center;
+        padding: 15px;
+        margin: 15px 0;
+        border: 2px solid #00ffff;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #0f1425, #1a1f35);
+        text-shadow: 0 0 10px #00ffff;
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        animation: borderGlow 2s infinite;
+    }
+    
+    @keyframes borderGlow {
+        0% { border-color: #00ffff; box-shadow: 0 0 20px rgba(0, 255, 255, 0.3); }
+        50% { border-color: #ff00ff; box-shadow: 0 0 30px rgba(255, 0, 255, 0.5); }
+        100% { border-color: #00ffff; box-shadow: 0 0 20px rgba(0, 255, 255, 0.3); }
+    }
+    
+    .sci-card {
+        background: linear-gradient(135deg, #1a1f35, #0f1425);
+        border-radius: 15px;
+        padding: 25px;
+        border: 2px solid transparent;
+        border-image: linear-gradient(135deg, #00ffff, #ff00ff) 1;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 30px rgba(0, 255, 255, 0.2);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 15px;
+    }
+    
+    .sci-card::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(45deg, transparent, rgba(0, 255, 255, 0.1), transparent);
+        transform: rotate(45deg);
+        animation: shine 3s infinite;
+    }
+    
+    @keyframes shine {
+        0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+        100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+    }
+    
+    .sci-card:hover {
+        transform: translateY(-5px) scale(1.02);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 50px rgba(0, 255, 255, 0.4);
+    }
+    
+    .sci-card .label {
+        color: #8a8f9c;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        font-weight: 500;
+    }
+    
+    .sci-card .value {
+        font-family: 'Source Code Pro', monospace;
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: #00ffff;
+        text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+        margin: 5px 0;
+    }
+    
+    .sci-card .delta {
+        font-size: 0.9rem;
+        color: #ff00ff;
+    }
+    
+    .warning-card {
+        background: linear-gradient(135deg, #330000, #1a0000);
+        border-radius: 15px;
+        padding: 20px;
+        border: 2px solid #ff4444;
+        text-align: center;
+        animation: alertPulse 1.5s infinite;
+        box-shadow: 0 0 30px rgba(255, 68, 68, 0.3);
+        margin-bottom: 15px;
+    }
+    
+    @keyframes alertPulse {
+        0% { border-color: #ff4444; box-shadow: 0 0 30px rgba(255, 68, 68, 0.3); }
+        50% { border-color: #ff8888; box-shadow: 0 0 50px rgba(255, 68, 68, 0.6); }
+        100% { border-color: #ff4444; box-shadow: 0 0 30px rgba(255, 68, 68, 0.3); }
+    }
+    
+    .warning-card .label {
+        color: #ff8888;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        font-weight: 600;
+    }
+    
+    .warning-card .value {
+        font-family: 'Source Code Pro', monospace;
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #ff4444;
+        text-shadow: 0 0 20px rgba(255, 68, 68, 0.5);
+    }
+    
+    .zone-card {
+        background: linear-gradient(135deg, #1a1f35, #0f1425);
+        border-radius: 12px;
+        padding: 18px;
+        margin: 8px 0;
+        border-left: 6px solid;
+        border-right: 1px solid rgba(0, 255, 255, 0.2);
+        border-top: 1px solid rgba(0, 255, 255, 0.2);
+        border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+        transition: all 0.3s ease;
+    }
+    
+    .zone-card:hover {
+        transform: translateX(10px);
+        box-shadow: -10px 10px 30px rgba(0,0,0,0.5);
+        border-right-color: #00ffff;
+    }
+    
+    .zone-card .zone-name {
+        font-size: 1rem;
+        color: #8a8f9c;
+        text-transform: uppercase;
+        font-weight: 500;
+        letter-spacing: 1px;
+    }
+    
+    .zone-card .zone-value {
+        font-family: 'Source Code Pro', monospace;
+        font-size: 1.6rem;
+        font-weight: 600;
+        color: white;
+    }
+    
+    .zone-card .zone-count {
+        font-size: 1.1rem;
+        color: #00ffff;
+        font-weight: 500;
+    }
+    
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 10px;
+        background: rgba(26, 31, 53, 0.8);
+        backdrop-filter: blur(10px);
+        padding: 8px;
+        border-radius: 15px;
+        border: 2px solid #00ffff;
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        border-radius: 10px;
+        padding: 12px 25px;
+        font-weight: 600;
+        color: #8a8f9c !important;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+    }
+    
+    .stTabs [aria-selected="true"] {
+        background: linear-gradient(135deg, #00ffff, #ff00ff) !important;
+        color: white !important;
+        transform: scale(1.05);
+        box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+    }
+    
+    .stButton > button {
+        background: linear-gradient(135deg, #00ffff, #ff00ff);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 12px 30px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        font-size: 1rem;
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+    }
+    
+    .stButton > button:hover {
+        transform: translateY(-2px) scale(1.05);
+        box-shadow: 0 0 40px rgba(255, 0, 255, 0.5);
+        border-color: white;
+    }
+    
+    .stat-container {
+        background: linear-gradient(135deg, #1a1f35, #0f1425);
+        border-radius: 12px;
+        padding: 20px;
+        border: 1px solid #00ffff;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        margin: 10px 0;
+    }
+    
+    .stat-container h4 {
+        color: #00ffff;
+        font-size: 1.1rem;
+        margin-bottom: 15px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .stat-container p {
+        color: #e2e8f0;
+        margin: 8px 0;
+    }
+    
+    .stat-container strong {
+        color: #ff00ff;
+    }
+    
+    .note-card {
+        background: linear-gradient(135deg, #1a1f35, #0f1425);
+        padding: 15px;
+        border-radius: 12px;
+        margin: 10px 0;
+        border-left: 4px solid #00ffff;
+        border-right: 1px solid rgba(0, 255, 255, 0.2);
+        border-top: 1px solid rgba(0, 255, 255, 0.2);
+        border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+    }
+    
+    .note-card .note-date {
+        color: #8a8f9c;
+        font-size: 0.85rem;
+    }
+    
+    .note-card .note-text {
+        color: white;
+        margin: 5px 0;
+    }
+    
+    h1 {
+        font-size: 3rem;
+        font-weight: 800;
+        color: white;
+        text-align: center;
+        margin-bottom: 10px;
+        text-shadow: 0 0 30px #00ffff, 0 0 60px #ff00ff;
+        animation: titleGlow 3s infinite;
+    }
+    
+    @keyframes titleGlow {
+        0% { text-shadow: 0 0 30px #00ffff, 0 0 60px #ff00ff; }
+        50% { text-shadow: 0 0 50px #ff00ff, 0 0 80px #00ffff; }
+        100% { text-shadow: 0 0 30px #00ffff, 0 0 60px #ff00ff; }
+    }
+    
+    h2 {
+        font-size: 2rem;
+        font-weight: 700;
+        color: white;
+        border-bottom: 3px solid;
+        border-image: linear-gradient(90deg, #00ffff, #ff00ff) 1;
+        padding-bottom: 10px;
+        margin-bottom: 25px;
+    }
+    
+    h3 {
+        font-size: 1.6rem;
+        font-weight: 600;
+        color: #00ffff;
+        margin-bottom: 20px;
+    }
+    
+    .dataframe {
+        background: #1a1f35 !important;
+        border-radius: 15px !important;
+        border: 2px solid #00ffff !important;
+    }
+    
+    .dataframe th {
+        background: linear-gradient(135deg, #00ffff, #ff00ff) !important;
+        color: white !important;
+        font-weight: 600;
+        padding: 15px !important;
+        font-size: 0.95rem;
+    }
+    
+    .dataframe td {
+        background: #0f1425 !important;
+        color: #e2e8f0 !important;
+        border-color: #00ffff !important;
+        padding: 12px !important;
+    }
+    
+    .stProgress > div > div {
+        background: linear-gradient(90deg, #00ffff, #ff00ff) !important;
+        border-radius: 10px;
+        border: 1px solid white;
+    }
+    
+    ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: #0f1425;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #00ffff, #ff00ff);
+        border-radius: 5px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, #ff00ff, #00ffff);
     }
 </style>
 """, unsafe_allow_html=True)
