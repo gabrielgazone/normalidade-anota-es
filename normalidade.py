@@ -1369,7 +1369,7 @@ with st.sidebar:
     
     idiomas = ['pt', 'en', 'es', 'es-mx']
     idx_idioma = idiomas.index(st.session_state.idioma) if st.session_state.idioma in idiomas else 0
-    idioma = st.selectbox("", idiomas, index=idx_idioma, label_visibility="collapsed", key="idioma_selector")
+    idioma = st.selectbox("Selecione o idioma", idiomas, index=idx_idioma, label_visibility="collapsed", key="idioma_selector")
     
     if idioma != st.session_state.idioma:
         st.session_state.idioma = idioma
@@ -1381,12 +1381,12 @@ with st.sidebar:
     st.markdown(f"<div class='sidebar-title'>📂 {t['upload']}</div>", unsafe_allow_html=True)
     
     uploaded_files = st.file_uploader(
-        "",
-        type=['csv'],
-        accept_multiple_files=True,
-        help=t['tip_text'],
-        key="file_uploader"
-    )
+    "Upload de arquivos CSV",
+    type=['csv'],
+    accept_multiple_files=True,
+    help=t['tip_text'],
+    key="file_uploader"
+)
     
     if uploaded_files and len(uploaded_files) > 0:
         with st.spinner('⚡ Processando...'):
@@ -1420,12 +1420,12 @@ with st.sidebar:
                 idx_var = st.session_state.variaveis_quantitativas.index(st.session_state.variavel_selecionada)
             
             var_sel = st.selectbox(
-                "",
-                options=st.session_state.variaveis_quantitativas,
-                index=idx_var,
-                label_visibility="collapsed",
-                key="var_selector"
-            )
+    "Selecione a variável",
+    options=st.session_state.variaveis_quantitativas,
+    index=idx_var,
+    label_visibility="collapsed",
+    key="var_selector"
+)
             
             if var_sel != st.session_state.variavel_selecionada:
                 st.session_state.variavel_selecionada = var_sel
@@ -1449,12 +1449,12 @@ with st.sidebar:
                     st.rerun()
             else:
                 pos_sel = st.multiselect(
-                    "",
-                    options=st.session_state.todos_posicoes,
-                    default=st.session_state.posicoes_selecionadas,
-                    label_visibility="collapsed",
-                    key="posicoes_selector"
-                )
+    "Selecione as posições",
+    options=st.session_state.todos_posicoes,
+    default=st.session_state.posicoes_selecionadas,
+    label_visibility="collapsed",
+    key="posicoes_selector"
+)
                 if pos_sel != st.session_state.posicoes_selecionadas:
                     st.session_state.posicoes_selecionadas = pos_sel
                     st.session_state.dados_processados = False
@@ -1478,12 +1478,12 @@ with st.sidebar:
                     st.rerun()
             else:
                 per_sel = st.multiselect(
-                    "",
-                    options=st.session_state.todos_periodos,
-                    default=st.session_state.periodos_selecionados,
-                    label_visibility="collapsed",
-                    key="periodos_selector"
-                )
+    "Selecione os períodos",
+    options=st.session_state.todos_periodos,
+    default=st.session_state.periodos_selecionados,
+    label_visibility="collapsed",
+    key="periodos_selector"
+)
                 if per_sel != st.session_state.periodos_selecionados:
                     st.session_state.periodos_selecionados = per_sel
                     st.session_state.dados_processados = False
@@ -1518,12 +1518,12 @@ with st.sidebar:
                 st.rerun()
         else:
             atl_sel = st.multiselect(
-                "",
-                options=atletas_disp,
-                default=st.session_state.atletas_selecionados if st.session_state.atletas_selecionados else (atletas_disp[:1] if atletas_disp else []),
-                label_visibility="collapsed",
-                key="atletas_selector"
-            )
+    "Selecione os atletas",
+    options=atletas_disp,
+    default=st.session_state.atletas_selecionados if st.session_state.atletas_selecionados else (atletas_disp[:1] if atletas_disp else []),
+    label_visibility="collapsed",
+    key="atletas_selector"
+)
             if atl_sel != st.session_state.atletas_selecionados:
                 if len(atl_sel) > 0:
                     st.session_state.atletas_selecionados = atl_sel
