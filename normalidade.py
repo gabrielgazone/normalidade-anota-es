@@ -12,8 +12,8 @@ warnings.filterwarnings('ignore')
 
 # CONFIGURAÇÃO DA PÁGINA - PRIMEIRA INSTRUÇÃO
 st.set_page_config(
-    page_title="🏆 SPORTS SCIENCE PRO | GAMIFIED EDITION",
-    page_icon="🏆",
+    page_title="🏃 Sports Science Analytics Pro | Professional Edition",
+    page_icon="🏃",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -51,12 +51,7 @@ def init_session_state():
         'window_size': 3,
         'show_critical_markers': True,
         'show_moving_average': True,
-        'confidence_level': 0.95,
-        'xp_points': 100,
-        'level': 1,
-        'achievements': [],
-        'streak': 0,
-        'particle_effects': True
+        'confidence_level': 0.95
     }
     
     for key, value in defaults.items():
@@ -66,304 +61,294 @@ def init_session_state():
 init_session_state()
 
 # ============================================================================
-# CSS GAMIFICADO PROFISSIONAL - CORRIGIDO
+# CSS PROFISSIONAL - DESIGN CIENTÍFICO MODERNO
 # ============================================================================
 
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap');
-    @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&display=swap');
-    @import url('https://fonts.googleapis.com/css2?family=Audiowide&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;500;600;700&display=swap');
     
     * {
-        font-family: 'Rajdhani', sans-serif;
+        font-family: 'Inter', sans-serif;
     }
     
-    h1, h2, h3, h4 {
-        font-family: 'Orbitron', sans-serif !important;
+    h1, h2, h3, h4, h5 {
+        font-family: 'Inter', sans-serif !important;
+        font-weight: 600 !important;
     }
     
-    .game-title {
-        font-family: 'Audiowide', cursive !important;
-        font-size: 3.5rem;
-        text-align: center;
-        background: linear-gradient(135deg, #ffd700, #ffaa00, #ff6b00);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        text-shadow: 0 0 30px rgba(255,215,0,0.5);
-        animation: glow 2s ease-in-out infinite;
-    }
-    
-    @keyframes glow {
-        0% { filter: drop-shadow(0 0 20px #ffd700); }
-        50% { filter: drop-shadow(0 0 40px #ffaa00); }
-        100% { filter: drop-shadow(0 0 20px #ffd700); }
-    }
-    
+    /* Background profissional */
     .stApp {
-        background: radial-gradient(circle at 20% 30%, #1a1f2f 0%, #0a0f1a 100%);
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
     }
     
+    /* Sidebar profissional */
     section[data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #1a1f2f 0%, #0f1422 100%) !important;
-        border-right: 3px solid #ffd700;
-        box-shadow: 5px 0 30px rgba(255,215,0,0.2);
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%) !important;
+        border-right: 1px solid #e2e8f0;
+        box-shadow: 2px 0 10px rgba(0,0,0,0.05);
     }
     
     .sidebar-title {
-        font-family: 'Press Start 2P', cursive !important;
-        font-size: 0.8rem;
-        color: #ffd700;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #0f172a;
         text-align: center;
-        padding: 20px;
-        margin: 10px 0;
-        border: 3px solid #ffd700;
-        background: linear-gradient(135deg, #0f1422, #1a1f2f);
-        text-shadow: 0 0 10px #ffd700;
-    }
-    
-    .rpg-card {
-        background: linear-gradient(135deg, #1e293b, #0f172a);
-        border: 3px solid #ffd700;
-        border-radius: 15px;
-        padding: 25px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 30px rgba(255,215,0,0.2);
-        transition: all 0.3s ease;
-        margin-bottom: 15px;
-    }
-    
-    .rpg-card:hover {
-        transform: translateY(-5px) scale(1.02);
-        box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 50px rgba(255,215,0,0.4);
-    }
-    
-    .rpg-card .label {
-        font-family: 'Press Start 2P', cursive;
-        color: #ffd700;
-        font-size: 0.7rem;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-    }
-    
-    .rpg-card .value {
-        font-family: 'Orbitron', sans-serif;
-        font-size: 2.5rem;
-        font-weight: 800;
-        color: white;
-        text-shadow: 0 0 20px rgba(255,215,0,0.5);
-    }
-    
-    .xp-bar {
-        background: #1e293b;
-        border-radius: 30px;
-        padding: 5px;
-        border: 3px solid #ffd700;
-        margin: 15px 0;
-    }
-    
-    .xp-fill {
-        background: linear-gradient(90deg, #ffd700, #ffaa00, #ff6b00);
-        border-radius: 25px;
-        height: 30px;
-        transition: width 0.5s ease;
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        padding-right: 15px;
-        color: black;
-        font-weight: bold;
-    }
-    
-    .level-badge {
-        background: linear-gradient(135deg, #ffd700, #ffaa00);
-        border-radius: 50px;
-        padding: 10px 25px;
-        display: inline-block;
-        font-family: 'Press Start 2P', cursive;
-        font-size: 0.8rem;
-        color: #0f1422;
-        border: 3px solid white;
-        box-shadow: 0 0 30px #ffd700;
-    }
-    
-    .achievement-card {
-        background: linear-gradient(135deg, #2e3a4f, #1e293b);
-        border-left: 6px solid #ffd700;
-        border-radius: 10px;
         padding: 15px;
         margin: 10px 0;
+        background: linear-gradient(135deg, #f1f5f9, #ffffff);
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        letter-spacing: 0.5px;
     }
     
-    .warning-card {
-        background: linear-gradient(135deg, #dc2626, #b91c1c);
-        border: 3px solid #ffd700;
-        border-radius: 15px;
+    /* Cards profissionais */
+    .metric-card {
+        background: white;
+        border-radius: 12px;
         padding: 20px;
-        text-align: center;
-        animation: warningPulse 1s infinite;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+        transition: all 0.2s ease;
     }
     
-    @keyframes warningPulse {
-        0% { box-shadow: 0 0 30px #dc2626; }
-        50% { box-shadow: 0 0 60px #ffd700; }
-        100% { box-shadow: 0 0 30px #dc2626; }
+    .metric-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+        border-color: #3b82f6;
+    }
+    
+    .metric-card .label {
+        color: #64748b;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 500;
+    }
+    
+    .metric-card .value {
+        font-family: 'Source Code Pro', monospace;
+        font-size: 2rem;
+        font-weight: 600;
+        color: #0f172a;
+        margin: 5px 0;
+    }
+    
+    .metric-card .delta {
+        font-size: 0.9rem;
+        color: #10b981;
+    }
+    
+    /* Warning card */
+    .warning-card {
+        background: linear-gradient(135deg, #fee2e2, #fecaca);
+        border-radius: 12px;
+        padding: 20px;
+        border: 1px solid #ef4444;
+        text-align: center;
+    }
+    
+    .warning-card .label {
+        color: #b91c1c;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        font-weight: 600;
     }
     
     .warning-card .value {
-        font-family: 'Orbitron', sans-serif;
-        font-size: 3rem;
-        color: white;
+        font-family: 'Source Code Pro', monospace;
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: #b91c1c;
     }
     
+    /* Zone cards */
     .zone-card {
-        background: linear-gradient(135deg, #1e293b, #0f172a);
-        border-radius: 15px;
+        background: white;
+        border-radius: 10px;
         padding: 15px;
         margin: 5px 0;
-        border-left: 8px solid;
-        transition: all 0.3s ease;
+        border-left: 6px solid;
+        border-right: 1px solid #e2e8f0;
+        border-top: 1px solid #e2e8f0;
+        border-bottom: 1px solid #e2e8f0;
+        transition: all 0.2s ease;
     }
     
     .zone-card:hover {
-        transform: translateX(15px) scale(1.02);
-        box-shadow: -15px 15px 30px rgba(0,0,0,0.6);
+        transform: translateX(5px);
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
     }
     
     .zone-card .zone-name {
-        font-family: 'Press Start 2P', cursive;
-        font-size: 0.7rem;
-        color: #ffd700;
+        font-size: 0.9rem;
+        color: #64748b;
+        text-transform: uppercase;
+        font-weight: 500;
     }
     
     .zone-card .zone-value {
-        font-family: 'Orbitron', sans-serif;
-        font-size: 1.8rem;
-        color: white;
-        font-weight: 700;
+        font-family: 'Source Code Pro', monospace;
+        font-size: 1.4rem;
+        font-weight: 600;
+        color: #0f172a;
     }
     
     .zone-card .zone-count {
-        font-size: 1.2rem;
-        color: #ffd700;
+        font-size: 1rem;
+        color: #3b82f6;
+        font-weight: 500;
     }
     
+    /* Tabs profissionais */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 15px;
-        background: rgba(30, 41, 59, 0.8);
-        backdrop-filter: blur(10px);
-        padding: 10px;
-        border-radius: 60px;
-        border: 3px solid #ffd700;
+        gap: 8px;
+        background: white;
+        padding: 8px;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
     }
     
     .stTabs [data-baseweb="tab"] {
-        border-radius: 50px;
-        padding: 12px 30px;
-        font-weight: 600;
-        color: #94a3b8 !important;
-        transition: all 0.3s ease;
-        font-family: 'Press Start 2P', cursive !important;
-        font-size: 0.7rem;
+        border-radius: 8px;
+        padding: 10px 20px;
+        font-weight: 500;
+        color: #64748b !important;
+        transition: all 0.2s ease;
     }
     
     .stTabs [aria-selected="true"] {
-        background: linear-gradient(135deg, #ffd700, #ffaa00) !important;
-        color: #0f1422 !important;
-        transform: scale(1.05);
-        box-shadow: 0 0 30px #ffd700;
+        background: #3b82f6 !important;
+        color: white !important;
     }
     
+    /* Botões profissionais */
     .stButton > button {
-        background: linear-gradient(135deg, #ffd700, #ffaa00, #ff6b00);
-        color: #0f1422;
+        background: #3b82f6;
+        color: white;
         border: none;
-        border-radius: 50px;
-        padding: 15px 35px;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: 3px;
-        font-size: 1.1rem;
-        border: 3px solid white;
-        box-shadow: 0 0 30px rgba(255,215,0,0.5);
-        transition: all 0.3s ease;
-        font-family: 'Press Start 2P', cursive !important;
-        font-size: 0.8rem;
+        border-radius: 8px;
+        padding: 12px 25px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        border: 1px solid #3b82f6;
     }
     
     .stButton > button:hover {
-        transform: scale(1.05);
-        box-shadow: 0 0 50px #ffd700;
+        background: #2563eb;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
     }
     
+    /* Dataframe profissional */
     .dataframe {
-        background: #1e293b !important;
-        border: 3px solid #ffd700 !important;
-        border-radius: 15px !important;
+        background: white !important;
+        border-radius: 12px !important;
+        border: 1px solid #e2e8f0 !important;
     }
     
     .dataframe th {
-        background: linear-gradient(135deg, #ffd700, #ffaa00) !important;
-        color: #0f1422 !important;
-        font-family: 'Press Start 2P', cursive !important;
-        font-size: 0.7rem !important;
-        padding: 15px !important;
+        background: #f8fafc !important;
+        color: #0f172a !important;
+        font-weight: 600;
+        padding: 12px !important;
+        border-bottom: 2px solid #e2e8f0 !important;
     }
     
     .dataframe td {
-        background: #0f172a !important;
-        color: #e2e8f0 !important;
-        border-color: #ffd700 !important;
-        padding: 12px !important;
+        background: white !important;
+        color: #334155 !important;
+        border-color: #e2e8f0 !important;
+        padding: 10px !important;
     }
     
-    .metric-container {
-        background: #1e293b;
-        border-radius: 15px;
+    /* Containers de métricas */
+    .stat-container {
+        background: white;
+        border-radius: 10px;
         padding: 20px;
-        border: 2px solid #ffd700;
-        margin: 10px 0;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
     
-    .metric-container h4 {
-        color: #ffd700;
-        margin-bottom: 10px;
+    .stat-container h4 {
+        color: #0f172a;
+        font-size: 1.1rem;
+        margin-bottom: 15px;
     }
     
-    .metric-container p {
-        color: #e2e8f0;
-        margin: 5px 0;
+    .stat-container p {
+        color: #334155;
+        margin: 8px 0;
     }
     
+    .stat-container strong {
+        color: #3b82f6;
+    }
+    
+    /* Note card */
     .note-card {
-        background: #1e293b;
+        background: #f8fafc;
         padding: 15px;
         border-radius: 10px;
         margin: 10px 0;
-        border-left: 4px solid #ffd700;
+        border-left: 4px solid #3b82f6;
+        border: 1px solid #e2e8f0;
     }
     
     .note-card .note-date {
-        color: #94a3b8;
+        color: #64748b;
         font-size: 0.85rem;
     }
     
     .note-card .note-text {
-        color: white;
+        color: #0f172a;
+        margin: 5px 0;
     }
     
+    /* Scrollbar */
     ::-webkit-scrollbar {
-        width: 10px;
-        height: 10px;
+        width: 8px;
+        height: 8px;
     }
     
     ::-webkit-scrollbar-track {
-        background: #1e293b;
+        background: #f1f5f9;
     }
     
     ::-webkit-scrollbar-thumb {
-        background: #ffd700;
-        border-radius: 5px;
+        background: #94a3b8;
+        border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: #64748b;
+    }
+    
+    /* Headers */
+    h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #0f172a;
+        text-align: center;
+        margin-bottom: 10px;
+    }
+    
+    h2 {
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: #0f172a;
+        border-bottom: 2px solid #3b82f6;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+    }
+    
+    h3 {
+        font-size: 1.4rem;
+        font-weight: 600;
+        color: #3b82f6;
+        margin-bottom: 15px;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -384,52 +369,17 @@ mobile = is_mobile()
 n_colunas = 1 if mobile else 4
 
 # ============================================================================
-# HEADER GAMIFICADO
+# HEADER PROFISSIONAL
 # ============================================================================
 
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
     st.markdown("""
-    <div style="text-align: center; padding: 30px 0;">
-        <h1 class="game-title">🏆 SPORTS SCIENCE PRO</h1>
-        <p style="color: #ffd700; font-size: 1.2rem; letter-spacing: 4px; font-family: 'Press Start 2P', cursive;">
-            GAMIFIED EDITION ⚡ LEVEL UP YOUR ANALYSIS
+    <div style="text-align: center; padding: 20px 0;">
+        <h1>🏃 SPORTS SCIENCE ANALYTICS PRO</h1>
+        <p style="color: #3b82f6; font-size: 1.1rem; letter-spacing: 1px;">
+            Professional Sports Performance Analysis Platform
         </p>
-    </div>
-    """, unsafe_allow_html=True)
-
-# Sistema de XP e Level
-col1, col2, col3, col4 = st.columns(4)
-with col1:
-    st.markdown(f"""
-    <div class="level-badge">
-        LEVEL {st.session_state.level}
-    </div>
-    """, unsafe_allow_html=True)
-
-with col2:
-    xp_percent = st.session_state.xp_points % 100
-    st.markdown(f"""
-    <div class="xp-bar">
-        <div class="xp-fill" style="width: {xp_percent}%;">
-            {st.session_state.xp_points} XP
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-with col3:
-    st.markdown(f"""
-    <div class="rpg-card" style="padding: 10px;">
-        <p class="label">🔥 STREAK</p>
-        <p class="value" style="font-size: 1.5rem;">{st.session_state.streak} dias</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-with col4:
-    st.markdown(f"""
-    <div class="rpg-card" style="padding: 10px;">
-        <p class="label">🏆 ACHIEVEMENTS</p>
-        <p class="value" style="font-size: 1.5rem;">{len(st.session_state.achievements)}</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -518,11 +468,7 @@ translations = {
         'window_size': 'Janela',
         'critical_markers': 'Marcadores Críticos',
         'trend_analysis': 'Análise de Tendência',
-        'gain_xp': 'Ganhou +10 XP!',
-        'achievement_unlocked': '🏆 Conquista Desbloqueada!',
-        'first_analysis': 'Primeira Análise',
-        'critical_finder': 'Caçador de Críticos',
-        'master_analyst': 'Mestre Analista'
+        'observations': 'Observações'
     },
     'en': {
         'title': 'Sports Science Analytics Pro',
@@ -604,11 +550,7 @@ translations = {
         'window_size': 'Window',
         'critical_markers': 'Critical Markers',
         'trend_analysis': 'Trend Analysis',
-        'gain_xp': 'Earned +10 XP!',
-        'achievement_unlocked': '🏆 Achievement Unlocked!',
-        'first_analysis': 'First Analysis',
-        'critical_finder': 'Critical Hunter',
-        'master_analyst': 'Master Analyst'
+        'observations': 'Observations'
     },
     'es': {
         'title': 'Sports Science Analytics Pro',
@@ -690,11 +632,7 @@ translations = {
         'window_size': 'Ventana',
         'critical_markers': 'Marcadores Críticos',
         'trend_analysis': 'Análisis de Tendencia',
-        'gain_xp': '¡Ganaste +10 XP!',
-        'achievement_unlocked': '🏆 ¡Logro Desbloqueado!',
-        'first_analysis': 'Primer Análisis',
-        'critical_finder': 'Cazador de Críticos',
-        'master_analyst': 'Analista Maestro'
+        'observations': 'Observaciones'
     },
     'es-mx': {
         'title': 'Sports Science Analytics Pro',
@@ -776,11 +714,7 @@ translations = {
         'window_size': 'Ventana',
         'critical_markers': 'Marcadores Críticos',
         'trend_analysis': 'Análisis de Tendencia',
-        'gain_xp': '¡Ganaste +10 XP!',
-        'achievement_unlocked': '🏆 ¡Logro Desbloqueado!',
-        'first_analysis': 'Primer Análisis',
-        'critical_finder': 'Cazador de Críticos',
-        'master_analyst': 'Analista Maestro'
+        'observations': 'Observaciones'
     }
 }
 
@@ -1004,10 +938,10 @@ def interpretar_teste(p_valor, nome_teste, t):
         cor = "#ef4444"
     
     st.markdown(f"""
-    <div class="rpg-card" style="border-left: 5px solid {cor};">
-        <h4 style="color: white;">{status}</h4>
-        <p style="color: #94a3b8;"><strong>Teste:</strong> {nome_teste}</p>
-        <p style="color: #94a3b8;"><strong>p-valor:</strong> <span style="color: {cor};">{p_text}</span></p>
+    <div class="stat-container" style="border-left: 5px solid {cor};">
+        <h4 style="color: {cor};">{status}</h4>
+        <p><strong>Teste:</strong> {nome_teste}</p>
+        <p><strong>p-valor:</strong> <span style="color: {cor};">{p_text}</span></p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -1017,14 +951,14 @@ def executive_card(titulo, valor, delta, icone, cor_status="#3b82f6"):
     delta_color = "#10b981" if delta > 0 else "#ef4444"
     
     st.markdown(f"""
-    <div class="rpg-card" style="border-left-color: {cor_status};">
+    <div class="metric-card" style="border-left: 4px solid {cor_status};">
         <div style="display: flex; justify-content: space-between;">
             <div>
                 <p class="label">{titulo}</p>
                 <p class="value">{valor}</p>
                 <p style="color: {delta_color};">{delta_icon} {abs(delta):.1f}%</p>
             </div>
-            <div style="font-size: 3rem;">{icone}</div>
+            <div style="font-size: 2.5rem;">{icone}</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -1032,7 +966,7 @@ def executive_card(titulo, valor, delta, icone, cor_status="#3b82f6"):
 def time_metric_card(label, valor, sub_label="", cor="#3b82f6"):
     """Card para métricas temporais"""
     st.markdown(f"""
-    <div class="rpg-card" style="border-left: 6px solid {cor};">
+    <div class="metric-card" style="border-left: 4px solid {cor};">
         <p class="label">{label}</p>
         <p class="value" style="font-size: 1.8rem;">{valor}</p>
         <p style="color: #64748b;">{sub_label}</p>
@@ -1045,25 +979,9 @@ def warning_card(titulo, valor, subtitulo, icone="⚠️"):
     <div class="warning-card">
         <p class="label">{icone} {titulo}</p>
         <p class="value">{valor}</p>
-        <p style="color: white;">{subtitulo}</p>
+        <p style="color: #b91c1c;">{subtitulo}</p>
     </div>
     """, unsafe_allow_html=True)
-
-def add_xp(amount=10, t=None):
-    """Adiciona XP e verifica level up"""
-    st.session_state.xp_points += amount
-    st.session_state.streak += 1
-    
-    new_level = (st.session_state.xp_points // 100) + 1
-    if new_level > st.session_state.level:
-        st.session_state.level = new_level
-        st.balloons()
-        st.success(f"🎉 LEVEL UP! Agora você é nível {new_level}!")
-    
-    if st.session_state.xp_points >= 100 and 'first_analysis' not in st.session_state.achievements:
-        st.session_state.achievements.append('first_analysis')
-        if t:
-            st.success(f"🏆 {t['achievement_unlocked']}: {t['first_analysis']}")
 
 def comparar_atletas(df, atleta1, atleta2, variaveis, t):
     """Comparação lado a lado de dois atletas"""
@@ -1079,9 +997,9 @@ def comparar_atletas(df, atleta1, atleta2, variaveis, t):
                 delta = ((dados1[var] - dados2[var]) / dados2[var]) * 100 if dados2[var] != 0 else 0
                 cor = "#10b981" if delta > 0 else "#ef4444"
                 st.markdown(f"""
-                <div class="rpg-card" style="padding: 15px; border-left: 4px solid {cor};">
-                    <span style="color: #94a3b8;">{var}:</span>
-                    <span style="color: white; float: right;">{dados1[var]:.2f}</span>
+                <div class="stat-container" style="border-left: 4px solid {cor};">
+                    <span style="color: #64748b;">{var}:</span>
+                    <span style="color: #0f172a; float: right; font-weight: bold;">{dados1[var]:.2f}</span>
                     <br>
                     <span style="color: {cor};">{delta:+.1f}%</span>
                 </div>
@@ -1093,9 +1011,9 @@ def comparar_atletas(df, atleta1, atleta2, variaveis, t):
                 delta = ((dados2[var] - dados1[var]) / dados1[var]) * 100 if dados1[var] != 0 else 0
                 cor = "#10b981" if delta > 0 else "#ef4444"
                 st.markdown(f"""
-                <div class="rpg-card" style="padding: 15px; border-left: 4px solid {cor};">
-                    <span style="color: #94a3b8;">{var}:</span>
-                    <span style="color: white; float: right;">{dados2[var]:.2f}</span>
+                <div class="stat-container" style="border-left: 4px solid {cor};">
+                    <span style="color: #64748b;">{var}:</span>
+                    <span style="color: #0f172a; float: right; font-weight: bold;">{dados2[var]:.2f}</span>
                     <br>
                     <span style="color: {cor};">{delta:+.1f}%</span>
                 </div>
@@ -1112,21 +1030,19 @@ def sistema_anotacoes(t):
             nova_anotacao = st.text_area("Nova anotação:", height=100, key="nova_anotacao")
         
         with col2:
-            if st.button("➕ Adicionar"):
+            if st.button("➕ Adicionar", use_container_width=True):
                 if nova_anotacao:
                     st.session_state.anotacoes.append({
                         'data': datetime.now().strftime("%d/%m/%Y %H:%M"),
                         'texto': nova_anotacao
                     })
-                    if t:
-                        add_xp(5, t)
                     st.rerun()
         
         for anotacao in reversed(st.session_state.anotacoes):
             st.markdown(f"""
-            <div class="achievement-card">
-                <p class="note-date" style="color: #94a3b8;">{anotacao['data']}</p>
-                <p class="note-text" style="color: white;">{anotacao['texto']}</p>
+            <div class="note-card">
+                <p class="note-date">{anotacao['data']}</p>
+                <p class="note-text">{anotacao['texto']}</p>
             </div>
             """, unsafe_allow_html=True)
 
@@ -1167,7 +1083,7 @@ def criar_timeline_quantum(df_completo, atletas_selecionados, periodos_seleciona
             line_width=3,
             annotation_text=f"🔴 {t['threshold_80']}: {limiar_80:.2f}",
             annotation_position="top left",
-            annotation_font=dict(color="white", size=12)
+            annotation_font=dict(color="#0f172a", size=12)
         )
         
         if st.session_state.show_moving_average:
@@ -1177,7 +1093,7 @@ def criar_timeline_quantum(df_completo, atletas_selecionados, periodos_seleciona
                 y=df_filtrado['Media_Movel'],
                 mode='lines',
                 name=f"📈 {t['moving_average']} ({window_size})",
-                line=dict(color='white', width=4, dash='dash'),
+                line=dict(color='#2563eb', width=3, dash='dash'),
                 opacity=0.9
             ))
         
@@ -1204,7 +1120,7 @@ def criar_timeline_quantum(df_completo, atletas_selecionados, periodos_seleciona
                 y=df_combo[variavel],
                 mode='lines',
                 name=f"{atleta[:15]} - {periodo[:10]}",
-                line=dict(color=cor, width=2.5)
+                line=dict(color=cor, width=2)
             ))
             
             if not df_normal.empty:
@@ -1212,7 +1128,7 @@ def criar_timeline_quantum(df_completo, atletas_selecionados, periodos_seleciona
                     x=df_normal['Minuto'],
                     y=df_normal[variavel],
                     mode='markers',
-                    marker=dict(size=8, color=cor, opacity=0.6, line=dict(color='white', width=1)),
+                    marker=dict(size=6, color=cor, opacity=0.6, line=dict(color='white', width=1)),
                     showlegend=False
                 ))
             
@@ -1221,7 +1137,7 @@ def criar_timeline_quantum(df_completo, atletas_selecionados, periodos_seleciona
                     x=df_critico['Minuto'],
                     y=df_critico[variavel],
                     mode='markers',
-                    marker=dict(size=14, color='#ef4444', symbol='circle', line=dict(color='white', width=2)),
+                    marker=dict(size=10, color='#ef4444', symbol='circle', line=dict(color='white', width=1)),
                     showlegend=False
                 ))
         
@@ -1235,7 +1151,7 @@ def criar_timeline_quantum(df_completo, atletas_selecionados, periodos_seleciona
                 y=[y_pos] * len(minutos_criticos),
                 mode='markers',
                 name=t['critical_markers'],
-                marker=dict(size=12, color='#ef4444', symbol='triangle-down', line=dict(color='white', width=1))
+                marker=dict(size=8, color='#ef4444', symbol='triangle-down', line=dict(color='white', width=1))
             ))
             
             for m in set(minutos_criticos):
@@ -1262,16 +1178,16 @@ def criar_timeline_quantum(df_completo, atletas_selecionados, periodos_seleciona
         
         fig.update_layout(
             title=dict(
-                text=f"⚡ {t['trend_analysis']} - {variavel}",
-                font=dict(size=24, color='#ffd700'),
+                text=f"📈 {t['trend_analysis']} - {variavel}",
+                font=dict(size=20, color='#0f172a'),
                 x=0.5
             ),
             xaxis_title="⏱️ Minuto",
             yaxis_title=f"📊 {variavel}",
             hovermode='x unified',
-            plot_bgcolor='rgba(15,23,42,0.95)',
-            paper_bgcolor='rgba(0,0,0,0)',
-            font=dict(color='white'),
+            plot_bgcolor='white',
+            paper_bgcolor='white',
+            font=dict(color='#334155'),
             height=600,
             showlegend=True,
             legend=dict(
@@ -1280,14 +1196,14 @@ def criar_timeline_quantum(df_completo, atletas_selecionados, periodos_seleciona
                 y=0.99,
                 xanchor="left",
                 x=1.02,
-                bgcolor='rgba(15,23,42,0.9)',
-                bordercolor='#ffd700',
-                borderwidth=2
+                bgcolor='white',
+                bordercolor='#e2e8f0',
+                borderwidth=1
             )
         )
         
-        fig.update_xaxes(gridcolor='#334155', tickangle=-45)
-        fig.update_yaxes(gridcolor='#334155')
+        fig.update_xaxes(gridcolor='#e2e8f0', tickangle=-45, tickfont=dict(color='#64748b'))
+        fig.update_yaxes(gridcolor='#e2e8f0', tickfont=dict(color='#64748b'))
         
         return fig, combinacoes_list, minutos_criticos
         
@@ -1324,7 +1240,7 @@ with st.sidebar:
     )
     
     if uploaded_files and len(uploaded_files) > 0 and not st.session_state.upload_concluido:
-        with st.spinner('⚡ Processando...'):
+        with st.spinner('📊 Processando...'):
             df, vars_quant, periodos, posicoes, nomes = processar_upload(uploaded_files)
             
             if df is not None:
@@ -1342,7 +1258,6 @@ with st.sidebar:
                     st.session_state.variavel_selecionada = vars_quant[0]
                 
                 st.success(f"✅ {len(nomes)} {t['upload']}")
-                add_xp(20, t)
                 st.rerun()
     
     if st.session_state.df_completo is not None:
@@ -1436,9 +1351,11 @@ with st.sidebar:
         
         atletas_disp = sorted(df_temp['Nome'].unique())
         
-        if not st.session_state.atletas_selecionados and atletas_disp:
-            st.session_state.atletas_selecionados = atletas_disp.copy()
-            st.rerun()
+        # CORREÇÃO: Garantir que atletas_selecionados seja uma lista válida
+        if not st.session_state.atletas_selecionados or len(st.session_state.atletas_selecionados) == 0:
+            if atletas_disp:
+                st.session_state.atletas_selecionados = [atletas_disp[0]]
+                st.rerun()
         
         select_all_atl = st.checkbox(
             "Todos" if st.session_state.idioma in ['pt', 'es', 'es-mx'] else "All",
@@ -1448,7 +1365,7 @@ with st.sidebar:
         
         if select_all_atl:
             if st.session_state.atletas_selecionados != atletas_disp:
-                st.session_state.atletas_selecionados = atletas_disp
+                st.session_state.atletas_selecionados = atletas_disp.copy()
                 st.session_state.dados_processados = False
                 st.rerun()
         else:
@@ -1459,8 +1376,12 @@ with st.sidebar:
                 label_visibility="collapsed",
                 key="atletas_selector"
             )
+            # CORREÇÃO: Verificar se a seleção mudou e atualizar
             if atl_sel != st.session_state.atletas_selecionados:
-                st.session_state.atletas_selecionados = atl_sel
+                if len(atl_sel) > 0:  # Garantir que não fique vazio
+                    st.session_state.atletas_selecionados = atl_sel
+                else:
+                    st.session_state.atletas_selecionados = [atletas_disp[0]]  # Manter pelo menos um
                 st.session_state.dados_processados = False
                 st.rerun()
         
@@ -1491,32 +1412,11 @@ with st.sidebar:
         
         st.markdown("---")
         
-        with st.expander("🏆 Conquistas"):
-            if st.session_state.achievements:
-                for ach in st.session_state.achievements:
-                    if ach == 'first_analysis':
-                        st.markdown(f"""
-                        <div class="achievement-card">
-                            <p class="achievement-name">{t['first_analysis']}</p>
-                            <p class="achievement-desc">+50 XP</p>
-                        </div>
-                        """, unsafe_allow_html=True)
-                    elif ach == 'critical_finder':
-                        st.markdown(f"""
-                        <div class="achievement-card">
-                            <p class="achievement-name">{t['critical_finder']}</p>
-                            <p class="achievement-desc">+30 XP</p>
-                        </div>
-                        """, unsafe_allow_html=True)
-            else:
-                st.info("Nenhuma conquista ainda. Processe dados para ganhar!")
-        
-        st.markdown("---")
-        
         pode_processar = (st.session_state.variavel_selecionada and 
                          st.session_state.posicoes_selecionadas and 
                          st.session_state.periodos_selecionados and 
-                         st.session_state.atletas_selecionados)
+                         st.session_state.atletas_selecionados and 
+                         len(st.session_state.atletas_selecionados) > 0)
         
         if st.button(t['process'], use_container_width=True, disabled=not pode_processar, key="process_button"):
             st.session_state.processar_click = True
@@ -1528,7 +1428,7 @@ with st.sidebar:
 
 if st.session_state.processar_click and st.session_state.df_completo is not None:
     
-    with st.spinner('⚡ Gerando análise...'):
+    with st.spinner('📊 Gerando análise...'):
         time.sleep(0.5)
         
         df = st.session_state.df_completo
@@ -1553,8 +1453,6 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
             st.session_state.dados_processados = True
             t = translations[st.session_state.idioma]
             
-            add_xp(10, t)
-            
             st.markdown(f"<h2>📊 {t['tab_executive']}</h2>", unsafe_allow_html=True)
             
             media_global = df_filtrado[variavel].mean()
@@ -1570,6 +1468,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
             with col3:
                 executive_card(t['min_value'], f"{valor_min:.2f}", 0, "📉")
             with col4:
+                # CORREÇÃO: Usar str() para converter o número para string
                 executive_card(t['observations'], str(len(df_filtrado)), 0, "👥")
             
             st.markdown("---")
@@ -1600,12 +1499,12 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     fig_hist.add_vline(x=media_global, line_dash="dash", line_color="#ef4444")
                     fig_hist.update_layout(
                         title=f"Histograma - {variavel}",
-                        plot_bgcolor='rgba(15,23,42,0.95)',
-                        paper_bgcolor='rgba(0,0,0,0)',
-                        font=dict(color='white')
+                        plot_bgcolor='white',
+                        paper_bgcolor='white',
+                        font=dict(color='#334155')
                     )
-                    fig_hist.update_xaxes(gridcolor='#334155')
-                    fig_hist.update_yaxes(gridcolor='#334155')
+                    fig_hist.update_xaxes(gridcolor='#e2e8f0')
+                    fig_hist.update_yaxes(gridcolor='#e2e8f0')
                     st.plotly_chart(fig_hist, use_container_width=True)
                 
                 with col2:
@@ -1622,12 +1521,12 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     ))
                     fig_qq.update_layout(
                         title=f"QQ Plot - {variavel}",
-                        plot_bgcolor='rgba(15,23,42,0.95)',
-                        paper_bgcolor='rgba(0,0,0,0)',
-                        font=dict(color='white')
+                        plot_bgcolor='white',
+                        paper_bgcolor='white',
+                        font=dict(color='#334155')
                     )
-                    fig_qq.update_xaxes(gridcolor='#334155')
-                    fig_qq.update_yaxes(gridcolor='#334155')
+                    fig_qq.update_xaxes(gridcolor='#e2e8f0')
+                    fig_qq.update_yaxes(gridcolor='#e2e8f0')
                     st.plotly_chart(fig_qq, use_container_width=True)
             
             # ABA 2: TEMPORAL
@@ -1654,7 +1553,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 with col4:
                     time_metric_card(t['threshold_80'], f"{limiar_80:.2f}", "", "#f59e0b")
                 with col5:
-                    warning_card(t['critical_events'], f"{eventos_criticos}", f"{percentual_critico:.1f}% {t['above_threshold']}")
+                    warning_card(t['critical_events'], str(eventos_criticos), f"{percentual_critico:.1f}% {t['above_threshold']}")
                 
                 st.markdown("---")
                 
@@ -1704,10 +1603,6 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                         st.success(f"✅ {len(combinacoes)} combinações")
                     with col2:
                         st.warning(f"⚠️ {len(set(minutos_criticos))} minutos críticos")
-                        if len(set(minutos_criticos)) > 5 and 'critical_finder' not in st.session_state.achievements:
-                            st.session_state.achievements.append('critical_finder')
-                            st.balloons()
-                            st.success(f"🏆 {t['achievement_unlocked']}: {t['critical_finder']}")
                     with col3:
                         st.info(f"📊 {len(df_filtrado)} observações")
                 
@@ -1728,7 +1623,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 
                 with col_e1:
                     st.markdown(f"""
-                    <div class="rpg-card">
+                    <div class="stat-container">
                         <h4>{t['mean']}</h4>
                         <p><strong>{t['mean']}:</strong> {media:.3f}</p>
                         <p><strong>{t['median']}:</strong> {mediana:.3f}</p>
@@ -1737,7 +1632,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 
                 with col_e2:
                     st.markdown(f"""
-                    <div class="rpg-card">
+                    <div class="stat-container">
                         <h4>{t['std']}</h4>
                         <p><strong>{t['std']}:</strong> {desvio:.3f}</p>
                         <p><strong>{t['cv']}:</strong> {calcular_cv(media, desvio):.1f}%</p>
@@ -1746,7 +1641,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 
                 with col_e3:
                     st.markdown(f"""
-                    <div class="rpg-card">
+                    <div class="stat-container">
                         <h4>{t['iqr']}</h4>
                         <p><strong>{t['q1']}:</strong> {q1:.3f}</p>
                         <p><strong>{t['q3']}:</strong> {q3:.3f}</p>
@@ -1765,7 +1660,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                         interp_ass = t['high_skew']
                     
                     st.markdown(f"""
-                    <div class="rpg-card">
+                    <div class="stat-container">
                         <h4>{t['skewness']}</h4>
                         <p><strong>Valor:</strong> {assimetria:.3f}</p>
                         <p><strong>Interpretação:</strong> {interp_ass}</p>
@@ -1781,7 +1676,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                         interp_curt = t['mesokurtic']
                     
                     st.markdown(f"""
-                    <div class="rpg-card">
+                    <div class="stat-container">
                         <h4>{t['kurtosis']}</h4>
                         <p><strong>Valor:</strong> {curtose:.3f}</p>
                         <p><strong>Interpretação:</strong> {interp_curt}</p>
@@ -1810,7 +1705,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                         dist = "t-Student"
                     
                     st.markdown(f"""
-                    <div class="rpg-card">
+                    <div class="stat-container">
                         <p><strong>{t['mean']}:</strong> {media:.3f}</p>
                         <p><strong>Erro Padrão:</strong> {erro_padrao:.3f}</p>
                         <p><strong>IC Inferior:</strong> {ic_inf:.3f}</p>
@@ -1832,13 +1727,13 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     
                     fig_ic.update_layout(
                         title=t['confidence_interval'],
-                        plot_bgcolor='rgba(15,23,42,0.95)',
-                        paper_bgcolor='rgba(0,0,0,0)',
-                        font=dict(color='white'),
+                        plot_bgcolor='white',
+                        paper_bgcolor='white',
+                        font=dict(color='#334155'),
                         showlegend=False
                     )
-                    fig_ic.update_xaxes(gridcolor='#334155')
-                    fig_ic.update_yaxes(gridcolor='#334155')
+                    fig_ic.update_xaxes(gridcolor='#e2e8f0')
+                    fig_ic.update_yaxes(gridcolor='#e2e8f0')
                     
                     st.plotly_chart(fig_ic, use_container_width=True)
                 
@@ -1919,16 +1814,16 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                             name=pos,
                             boxmean='sd',
                             marker_color='#3b82f6',
-                            line_color='white'
+                            line_color='#0f172a'
                         ))
                 
                 fig_box_pos.update_layout(
-                    plot_bgcolor='rgba(15,23,42,0.95)',
-                    paper_bgcolor='rgba(0,0,0,0)',
-                    font=dict(color='white')
+                    plot_bgcolor='white',
+                    paper_bgcolor='white',
+                    font=dict(color='#334155')
                 )
-                fig_box_pos.update_xaxes(gridcolor='#334155')
-                fig_box_pos.update_yaxes(gridcolor='#334155')
+                fig_box_pos.update_xaxes(gridcolor='#e2e8f0')
+                fig_box_pos.update_yaxes(gridcolor='#e2e8f0')
                 st.plotly_chart(fig_box_pos, use_container_width=True)
                 
                 st.markdown(f"<h4>👤 {t['athlete']}</h4>", unsafe_allow_html=True)
@@ -1942,17 +1837,17 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                             name=atl[:15] + "..." if len(atl) > 15 else atl,
                             boxmean='sd',
                             marker_color='#8b5cf6',
-                            line_color='white'
+                            line_color='#0f172a'
                         ))
                 
                 fig_box_atl.update_layout(
-                    plot_bgcolor='rgba(15,23,42,0.95)',
-                    paper_bgcolor='rgba(0,0,0,0)',
-                    font=dict(color='white'),
+                    plot_bgcolor='white',
+                    paper_bgcolor='white',
+                    font=dict(color='#334155'),
                     height=max(400, len(atletas[:10]) * 30)
                 )
-                fig_box_atl.update_xaxes(gridcolor='#334155', tickangle=-45)
-                fig_box_atl.update_yaxes(gridcolor='#334155')
+                fig_box_atl.update_xaxes(gridcolor='#e2e8f0', tickangle=-45)
+                fig_box_atl.update_yaxes(gridcolor='#e2e8f0')
                 st.plotly_chart(fig_box_atl, use_container_width=True)
             
             # ABA 4: CORRELAÇÕES
@@ -1977,9 +1872,9 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                             zmin=-1, zmax=1
                         )
                         fig_corr.update_layout(
-                            plot_bgcolor='rgba(15,23,42,0.95)',
-                            paper_bgcolor='rgba(0,0,0,0)',
-                            font=dict(color='white'),
+                            plot_bgcolor='white',
+                            paper_bgcolor='white',
+                            font=dict(color='#334155'),
                             height=500
                         )
                         st.plotly_chart(fig_corr, use_container_width=True)
@@ -2014,7 +1909,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                         
                         if resultado:
                             st.markdown(f"""
-                            <div class="rpg-card">
+                            <div class="stat-container">
                                 <h4>📊 Resultado</h4>
                                 <p><strong>{grupo1}:</strong> {resultado['media_g1']:.2f} ± {resultado['std_g1']:.2f} (n={resultado['n_g1']})</p>
                                 <p><strong>{grupo2}:</strong> {resultado['media_g2']:.2f} ± {resultado['std_g2']:.2f} (n={resultado['n_g2']})</p>
@@ -2079,7 +1974,7 @@ elif st.session_state.df_completo is None:
     
     with col2:
         st.markdown(f"""
-        <div class="rpg-card">
+        <div class="metric-card">
             <h4>{t['components']}</h4>
             <p>{t['name_ex']}</p>
             <p>{t['period_ex']}</p>
