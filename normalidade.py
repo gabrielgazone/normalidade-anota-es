@@ -144,6 +144,7 @@ st.markdown("""
         transition: all 0.3s ease;
         position: relative;
         overflow: hidden;
+        margin-bottom: 15px;
     }
     
     .sci-card::before {
@@ -199,6 +200,7 @@ st.markdown("""
         text-align: center;
         animation: alertPulse 1.5s infinite;
         box-shadow: 0 0 30px rgba(255, 68, 68, 0.3);
+        margin-bottom: 15px;
     }
     
     @keyframes alertPulse {
@@ -595,7 +597,12 @@ translations = {
         'critical_markers': 'Marcadores Críticos',
         'trend_analysis': 'Análise de Tendência',
         'observations': 'Observações',
-        'r_squared': 'R²'
+        'r_squared': 'R²',
+        'gain_xp': 'Ganhou +5 XP!',
+        'achievement_unlocked': '🏆 Conquista Desbloqueada!',
+        'first_analysis': 'Primeira Análise',
+        'critical_finder': 'Caçador de Críticos',
+        'master_analyst': 'Mestre Analista'
     },
     'en': {
         'title': 'Sports Science Analytics Pro',
@@ -678,7 +685,12 @@ translations = {
         'critical_markers': 'Critical Markers',
         'trend_analysis': 'Trend Analysis',
         'observations': 'Observations',
-        'r_squared': 'R²'
+        'r_squared': 'R²',
+        'gain_xp': 'Earned +5 XP!',
+        'achievement_unlocked': '🏆 Achievement Unlocked!',
+        'first_analysis': 'First Analysis',
+        'critical_finder': 'Critical Hunter',
+        'master_analyst': 'Master Analyst'
     },
     'es': {
         'title': 'Sports Science Analytics Pro',
@@ -761,7 +773,12 @@ translations = {
         'critical_markers': 'Marcadores Críticos',
         'trend_analysis': 'Análisis de Tendencia',
         'observations': 'Observaciones',
-        'r_squared': 'R²'
+        'r_squared': 'R²',
+        'gain_xp': '¡Ganaste +5 XP!',
+        'achievement_unlocked': '🏆 ¡Logro Desbloqueado!',
+        'first_analysis': 'Primer Análisis',
+        'critical_finder': 'Cazador de Críticos',
+        'master_analyst': 'Analista Maestro'
     },
     'es-mx': {
         'title': 'Sports Science Analytics Pro',
@@ -844,7 +861,12 @@ translations = {
         'critical_markers': 'Marcadores Críticos',
         'trend_analysis': 'Análisis de Tendencia',
         'observations': 'Observaciones',
-        'r_squared': 'R²'
+        'r_squared': 'R²',
+        'gain_xp': '¡Ganaste +5 XP!',
+        'achievement_unlocked': '🏆 ¡Logro Desbloqueado!',
+        'first_analysis': 'Primer Análisis',
+        'critical_finder': 'Cazador de Críticos',
+        'master_analyst': 'Analista Maestro'
     }
 }
 
@@ -914,6 +936,7 @@ def processar_upload(files):
             continue
     
     if not dataframes:
+        st.error("❌ Nenhum arquivo válido encontrado!")
         return None, [], [], [], []
     
     estruturas_ok, estrutura_base = verificar_estruturas_arquivos(dataframes)
@@ -941,6 +964,7 @@ def processar_upload(files):
             dados_quant[nome_var] = valores.values
     
     if not variaveis_quant:
+        st.error("❌ Nenhuma variável numérica encontrada!")
         return None, [], [], [], []
     
     df_estruturado = pd.DataFrame({
@@ -959,6 +983,7 @@ def processar_upload(files):
     ].reset_index(drop=True)
     
     if df_estruturado.empty:
+        st.error("❌ Dataframe vazio após processamento!")
         return None, [], [], [], []
     
     periodos_unicos = sorted([p for p in df_estruturado['Período'].unique() if p and p.strip()])
@@ -1050,7 +1075,7 @@ def comparar_grupos(df, variavel, grupo1, grupo2):
             'n_g1': len(dados1),
             'n_g2': len(dados2)
         }
-    except:
+    except Exception as e:
         return None
 
 def interpretar_teste(p_valor, nome_teste, t):
@@ -1553,9 +1578,21 @@ with st.sidebar:
         with st.expander("🏆 Conquistas"):
             if len(st.session_state.achievements) > 0:
                 for ach in st.session_state.achievements:
+                    nome_conquista = ""
+                    if ach == 'primeira_analise':
+                        nome_conquista = t['first_analysis']
+                    elif ach == 'critical_master':
+                        nome_conquista = t['critical_finder']
+                    elif ach == 'multi_atleta':
+                        nome_conquista = "Multi-Atleta"
+                    elif ach == 'forte_correlacao':
+                        nome_conquista = "Correlação Forte"
+                    else:
+                        nome_conquista = ach
+                    
                     st.markdown(f"""
                     <div class="zone-card" style="border-left-color: #00ffff;">
-                        <p class="zone-name">{ach}</p>
+                        <p class="zone-name">{nome_conquista}</p>
                     </div>
                     """, unsafe_allow_html=True)
             else:
@@ -1609,7 +1646,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
             if 'primeira_analise' not in st.session_state.achievements:
                 st.session_state.achievements.append('primeira_analise')
                 st.balloons()
-                st.success("🏆 Conquista desbloqueada: Primeira Análise!")
+                st.success(f"🏆 {t['achievement_unlocked']}: {t['first_analysis']}")
             
             st.markdown(f"<h2>📊 {t['tab_executive']}</h2>", unsafe_allow_html=True)
             
@@ -1709,7 +1746,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     residuos = quantis_observados - p(quantis_teoricos)
                     ss_res = np.sum(residuos**2)
                     ss_tot = np.sum((quantis_observados - np.mean(quantis_observados))**2)
-                    r2 = 1 - (ss_res / ss_tot)
+                    r2 = 1 - (ss_res / ss_tot) if ss_tot != 0 else 0
                     
                     fig_qq = go.Figure()
                     
@@ -1831,13 +1868,13 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                         if len(combinacoes) > 5 and 'multi_atleta' not in st.session_state.achievements:
                             st.session_state.achievements.append('multi_atleta')
                             st.balloons()
-                            st.success("🏆 Conquista desbloqueada: Multi-Atleta!")
+                            st.success(f"🏆 {t['achievement_unlocked']}: Multi-Atleta!")
                     with col2:
                         st.warning(f"⚠️ {len(set(minutos_criticos))} minutos críticos")
                         if len(set(minutos_criticos)) > 3 and 'critical_master' not in st.session_state.achievements:
                             st.session_state.achievements.append('critical_master')
                             st.balloons()
-                            st.success("🏆 Conquista desbloqueada: Mestre dos Críticos!")
+                            st.success(f"🏆 {t['achievement_unlocked']}: {t['critical_finder']}")
                     with col3:
                         st.info(f"📊 {len(df_filtrado)} observações")
                 
@@ -2133,7 +2170,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                             if abs(corr_valor) > 0.8 and 'forte_correlacao' not in st.session_state.achievements:
                                 st.session_state.achievements.append('forte_correlacao')
                                 st.balloons()
-                                st.success("🏆 Conquista desbloqueada: Correlação Forte!")
+                                st.success(f"🏆 {t['achievement_unlocked']}: Correlação Forte!")
             
             # ABA 5: COMPARAÇÕES
             with tabs[4]:
