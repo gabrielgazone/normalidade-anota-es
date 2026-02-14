@@ -276,6 +276,25 @@ st.markdown("""
         100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
     }
     
+    .wave-card .label {
+        color: #94a3b8;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
+    
+    .wave-card .value {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1.8rem;
+        color: white;
+        font-weight: 700;
+    }
+    
+    .wave-card .sub-value {
+        color: #64748b;
+        font-size: 0.85rem;
+    }
+    
     /* Warning card com efeito de alerta quântico */
     .quantum-warning {
         background: linear-gradient(135deg, rgba(220, 38, 38, 0.9), rgba(185, 28, 28, 0.95));
@@ -297,12 +316,25 @@ st.markdown("""
         100% { box-shadow: 0 0 30px rgba(239, 68, 68, 0.5); }
     }
     
+    .quantum-warning .label {
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        opacity: 0.9;
+    }
+    
     .quantum-warning .value {
         font-family: 'Orbitron', sans-serif;
         font-size: 2.5rem;
         font-weight: 800;
         color: white;
         text-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
+        margin: 10px 0;
+    }
+    
+    .quantum-warning .sub-label {
+        font-size: 0.85rem;
+        opacity: 0.8;
     }
     
     /* Zone cards com design futurista */
@@ -1188,9 +1220,9 @@ def time_metric_card(label, valor, sub_label="", cor="#3b82f6"):
     """Card para métricas temporais"""
     st.markdown(f"""
     <div class="wave-card" style="border-left: 6px solid {cor};">
-        <div class="label" style="color: #94a3b8; font-size: 0.85rem;">{label}</div>
-        <div class="value" style="font-family: 'Orbitron', sans-serif; font-size: 1.8rem; color: white;">{valor}</div>
-        <div class="sub-value" style="color: #64748b; font-size: 0.85rem;">{sub_label}</div>
+        <div class="label">{label}</div>
+        <div class="value">{valor}</div>
+        <div class="sub-value">{sub_label}</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -1198,9 +1230,9 @@ def warning_card(titulo, valor, subtitulo, icone="⚠️"):
     """Card de aviso para eventos críticos"""
     st.markdown(f"""
     <div class="quantum-warning">
-        <div class="label" style="font-size: 0.9rem;">{icone} {titulo}</div>
+        <div class="label">{icone} {titulo}</div>
         <div class="value">{valor}</div>
-        <div class="sub-label" style="font-size: 0.85rem;">{subtitulo}</div>
+        <div class="sub-label">{subtitulo}</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -1308,6 +1340,15 @@ def criar_tabela_destaque(df, colunas_destaque):
                     cmap='viridis',
                     axis=0
                 )
+        
+        # Destacar linha do melhor atleta (maior média)
+        if 'Média' in df.columns:
+            def highlight_max_row(row):
+                if row.name == df['Média'].idxmax():
+                    return ['background-color: rgba(16, 185, 129, 0.2)'] * len(row)
+                return [''] * len(row)
+            
+            styled_df = styled_df.apply(highlight_max_row, axis=1)
         
         return styled_df
     except:
@@ -2112,11 +2153,11 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 with col2:
                     time_metric_card(t['min_value'], f"{valor_min:.2f}", f"{t['minute_of_min']}: {minuto_min}", "#10b981")
                 with col3:
-                    time_metric_card(t['mean'], f"{media_tempo:.2f}", t['mean'], "#3b82f6")
+                    time_metric_card(t['mean'], f"{media_tempo:.2f}", "", "#3b82f6")
                 with col4:
                     time_metric_card(t['threshold_80'], f"{limiar_80:.2f}", f"80% do máx ({valor_max:.2f})", "#f59e0b")
                 with col5:
-                    warning_card(t['critical_events'], f"{eventos_criticos}", f"{percentual_critico:.1f}% {t['above_threshold']}", "⚠️")
+                    warning_card(t['critical_events'], f"{eventos_criticos}", f"{percentual_critico:.1f}% {t['above_threshold']}")
                 
                 st.markdown("---")
                 
@@ -2752,14 +2793,14 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     col_atl1, col_atl2 = st.columns(2)
                     with col_atl1:
                         atl1 = st.selectbox(
-                            "Atleta 1", 
+                            "Atleta 1" if st.session_state.idioma == 'pt' else "Athlete 1", 
                             atletas, 
                             index=0, 
                             key="atleta1_comp_select"
                         )
                     with col_atl2:
                         atl2 = st.selectbox(
-                            "Atleta 2", 
+                            "Atleta 2" if st.session_state.idioma == 'pt' else "Athlete 2", 
                             atletas, 
                             index=min(1, len(atletas)-1), 
                             key="atleta2_comp_select"
@@ -2776,16 +2817,16 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                         if len(vars_comp) >= 1:
                             comparar_atletas(df_filtrado, atl1, atl2, vars_comp, t)
                     else:
-                        st.info("Selecione atletas diferentes para comparação")
+                        st.info("Selecione atletas diferentes para comparação" if st.session_state.idioma == 'pt' else "Select different athletes")
                 else:
-                    st.info("Selecione pelo menos 2 atletas para comparação")
+                    st.info("Selecione pelo menos 2 atletas para comparação" if st.session_state.idioma == 'pt' else "Select at least 2 athletes")
                 
                 st.markdown("---")
                 
                 sistema_anotacoes(t)
             
             # Dados brutos
-            with st.expander("📋 Visualizar dados filtrados"):
+            with st.expander("📋 Visualizar dados filtrados" if st.session_state.idioma == 'pt' else "📋 View filtered data"):
                 st.dataframe(df_filtrado, use_container_width=True)
     
     st.session_state.processar_click = False
@@ -2793,7 +2834,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
 elif st.session_state.df_completo is None:
     # Tela inicial
     t = translations[st.session_state.idioma]
-    st.info("👈 **Faça upload dos arquivos CSV para iniciar a análise quântica**")
+    st.info("👈 **Faça upload dos arquivos CSV para iniciar a análise quântica**" if st.session_state.idioma == 'pt' else "👈 **Upload CSV files to start quantum analysis**")
     
     col1, col2 = st.columns([2, 1])
     
@@ -2842,20 +2883,26 @@ elif st.session_state.df_completo is None:
         2. Selecione todos os arquivos desejados
         3. O sistema verificará compatibilidade e concatenará automaticamente
         4. Todos os dados serão combinados para análise unificada
+        """ if st.session_state.idioma == 'pt' else """
+        ### Instructions for multiple files:
+        1. Prepare your CSV files with the **same column structure**
+        2. Select all desired files
+        3. The system will check compatibility and concatenate automatically
+        4. All data will be combined for unified analysis
         """)
 
 elif st.session_state.dados_processados:
     t = translations[st.session_state.idioma]
-    st.info("👈 **Selecione os filtros na sidebar e clique em Processar Análise**")
+    st.info("👈 **Selecione os filtros na sidebar e clique em Processar Análise**" if st.session_state.idioma == 'pt' else "👈 **Select filters in sidebar and click Process Analysis**")
     
-    with st.expander("📋 Preview dos dados carregados"):
+    with st.expander("📋 Preview dos dados carregados" if st.session_state.idioma == 'pt' else "📋 Loaded data preview"):
         if st.session_state.upload_files_names:
             st.caption(f"**{t['upload']}:** {', '.join(st.session_state.upload_files_names)}")
             st.markdown("---")
         
         st.dataframe(st.session_state.df_completo.head(10), use_container_width=True)
         st.caption(f"**{t['observations']}:** {len(st.session_state.df_completo)}")
-        st.caption(f"**{t['variable']}s:** {', '.join(st.session_session.variaveis_quantitativas)}")
+        st.caption(f"**{t['variable']}s:** {', '.join(st.session_state.variaveis_quantitativas)}")
         if st.session_state.todos_posicoes:
             st.caption(f"**{t['positions']}:** {', '.join(st.session_state.todos_posicoes)}")
         if st.session_state.todos_periodos:
