@@ -5,6 +5,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import scipy.stats as stats
+from scipy import signal
 import io
 import base64
 from datetime import datetime, timedelta
@@ -301,201 +302,253 @@ translations = {
 }
 
 # ============================================================================
-# CSS PERSONALIZADO
+# CSS PERSONALIZADO - DESIGN CIENTÍFICO INOVADOR
 # ============================================================================
 
 st.markdown("""
 <style>
-    /* Tema base profissional */
+    /* Tema base científico com gradiente dinâmico */
     .stApp {
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        background: radial-gradient(circle at 0% 0%, #0a0f1e 0%, #1a1f2f 50%, #0f1422 100%);
+        position: relative;
+        overflow-x: hidden;
     }
     
-    /* Sidebar elegante */
+    /* Efeito de partículas científicas */
+    .stApp::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: 
+            radial-gradient(2px 2px at 20px 30px, #3b82f6, rgba(0,0,0,0)),
+            radial-gradient(2px 2px at 40px 70px, #8b5cf6, rgba(0,0,0,0)),
+            radial-gradient(3px 3px at 90px 40px, #10b981, rgba(0,0,0,0)),
+            radial-gradient(2px 2px at 160px 120px, #ef4444, rgba(0,0,0,0)),
+            radial-gradient(2px 2px at 230px 80px, #3b82f6, rgba(0,0,0,0)),
+            radial-gradient(3px 3px at 300px 190px, #8b5cf6, rgba(0,0,0,0)),
+            radial-gradient(2px 2px at 380px 250px, #10b981, rgba(0,0,0,0)),
+            radial-gradient(2px 2px at 450px 320px, #ef4444, rgba(0,0,0,0)),
+            radial-gradient(3px 3px at 520px 150px, #3b82f6, rgba(0,0,0,0));
+        background-repeat: repeat;
+        opacity: 0.15;
+        pointer-events: none;
+        z-index: 0;
+        animation: float 20s infinite linear;
+    }
+    
+    @keyframes float {
+        0% { transform: translateY(0px) rotate(0deg); }
+        50% { transform: translateY(-20px) rotate(180deg); }
+        100% { transform: translateY(0px) rotate(360deg); }
+    }
+    
+    /* Sidebar elegante com efeito glassmorphism */
     .css-1d391kg, .css-1wrcr25 {
-        background: #020617 !important;
-        border-right: 1px solid #334155;
+        background: rgba(2, 6, 23, 0.85) !important;
+        backdrop-filter: blur(20px) !important;
+        border-right: 1px solid rgba(59, 130, 246, 0.3);
+        box-shadow: 10px 0 30px -10px rgba(0,0,0,0.5);
     }
     
     .sidebar-title {
         color: #f8fafc !important;
-        font-size: 1.1rem;
+        font-size: 1.2rem;
         font-weight: 600;
         margin-bottom: 15px;
         padding-bottom: 8px;
-        border-bottom: 2px solid #3b82f6;
+        border-bottom: 2px solid transparent;
+        background: linear-gradient(90deg, #3b82f6, #8b5cf6) border-box;
+        -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+        mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
         text-transform: uppercase;
-        letter-spacing: 1.5px;
+        letter-spacing: 2px;
+        animation: glow 3s infinite;
     }
     
-    /* Cards executivos */
+    @keyframes glow {
+        0% { border-bottom-color: #3b82f6; }
+        50% { border-bottom-color: #8b5cf6; }
+        100% { border-bottom-color: #3b82f6; }
+    }
+    
+    /* Cards executivos com design científico */
     .executive-card {
-        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-        border-radius: 16px;
-        padding: 20px;
-        border-left: 4px solid #3b82f6;
-        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3);
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
+        backdrop-filter: blur(10px);
+        border-radius: 24px;
+        padding: 25px;
+        border: 1px solid rgba(59, 130, 246, 0.2);
+        box-shadow: 0 20px 40px -15px rgba(0,0,0,0.5), 0 0 0 1px rgba(59, 130, 246, 0.1) inset;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         margin-bottom: 15px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .executive-card::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+        opacity: 0;
+        transition: opacity 0.6s;
+        pointer-events: none;
     }
     
     .executive-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 15px 30px -5px rgba(59, 130, 246, 0.2);
+        transform: translateY(-5px) scale(1.02);
+        box-shadow: 0 30px 50px -20px #3b82f6, 0 0 0 2px rgba(59, 130, 246, 0.3) inset;
+    }
+    
+    .executive-card:hover::before {
+        opacity: 1;
+        animation: rotate 10s infinite linear;
+    }
+    
+    @keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
     }
     
     .executive-card .label {
         color: #94a3b8;
-        font-size: 0.9rem;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
         margin: 0;
     }
     
     .executive-card .value {
         color: white;
-        font-size: 2rem;
-        font-weight: 700;
-        margin: 5px 0;
-    }
-    
-    .executive-card .delta {
-        font-size: 0.9rem;
-        margin: 0;
-    }
-    
-    .executive-card .icon {
         font-size: 2.5rem;
-        color: #3b82f6;
+        font-weight: 700;
+        margin: 10px 0;
+        background: linear-gradient(135deg, #fff, #94a3b8);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0 0 30px rgba(59, 130, 246, 0.3);
     }
     
-    /* Cards de métricas */
+    /* Cards de métricas com efeito 3D */
     .metric-card {
-        background: rgba(30, 41, 59, 0.8);
+        background: rgba(30, 41, 59, 0.7);
         backdrop-filter: blur(10px);
         padding: 25px;
-        border-radius: 16px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        border-radius: 20px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(59, 130, 246, 0.2) inset;
         text-align: center;
-        color: white !important;
+        color: white;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        border: 1px solid rgba(59, 130, 246, 0.2);
+        border: 1px solid rgba(59, 130, 246, 0.1);
         position: relative;
-        overflow: hidden;
+        transform-style: preserve-3d;
+        perspective: 1000px;
     }
     
     .metric-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 20px 40px rgba(59, 130, 246, 0.15);
-        border-color: #3b82f6;
+        transform: rotateX(5deg) rotateY(5deg) translateZ(20px);
+        box-shadow: 0 25px 45px -10px #3b82f6, 0 0 0 2px rgba(59, 130, 246, 0.3) inset;
     }
     
     .metric-card .icon {
-        font-size: 2.5rem;
+        font-size: 3rem;
         margin-bottom: 15px;
-        color: #3b82f6;
-    }
-    
-    .metric-card h3 {
-        color: #94a3b8 !important;
-        font-size: 0.9rem;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        margin-bottom: 10px;
-        font-weight: 500;
-    }
-    
-    .metric-card h2 {
-        color: white !important;
-        font-size: 2.2rem;
-        font-weight: 700;
-        margin: 10px 0;
-    }
-    
-    /* Timeline cards */
-    .time-metric-card {
-        background: rgba(30, 41, 59, 0.8);
-        backdrop-filter: blur(10px);
-        padding: 15px;
-        border-radius: 12px;
-        border-left: 4px solid #3b82f6;
-        margin: 10px 0;
-        border: 1px solid rgba(59, 130, 246, 0.2);
-        transition: all 0.3s ease;
-    }
-    
-    .time-metric-card:hover {
-        transform: translateX(2px);
-    }
-    
-    .time-metric-card .label {
-        color: #94a3b8;
-        font-size: 0.8rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        font-weight: 500;
-    }
-    
-    .time-metric-card .value {
-        color: white;
-        font-size: 1.6rem;
-        font-weight: 700;
-    }
-    
-    .time-metric-card .sub-value {
-        color: #64748b;
-        font-size: 0.8rem;
-    }
-    
-    /* Warning card */
-    .warning-card {
-        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-        padding: 20px;
-        border-radius: 16px;
-        box-shadow: 0 10px 25px rgba(220, 38, 38, 0.2);
-        text-align: center;
-        color: white;
-        margin: 10px 0;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        filter: drop-shadow(0 0 20px #3b82f6);
         animation: pulse 2s infinite;
     }
     
     @keyframes pulse {
         0% { transform: scale(1); }
-        50% { transform: scale(1.02); }
+        50% { transform: scale(1.1); }
         100% { transform: scale(1); }
     }
     
-    .warning-card .label {
-        font-size: 0.9rem;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        opacity: 0.9;
-        font-weight: 500;
-    }
-    
-    .warning-card .value {
-        font-size: 2.5rem;
-        font-weight: 700;
-        margin: 10px 0;
-    }
-    
-    .warning-card .sub-label {
-        font-size: 0.8rem;
-        opacity: 0.8;
-    }
-    
-    /* Zone cards */
-    .zone-card {
-        background: rgba(30, 41, 59, 0.8);
+    /* Timeline cards com gradiente dinâmico */
+    .time-metric-card {
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
         backdrop-filter: blur(10px);
-        padding: 12px;
-        border-radius: 10px;
+        padding: 15px;
+        border-radius: 16px;
+        border-left: 4px solid transparent;
+        margin: 10px 0;
+        border: 1px solid rgba(59, 130, 246, 0.2);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .time-metric-card::after {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(45deg, transparent, rgba(59, 130, 246, 0.1), transparent);
+        transform: rotate(45deg);
+        animation: shine 3s infinite;
+    }
+    
+    @keyframes shine {
+        0% { transform: translateX(-100%) rotate(45deg); }
+        100% { transform: translateX(100%) rotate(45deg); }
+    }
+    
+    /* Warning card com efeito de alerta */
+    .warning-card {
+        background: linear-gradient(135deg, rgba(220, 38, 38, 0.9), rgba(185, 28, 28, 0.95));
+        backdrop-filter: blur(10px);
+        padding: 20px;
+        border-radius: 16px;
+        box-shadow: 0 0 30px rgba(220, 38, 38, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+        text-align: center;
+        color: white;
+        margin: 10px 0;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        animation: alertPulse 2s infinite;
+        position: relative;
+    }
+    
+    @keyframes alertPulse {
+        0% { box-shadow: 0 0 30px rgba(220, 38, 38, 0.3); }
+        50% { box-shadow: 0 0 50px rgba(220, 38, 38, 0.6); }
+        100% { box-shadow: 0 0 30px rgba(220, 38, 38, 0.3); }
+    }
+    
+    .warning-card::before {
+        content: "⚠️";
+        position: absolute;
+        top: -10px;
+        right: -10px;
+        font-size: 2rem;
+        opacity: 0.3;
+        transform: rotate(15deg);
+    }
+    
+    /* Zone cards com design moderno */
+    .zone-card {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(10px);
+        padding: 15px;
+        border-radius: 16px;
         margin: 5px 0;
         border-left: 4px solid;
-        transition: all 0.3s ease;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
     }
     
     .zone-card:hover {
-        transform: translateX(2px);
+        transform: translateX(5px) scale(1.02);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.3);
     }
     
     .zone-card .zone-name {
@@ -506,211 +559,180 @@ st.markdown("""
     }
     
     .zone-card .zone-value {
-        font-size: 1.2rem;
+        font-size: 1.4rem;
         color: white;
         font-weight: 600;
     }
     
     .zone-card .zone-count {
-        font-size: 0.9rem;
-        color: #3b82f6;
-    }
-    
-    /* Anotação cards */
-    .note-card {
-        background: #1e293b;
-        padding: 10px;
-        border-radius: 8px;
-        margin: 5px 0;
-        border-left: 3px solid #3b82f6;
-    }
-    
-    .note-card .note-date {
-        color: #94a3b8;
-        font-size: 0.8rem;
-        margin: 0;
-    }
-    
-    .note-card .note-text {
-        color: white;
-        margin: 5px 0;
-    }
-    
-    /* Títulos */
-    h1 {
-        color: white !important;
-        font-size: 2.5rem;
-        font-weight: 700;
-        text-shadow: 0 0 30px rgba(59, 130, 246, 0.5);
+        font-size: 1rem;
         background: linear-gradient(135deg, #3b82f6, #8b5cf6);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
+        font-weight: 500;
+    }
+    
+    /* Títulos com efeito holográfico */
+    h1 {
+        font-size: 3.5rem;
+        font-weight: 800;
         text-align: center;
         margin-bottom: 10px;
+        background: linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899, #ef4444);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-size: 300% 300%;
+        animation: gradientShift 8s ease infinite;
+        text-shadow: 0 0 50px rgba(59, 130, 246, 0.3);
+    }
+    
+    @keyframes gradientShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
     }
     
     h2 {
-        color: white !important;
-        font-size: 1.8rem;
-        font-weight: 600;
-        border-bottom: 2px solid #3b82f6;
-        padding-bottom: 10px;
-        margin-bottom: 25px;
+        font-size: 2.2rem;
+        font-weight: 700;
+        border-bottom: 2px solid transparent;
+        background: linear-gradient(135deg, #3b82f6, #8b5cf6) border-box;
+        -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+        mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        padding-bottom: 15px;
+        margin-bottom: 30px;
     }
     
     h3 {
-        color: #3b82f6 !important;
-        font-size: 1.4rem;
-        font-weight: 500;
+        font-size: 1.8rem;
+        font-weight: 600;
+        background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 20px;
     }
     
-    h4 {
-        color: #8b5cf6 !important;
-        font-size: 1.2rem;
-        font-weight: 500;
-    }
-    
-    /* Abas com transição suave */
+    /* Abas com design futurista */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
-        background: rgba(30, 41, 59, 0.6);
+        gap: 10px;
+        background: rgba(30, 41, 59, 0.5);
         backdrop-filter: blur(10px);
         padding: 8px;
         border-radius: 50px;
         border: 1px solid rgba(59, 130, 246, 0.2);
+        box-shadow: 0 10px 30px -10px rgba(0,0,0,0.3);
     }
     
     .stTabs [data-baseweb="tab"] {
         border-radius: 50px;
-        padding: 10px 20px;
-        font-weight: 500;
+        padding: 12px 25px;
+        font-weight: 600;
         color: #94a3b8 !important;
         transition: all 0.3s ease;
-        font-size: 0.9rem;
+        font-size: 1rem;
+        letter-spacing: 0.5px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stTabs [data-baseweb="tab"]::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: radial-gradient(circle, rgba(59, 130, 246, 0.3), transparent);
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+    }
+    
+    .stTabs [data-baseweb="tab"]:hover::before {
+        width: 200px;
+        height: 200px;
     }
     
     .stTabs [aria-selected="true"] {
-        background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%) !important;
+        background: linear-gradient(135deg, #3b82f6, #8b5cf6) !important;
         color: white !important;
-        box-shadow: 0 5px 15px rgba(59, 130, 246, 0.2);
+        box-shadow: 0 5px 20px rgba(59, 130, 246, 0.4);
     }
     
-    .stTabs [data-baseweb="tab-panel"] {
-        animation: fadeSlide 0.4s ease-out;
-    }
-    
-    @keyframes fadeSlide {
-        from {
-            opacity: 0;
-            transform: translateX(10px);
-        }
-        to {
-            opacity: 1;
-            transform: translateX(0);
-        }
-    }
-    
-    /* Containers de métricas */
+    /* Containers de métricas com efeito vidro */
     .metric-container {
-        background: rgba(30, 41, 59, 0.8);
+        background: rgba(30, 41, 59, 0.7);
         backdrop-filter: blur(10px);
-        border-radius: 16px;
-        padding: 20px;
+        border-radius: 20px;
+        padding: 25px;
         border: 1px solid rgba(59, 130, 246, 0.2);
-        box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        box-shadow: 0 15px 35px -10px rgba(0,0,0,0.3);
         transition: all 0.3s ease;
         height: 100%;
     }
     
     .metric-container:hover {
         border-color: #3b82f6;
-        box-shadow: 0 12px 30px rgba(59, 130, 246, 0.1);
+        box-shadow: 0 20px 40px -10px #3b82f6;
+        transform: translateY(-2px);
     }
     
-    .metric-container h4 {
-        color: #3b82f6 !important;
-        margin-bottom: 15px;
-        font-size: 1rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-    
-    .metric-container p {
-        color: #e2e8f0 !important;
-        margin: 10px 0;
-        font-size: 0.95rem;
-    }
-    
-    .metric-container strong {
-        color: #8b5cf6;
-    }
-    
-    /* Dataframe estilizado */
-    .dataframe {
-        background: rgba(30, 41, 59, 0.8) !important;
-        backdrop-filter: blur(10px) !important;
-        border-radius: 12px !important;
-        border: 1px solid rgba(59, 130, 246, 0.2) !important;
-        color: white !important;
-    }
-    
-    .dataframe th {
-        background: #1e293b !important;
-        color: #3b82f6 !important;
-        font-weight: 600;
-        padding: 12px !important;
-    }
-    
-    .dataframe td {
-        background: rgba(30, 41, 59, 0.6) !important;
-        color: #e2e8f0 !important;
-        border-color: #334155 !important;
-        padding: 10px !important;
-    }
-    
-    p, li, .caption, .stMarkdown {
-        color: #cbd5e1 !important;
-        line-height: 1.6;
-    }
-    
+    /* Botões com efeito científico */
     .stButton > button {
-        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
         color: white;
         border: none;
         border-radius: 50px;
-        padding: 10px 25px;
+        padding: 12px 30px;
         font-weight: 600;
-        transition: all 0.2s ease;
+        transition: all 0.3s ease;
         text-transform: uppercase;
-        letter-spacing: 1px;
-        font-size: 0.9rem;
+        letter-spacing: 2px;
+        font-size: 1rem;
         border: 1px solid rgba(255,255,255,0.1);
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+        box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        position: relative;
+        overflow: hidden;
     }
     
-    .stButton > button:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 6px 16px rgba(59, 130, 246, 0.3);
+    .stButton > button::after {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(45deg, transparent, rgba(255,255,255,0.2), transparent);
+        transform: rotate(45deg);
+        animation: buttonShine 3s infinite;
     }
     
-    /* Scrollbar elegante */
+    @keyframes buttonShine {
+        0% { transform: translateX(-100%) rotate(45deg); }
+        100% { transform: translateX(100%) rotate(45deg); }
+    }
+    
+    /* Scrollbar científica */
     ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
+        width: 10px;
+        height: 10px;
     }
     
     ::-webkit-scrollbar-track {
-        background: #1e293b;
+        background: rgba(30, 41, 59, 0.5);
         border-radius: 10px;
+        backdrop-filter: blur(5px);
     }
     
     ::-webkit-scrollbar-thumb {
-        background: #3b82f6;
+        background: linear-gradient(135deg, #3b82f6, #8b5cf6);
         border-radius: 10px;
+        box-shadow: 0 0 20px #3b82f6;
     }
     
     ::-webkit-scrollbar-thumb:hover {
-        background: #2563eb;
+        background: linear-gradient(135deg, #2563eb, #7c3aed);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -737,15 +759,15 @@ n_colunas = 1 if mobile else 4
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
     st.markdown("""
-    <div style="text-align: center; padding: 20px 0;">
+    <div style="text-align: center; padding: 30px 0; position: relative; z-index: 10;">
         <h1>🏃 Sports Science Analytics Pro</h1>
-        <p style="color: #94a3b8; font-size: 1.2rem; margin-top: 10px;">
-            Professional Dashboard for Elite Performance Analysis
+        <p style="color: #94a3b8; font-size: 1.3rem; margin-top: 10px; letter-spacing: 2px;">
+            Elite Performance Analysis Platform
         </p>
-        <div style="display: flex; justify-content: center; gap: 10px; margin-top: 20px;">
-            <span style="background: #3b82f6; color: white; padding: 5px 15px; border-radius: 50px; font-size: 0.9rem;">⚡ Real-time</span>
-            <span style="background: #8b5cf6; color: white; padding: 5px 15px; border-radius: 50px; font-size: 0.9rem;">📊 Statistical</span>
-            <span style="background: #10b981; color: white; padding: 5px 15px; border-radius: 50px; font-size: 0.9rem;">🎯 Precision</span>
+        <div style="display: flex; justify-content: center; gap: 15px; margin-top: 25px;">
+            <span style="background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; padding: 8px 20px; border-radius: 50px; font-size: 0.9rem; box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3);">⚡ Neural Analytics</span>
+            <span style="background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; padding: 8px 20px; border-radius: 50px; font-size: 0.9rem; box-shadow: 0 5px 15px rgba(139, 92, 246, 0.3);">📊 Predictive Modeling</span>
+            <span style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 8px 20px; border-radius: 50px; font-size: 0.9rem; box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);">🎯 Quantum Precision</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -801,6 +823,8 @@ def init_session_state():
         st.session_state.atleta2_comp = None
     if 'vars_comp' not in st.session_state:
         st.session_state.vars_comp = []
+    if 'window_size' not in st.session_state:
+        st.session_state.window_size = 3
 
 init_session_state()
 
@@ -822,7 +846,7 @@ def interpretar_teste(p_valor, nome_teste, t):
         cor = "#ef4444"
     
     st.markdown(f"""
-    <div style="background: rgba(30, 41, 59, 0.8); border-radius: 12px; padding: 20px; border-left: 5px solid {cor}; backdrop-filter: blur(10px);">
+    <div style="background: rgba(30, 41, 59, 0.8); border-radius: 16px; padding: 20px; border-left: 5px solid {cor}; backdrop-filter: blur(10px); border: 1px solid rgba(59, 130, 246, 0.2);">
         <h4 style="color: white; margin: 0 0 10px 0;">{status}</h4>
         <p style="color: #94a3b8; margin: 5px 0;"><strong>Teste:</strong> {nome_teste}</p>
         <p style="color: #94a3b8; margin: 5px 0;"><strong>p-valor:</strong> <span style="color: {cor};">{p_text}</span></p>
@@ -878,7 +902,7 @@ def executive_card(titulo, valor, delta, icone, cor_status="#3b82f6"):
 
 def metric_card(titulo, valor, icone, cor_gradiente):
     st.markdown(f"""
-    <div class="metric-card fade-in">
+    <div class="metric-card">
         <div class="icon">{icone}</div>
         <h3>{titulo}</h3>
         <h2>{valor}</h2>
@@ -896,7 +920,7 @@ def time_metric_card(label, valor, sub_label="", cor="#3b82f6"):
 
 def warning_card(titulo, valor, subtitulo, icone="⚠️"):
     st.markdown(f"""
-    <div class="warning-card fade-in">
+    <div class="warning-card">
         <div class="label">{icone} {titulo}</div>
         <div class="value">{valor}</div>
         <div class="sub-label">{subtitulo}</div>
@@ -981,118 +1005,241 @@ def comparar_grupos(df, variavel, grupo1, grupo2):
     except:
         return None
 
+def calcular_media_movel(df, variavel, window):
+    """Calcula média móvel com janela especificada"""
+    return df[variavel].rolling(window=window, min_periods=1, center=True).mean()
+
 # ============================================================================
-# FUNÇÃO DEFINITIVA: criar_timeline_filtrada - MOSTRA APENAS DADOS VÁLIDOS
+# FUNÇÃO CORRIGIDA: criar_timeline_filtrada COM MÉDIA MÓVEL E MARCADORES NO EIXO X
 # ============================================================================
 
-def criar_timeline_filtrada(df_completo, atletas_selecionados, periodos_selecionados, variavel, t):
+def criar_timeline_filtrada(df_completo, atletas_selecionados, periodos_selecionados, variavel, window_size, t):
     """
-    Timeline que mostra APENAS os períodos onde cada atleta realmente tem dados
-    Garantindo que não apareçam linhas para combinações atleta-período inexistentes
+    Timeline com:
+    - Linhas por atleta-período
+    - Pontos vermelhos para eventos críticos
+    - Marcadores vermelhos no eixo X para eventos críticos
+    - Média móvel (linha tracejada branca)
     """
-    if not atletas_selecionados:
-        return None
+    if not atletas_selecionados or not periodos_selecionados:
+        return None, []
+    
+    # Filtrar dados apenas para combinações válidas
+    df_filtrado = df_completo[
+        df_completo['Nome'].isin(atletas_selecionados) & 
+        df_completo['Período'].isin(periodos_selecionados)
+    ].copy()
+    
+    if df_filtrado.empty:
+        return None, []
+    
+    # Ordenar por minuto para garantir sequência temporal
+    df_filtrado = df_filtrado.sort_values('Minuto')
+    
+    # Identificar todas as combinações únicas atleta-período
+    combinacoes = df_filtrado.groupby(['Nome', 'Período']).size().reset_index()[['Nome', 'Período']]
+    combinacoes_list = list(zip(combinacoes['Nome'], combinacoes['Período']))
     
     fig = go.Figure()
     
     # Cores para cada atleta
     cores = px.colors.qualitative.Set2
     
-    # Dicionário para rastrear combinações válidas
-    combinacoes_validas = []
+    # Calcular valor máximo e limiar de 80% para linha vermelha
+    valor_maximo = df_filtrado[variavel].max()
+    limiar_80 = valor_maximo * 0.8
     
-    # Primeiro, identificar todas as combinações válidas
-    for atleta in atletas_selecionados:
-        # Períodos em que este atleta realmente tem dados
-        periodos_do_atleta = df_completo[df_completo['Nome'] == atleta]['Período'].unique()
-        
-        # Interseção com os períodos selecionados
-        periodos_validos = [p for p in periodos_selecionados if p in periodos_do_atleta]
-        
-        for periodo in periodos_validos:
-            combinacoes_validas.append((atleta, periodo))
+    # Adicionar linha vermelha do limiar de 80%
+    fig.add_hline(
+        y=limiar_80,
+        line_dash="solid",
+        line_color="#ef4444",
+        line_width=3,
+        annotation_text=f"Limiar 80%: {limiar_80:.2f}",
+        annotation_position="top left",
+        annotation_font=dict(color="white", size=12)
+    )
     
-    # Se não houver combinações válidas, retornar None
-    if not combinacoes_validas:
-        return None
+    # Coletar todos os minutos para análise global
+    todos_minutos = df_filtrado['Minuto'].values
+    todos_valores = df_filtrado[variavel].values
     
-    # Plotar apenas as combinações válidas
-    for i, (atleta, periodo) in enumerate(combinacoes_validas):
+    # Calcular média móvel global
+    df_filtrado['Media_Movel'] = calcular_media_movel(df_filtrado, variavel, window_size)
+    
+    # Adicionar linha da média móvel global
+    fig.add_trace(go.Scatter(
+        x=df_filtrado['Minuto'],
+        y=df_filtrado['Media_Movel'],
+        mode='lines',
+        name=f'Média Móvel (janela={window_size})',
+        line=dict(color='white', width=3, dash='dash'),
+        opacity=0.9,
+        hovertemplate='<b>Média Móvel</b><br>' +
+                      '<b>Minuto:</b> %{x}<br>' +
+                      '<b>Valor:</b> %{y:.2f}<extra></extra>'
+    ))
+    
+    # Lista para armazenar minutos de eventos críticos
+    minutos_criticos = []
+    
+    # Plotar cada combinação atleta-período
+    for i, (atleta, periodo) in enumerate(combinacoes_list):
         # Filtrar dados específicos para esta combinação
-        df_combo = df_completo[
-            (df_completo['Nome'] == atleta) & 
-            (df_completo['Período'] == periodo)
+        df_combo = df_filtrado[
+            (df_filtrado['Nome'] == atleta) & 
+            (df_filtrado['Período'] == periodo)
         ].copy().sort_values('Minuto')
         
         if df_combo.empty:
             continue
         
         # Determinar a cor baseada no atleta
-        cor_atleta = cores[atletas_selecionados.index(atleta) % len(cores)]
+        if atleta in atletas_selecionados:
+            atleta_idx = atletas_selecionados.index(atleta)
+            cor_atleta = cores[atleta_idx % len(cores)]
+        else:
+            cor_atleta = '#3b82f6'
         
-        # Variar opacidade baseado no período (opcional)
-        indice_periodo = periodos_selecionados.index(periodo) if periodo in periodos_selecionados else 0
-        opacity = 0.6 + (indice_periodo / len(periodos_selecionados)) * 0.4
+        # Separar pontos normais e críticos
+        mask_critico = df_combo[variavel] > limiar_80
+        df_normal = df_combo[~mask_critico]
+        df_critico = df_combo[mask_critico]
         
+        # Adicionar minutos críticos à lista
+        minutos_criticos.extend(df_critico['Minuto'].tolist())
+        
+        # Plotar linha conectando todos os pontos
         fig.add_trace(go.Scatter(
             x=df_combo['Minuto'],
             y=df_combo[variavel],
-            mode='lines+markers',
+            mode='lines',
             name=f"{atleta} - {periodo}",
-            line=dict(color=cor_atleta, width=2.5),
-            marker=dict(
-                size=8, 
-                color=cor_atleta, 
-                opacity=opacity,
-                line=dict(color='white', width=1)
-            ),
+            line=dict(color=cor_atleta, width=2),
+            legendgroup=f"{atleta}_{periodo}",
+            showlegend=True,
             hovertemplate='<b>Atleta:</b> ' + atleta + '<br>' +
                           '<b>Período:</b> ' + periodo + '<br>' +
                           '<b>Minuto:</b> %{x}<br>' +
                           '<b>Valor:</b> %{y:.2f}<extra></extra>'
         ))
-    
-    # Calcular média global apenas dos dados válidos
-    df_validos = pd.DataFrame()
-    for atleta, periodo in combinacoes_validas:
-        df_temp = df_completo[
-            (df_completo['Nome'] == atleta) & 
-            (df_completo['Período'] == periodo)
-        ]
-        df_validos = pd.concat([df_validos, df_temp])
-    
-    if not df_validos.empty:
-        media_global = df_validos[variavel].mean()
-        desvio_global = df_validos[variavel].std()
         
-        fig.add_hline(
-            y=media_global, 
-            line_dash="dash", 
-            line_color="#94a3b8",
-            annotation_text=f"Média Global: {media_global:.2f}", 
-            annotation_position="top left",
-            annotation_font=dict(color="white")
-        )
+        # Plotar pontos normais
+        if not df_normal.empty:
+            fig.add_trace(go.Scatter(
+                x=df_normal['Minuto'],
+                y=df_normal[variavel],
+                mode='markers',
+                name=f"{atleta} - {periodo} (normal)",
+                marker=dict(
+                    size=8,
+                    color=cor_atleta,
+                    opacity=0.7,
+                    line=dict(color='white', width=1)
+                ),
+                legendgroup=f"{atleta}_{periodo}",
+                showlegend=False,
+                hovertemplate='<b>Atleta:</b> ' + atleta + '<br>' +
+                              '<b>Período:</b> ' + periodo + '<br>' +
+                              '<b>Minuto:</b> %{x}<br>' +
+                              '<b>Valor:</b> %{y:.2f}<br>' +
+                              '<b>Status:</b> Normal<extra></extra>'
+            ))
         
-        fig.add_hrect(
-            y0=media_global-desvio_global, 
-            y1=media_global+desvio_global,
-            fillcolor="#3b82f6", 
-            opacity=0.1, 
-            line_width=0,
-            annotation_text="±1 DP Global",
-            annotation_position="top right"
-        )
+        # Plotar pontos críticos em VERMELHO
+        if not df_critico.empty:
+            fig.add_trace(go.Scatter(
+                x=df_critico['Minuto'],
+                y=df_critico[variavel],
+                mode='markers',
+                name=f"{atleta} - {periodo} (crítico)",
+                marker=dict(
+                    size=12,
+                    color='#ef4444',
+                    symbol='circle',
+                    opacity=1,
+                    line=dict(color='white', width=2)
+                ),
+                legendgroup=f"{atleta}_{periodo}",
+                showlegend=False,
+                hovertemplate='<b style="color:red;">⚠️ EVENTO CRÍTICO</b><br>' +
+                              '<b>Atleta:</b> ' + atleta + '<br>' +
+                              '<b>Período:</b> ' + periodo + '<br>' +
+                              '<b>Minuto:</b> %{x}<br>' +
+                              '<b>Valor:</b> %{y:.2f}<br>' +
+                              '<b>Acima do limiar:</b> {:.2f}%<extra></extra>'.format(
+                                  ((df_critico[variavel].iloc[0] / limiar_80) - 1) * 100 if not df_critico.empty else 0
+                              )
+            ))
+    
+    # Adicionar marcadores vermelhos no eixo X para eventos críticos
+    if minutos_criticos:
+        # Criar traço invisível com marcadores no eixo X
+        fig.add_trace(go.Scatter(
+            x=minutos_criticos,
+            y=[df_filtrado[variavel].min() * 0.95] * len(minutos_criticos),  # Posicionar próximo ao eixo X
+            mode='markers',
+            name='Eventos Críticos',
+            marker=dict(
+                size=15,
+                color='#ef4444',
+                symbol='triangle-down',
+                opacity=1,
+                line=dict(color='white', width=1)
+            ),
+            showlegend=True,
+            hovertemplate='<b style="color:red;">⚠️ EVENTO CRÍTICO</b><br>' +
+                          '<b>Minuto:</b> %{x}<br>' +
+                          '<b>Valor acima do limiar</b><extra></extra>'
+        ))
+        
+        # Adicionar linhas verticais vermelhas nos minutos críticos
+        for minuto in minutos_criticos:
+            fig.add_vline(
+                x=minuto,
+                line_width=1,
+                line_dash="dot",
+                line_color="#ef4444",
+                opacity=0.3
+            )
+    
+    # Calcular média global
+    media_global = df_filtrado[variavel].mean()
+    desvio_global = df_filtrado[variavel].std()
+    
+    # Adicionar linha da média global
+    fig.add_hline(
+        y=media_global, 
+        line_dash="dash", 
+        line_color="#94a3b8",
+        annotation_text=f"Média Global: {media_global:.2f}", 
+        annotation_position="bottom left",
+        annotation_font=dict(color="white", size=10)
+    )
+    
+    # Adicionar área de desvio padrão
+    fig.add_hrect(
+        y0=media_global-desvio_global, 
+        y1=media_global+desvio_global,
+        fillcolor="#3b82f6", 
+        opacity=0.1, 
+        line_width=0,
+        annotation_text="±1 DP",
+        annotation_position="bottom right"
+    )
     
     fig.update_layout(
-        title=f"Evolução Temporal - {variavel} ({len(combinacoes_validas)} combinações atleta-período)",
+        title=dict(
+            text=f"📈 Análise Temporal - {variavel}",
+            font=dict(size=24, color='#3b82f6'),
+            x=0.5
+        ),
         xaxis_title="Minuto",
         yaxis_title=variavel,
-        hovermode='x unified',
+        hovermode='closest',
         plot_bgcolor='rgba(30,41,59,0.8)',
         paper_bgcolor='rgba(0,0,0,0)',
         font=dict(color='white', size=12),
-        title_font=dict(color='#3b82f6', size=20),
         showlegend=True,
         legend=dict(
             font=dict(color='white', size=10),
@@ -1101,16 +1248,40 @@ def criar_timeline_filtrada(df_completo, atletas_selecionados, periodos_selecion
             y=0.99,
             xanchor="left",
             x=1.02,
-            bgcolor='rgba(30,41,59,0.8)',
-            bordercolor='#334155',
-            borderwidth=1
+            bgcolor='rgba(30,41,59,0.9)',
+            bordercolor='#3b82f6',
+            borderwidth=2,
+            itemclick="toggle",
+            itemdoubleclick="toggleothers"
+        ),
+        height=700,
+        margin=dict(l=50, r=150, t=80, b=50),
+        hoverlabel=dict(
+            bgcolor='#1e293b',
+            font_size=12,
+            font_color='white',
+            bordercolor='#3b82f6'
         )
     )
     
-    fig.update_xaxes(gridcolor='#334155', tickfont=dict(color='white'), tickangle=-45)
-    fig.update_yaxes(gridcolor='#334155', tickfont=dict(color='white'))
+    fig.update_xaxes(
+        gridcolor='#334155', 
+        tickfont=dict(color='white', size=11), 
+        tickangle=-45,
+        title_font=dict(color='white', size=14),
+        showgrid=True,
+        gridwidth=1
+    )
     
-    return fig, combinacoes_validas
+    fig.update_yaxes(
+        gridcolor='#334155', 
+        tickfont=dict(color='white', size=11),
+        title_font=dict(color='white', size=14),
+        showgrid=True,
+        gridwidth=1
+    )
+    
+    return fig, combinacoes_list, minutos_criticos
 
 def criar_tabela_destaque(df, colunas_destaque):
     """Tabela com células destacadas baseado em valores"""
@@ -1149,12 +1320,12 @@ def comparar_atletas(df, atleta1, atleta2, variaveis, t):
             delta = ((dados1[var] - dados2[var]) / dados2[var]) * 100 if dados2[var] != 0 else 0
             cor = "#10b981" if delta > 0 else "#ef4444"
             st.markdown(f"""
-            <div style="background: #1e293b; padding: 10px; border-radius: 8px; margin: 5px 0;
-                        border-left: 3px solid {cor};">
+            <div style="background: #1e293b; padding: 15px; border-radius: 12px; margin: 5px 0;
+                        border-left: 4px solid {cor}; border: 1px solid rgba(59, 130, 246, 0.2);">
                 <span style="color: #94a3b8;">{var}:</span>
                 <span style="color: white; font-weight: bold; float: right;">{dados1[var]:.2f}</span>
                 <br>
-                <span style="color: {cor}; font-size: 0.8rem;">
+                <span style="color: {cor}; font-size: 0.9rem;">
                     {delta:+.1f}% vs {atleta2}
                 </span>
             </div>
@@ -1166,12 +1337,12 @@ def comparar_atletas(df, atleta1, atleta2, variaveis, t):
             delta = ((dados2[var] - dados1[var]) / dados1[var]) * 100 if dados1[var] != 0 else 0
             cor = "#10b981" if delta > 0 else "#ef4444"
             st.markdown(f"""
-            <div style="background: #1e293b; padding: 10px; border-radius: 8px; margin: 5px 0;
-                        border-left: 3px solid {cor};">
+            <div style="background: #1e293b; padding: 15px; border-radius: 12px; margin: 5px 0;
+                        border-left: 4px solid {cor}; border: 1px solid rgba(59, 130, 246, 0.2);">
                 <span style="color: #94a3b8;">{var}:</span>
                 <span style="color: white; font-weight: bold; float: right;">{dados2[var]:.2f}</span>
                 <br>
-                <span style="color: {cor}; font-size: 0.8rem;">
+                <span style="color: {cor}; font-size: 0.9rem;">
                     {delta:+.1f}% vs {atleta1}
                 </span>
             </div>
@@ -1198,9 +1369,9 @@ def sistema_anotacoes(t):
         # Listar anotações
         for i, anotacao in enumerate(reversed(st.session_state.anotacoes)):
             st.markdown(f"""
-            <div class="note-card">
-                <p class="note-date">{anotacao['data']}</p>
-                <p class="note-text">{anotacao['texto']}</p>
+            <div class="note-card" style="background: #1e293b; padding: 12px; border-radius: 10px; margin: 5px 0; border-left: 4px solid #3b82f6;">
+                <p class="note-date" style="color: #94a3b8; font-size: 0.85rem;">{anotacao['data']}</p>
+                <p class="note-text" style="color: white; margin: 5px 0;">{anotacao['texto']}</p>
             </div>
             """, unsafe_allow_html=True)
 
@@ -1479,7 +1650,7 @@ with st.sidebar:
                     st.session_state.dados_processados = False
                     st.rerun()
         
-        # CORREÇÃO: Seção de atletas SEMPRE visível
+        # Seção de atletas
         st.markdown("---")
         st.markdown(f"<h2 class='sidebar-title'>👤 {t['athlete']}</h2>", unsafe_allow_html=True)
         
@@ -1517,7 +1688,7 @@ with st.sidebar:
                 st.session_state.dados_processados = False
                 st.rerun()
         
-        # Multiselect SEMPRE visível
+        # Multiselect
         atletas_sel = st.multiselect(
             "",
             options=atletas_disponiveis,
@@ -1534,9 +1705,14 @@ with st.sidebar:
         st.markdown("---")
         st.markdown(f"<h2 class='sidebar-title'>⚙️ {t['config']}</h2>", unsafe_allow_html=True)
         
-        n_classes = st.slider(f"{t['config']}:", 3, 20, st.session_state.n_classes, key="classes_slider")
+        n_classes = st.slider(f"Classes do histograma:", 3, 20, st.session_state.n_classes, key="classes_slider")
         if n_classes != st.session_state.n_classes:
             st.session_state.n_classes = n_classes
+            st.rerun()
+        
+        window_size = st.slider("Janela da Média Móvel:", 2, 10, st.session_state.window_size, key="window_slider")
+        if window_size != st.session_state.window_size:
+            st.session_state.window_size = window_size
             st.rerun()
         
         st.markdown("---")
@@ -1566,6 +1742,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
         periodos_selecionados = st.session_state.periodos_selecionados
         variavel_analise = st.session_state.variavel_selecionada
         n_classes = st.session_state.n_classes
+        window_size = st.session_state.window_size
         
         df_filtrado = df_completo[
             df_completo['Nome'].isin(atletas_selecionados) & 
@@ -1586,7 +1763,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
             # ====================================================================
             # DASHBOARD EXECUTIVO - VISÃO GERAL
             # ====================================================================
-            st.markdown(f"<h2>📊 {t['title'].split('Pro')[0] if 'Pro' in t['title'] else 'Visão Geral'}</h2>", unsafe_allow_html=True)
+            st.markdown(f"<h2>📊 Executive Dashboard</h2>", unsafe_allow_html=True)
             
             media_global = df_filtrado[variavel_analise].mean()
             media_posicoes = df_filtrado.groupby('Posição')[variavel_analise].mean()
@@ -1759,7 +1936,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     hide_index=True
                 )
             
-            # ABA 2: ESTATÍSTICAS & TEMPORAL - VERSÃO DEFINITIVA
+            # ABA 2: ESTATÍSTICAS & TEMPORAL - VERSÃO CORRIGIDA
             with tabs[1]:
                 st.markdown(f"<h3>{t['tab_temporal']}</h3>", unsafe_allow_html=True)
                 
@@ -1824,38 +2001,56 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                             """, unsafe_allow_html=True)
                 
                 st.markdown("---")
-                st.markdown(f"<h4>⏱️ Evolução Temporal (Apenas Dados Válidos)</h4>", unsafe_allow_html=True)
-                st.caption("Mostrando APENAS as combinações atleta-período onde existem dados reais.")
+                st.markdown(f"<h4>⏱️ Evolução Temporal com Média Móvel</h4>", unsafe_allow_html=True)
+                st.caption(f"Mostrando dados filtrados com linha vermelha do limiar de 80%. Pontos em VERMELHO são eventos críticos. Marcadores vermelhos no eixo X indicam momentos críticos. Média móvel com janela={window_size}.")
                 
-                # USAR A FUNÇÃO DEFINITIVA QUE MOSTRA APENAS DADOS VÁLIDOS
+                # USAR A FUNÇÃO CORRIGIDA
                 resultado = criar_timeline_filtrada(
                     df_completo, 
                     atletas_selecionados, 
                     periodos_selecionados, 
-                    variavel_analise, 
+                    variavel_analise,
+                    window_size,
                     t
                 )
                 
-                if resultado:
-                    fig_tempo_filtrada, combinacoes = resultado
+                if resultado and resultado[0] is not None:
+                    fig_tempo_filtrada, combinacoes, minutos_criticos = resultado
                     st.plotly_chart(fig_tempo_filtrada, use_container_width=True)
                     
                     # Mostrar estatísticas das combinações
-                    st.success(f"✅ **{len(combinacoes)} combinações atleta-período com dados válidos**")
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.success(f"✅ **{len(combinacoes)} combinações atleta-período**")
+                    with col2:
+                        st.warning(f"⚠️ **{len(minutos_criticos)} eventos críticos**")
+                    with col3:
+                        st.info(f"📊 **{len(df_filtrado)} observações totais**")
                     
-                    # Tabela de combinações válidas
+                    # Tabela de combinações
                     df_combinacoes = pd.DataFrame(combinacoes, columns=['Atleta', 'Período'])
                     df_combinacoes = df_combinacoes.sort_values(['Atleta', 'Período']).reset_index(drop=True)
                     
-                    with st.expander("📋 Ver combinações com dados válidos"):
+                    with st.expander("📋 Ver combinações atleta-período"):
                         st.dataframe(df_combinacoes, use_container_width=True, hide_index=True)
                     
-                    # Aviso sobre combinações inválidas
-                    total_possiveis = len(atletas_selecionados) * len(periodos_selecionados)
-                    if len(combinacoes) < total_possiveis:
-                        st.info(f"ℹ️ {total_possiveis - len(combinacoes)} combinações atleta-período não possuem dados e foram omitidas do gráfico.")
+                    # Lista de minutos críticos
+                    if minutos_criticos:
+                        with st.expander("⚠️ Minutos com eventos críticos"):
+                            df_criticos = pd.DataFrame({
+                                'Minuto': minutos_criticos,
+                                'Valor': [df_filtrado[df_filtrado['Minuto'] == m][variavel_analise].values[0] for m in minutos_criticos],
+                                'Acima do limiar (%)': [((df_filtrado[df_filtrado['Minuto'] == m][variavel_analise].values[0] / limiar_80) - 1) * 100 for m in minutos_criticos]
+                            }).drop_duplicates().sort_values('Minuto')
+                            st.dataframe(df_criticos.style.format({
+                                'Valor': '{:.2f}',
+                                'Acima do limiar (%)': '{:.1f}'
+                            }), use_container_width=True, hide_index=True)
+                    
+                    # Estatísticas adicionais
+                    st.info(f"ℹ️ Estatísticas: Média={media_tempo:.2f} | Desvio={df_tempo[variavel_analise].std():.2f} | Limiar 80%={limiar_80:.2f}")
                 else:
-                    st.warning("⚠️ Nenhuma combinação atleta-período válida encontrada. Verifique se os atletas selecionados participam dos períodos escolhidos.")
+                    st.warning("⚠️ Nenhum dado encontrado para os filtros selecionados.")
                 
                 st.markdown("---")
                 st.markdown(f"<h4>{t['descriptive_stats']}</h4>", unsafe_allow_html=True)
@@ -2472,12 +2667,12 @@ elif st.session_state.df_completo is None:
         
         exemplo_data = {
             'Nome-Período-Minuto': [
-                'Mariano-1 TEMPO 00:00-01:00',
-                'Maria-SEGUNDO TEMPO 05:00-06:00',
-                'Joao-2 TEMPO 44:00-45:00',
-                'Marta-PRIMEIRO TEMPO 11:00-12:00',
-                'Pedro-1 TEMPO 15:00-16:00',
-                'Ana-SEGUNDO TEMPO 22:00-23:00'
+                'Mariano-1 TEMPO-00:00-01:00',
+                'Maria-SEGUNDO TEMPO-05:00-06:00',
+                'Joao-2 TEMPO-44:00-45:00',
+                'Marta-PRIMEIRO TEMPO-11:00-12:00',
+                'Pedro-1 TEMPO-15:00-16:00',
+                'Ana-SEGUNDO TEMPO-22:00-23:00'
             ],
             'Posição': ['Atacante', 'Meio-campo', 'Zagueiro', 'Atacante', 'Goleiro', 'Meio-campo'],
             'Distancia Total': [250, 127, 200, 90, 45, 180],
