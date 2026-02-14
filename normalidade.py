@@ -18,6 +18,39 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+import streamlit as st
+import sys
+
+st.write("### Diagnóstico")
+st.write("Python:", sys.version)
+st.write("Streamlit:", st.__version__)
+
+try:
+    import pandas as pd
+    st.write("✅ pandas OK")
+except Exception as e:
+    st.write("❌ pandas erro:", str(e))
+
+try:
+    import numpy as np
+    st.write("✅ numpy OK")
+except Exception as e:
+    st.write("❌ numpy erro:", str(e))
+
+try:
+    import plotly.express as px
+    st.write("✅ plotly OK")
+except Exception as e:
+    st.write("❌ plotly erro:", str(e))
+
+try:
+    import scipy.stats as stats
+    st.write("✅ scipy OK")
+except Exception as e:
+    st.write("❌ scipy erro:", str(e))
+
+st.write("---")
+
 # ============================================================================
 # INICIALIZAÇÃO DO SESSION STATE - COMPLETA
 # ============================================================================
