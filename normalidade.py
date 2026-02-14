@@ -5,7 +5,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import scipy.stats as stats
-from datetime import datetime, timedelta
+from datetime import datetime
 import time
 import warnings
 warnings.filterwarnings('ignore')
@@ -445,21 +445,6 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
-
-# ============================================================================
-# DETECÇÃO DE DISPOSITIVO MÓVEL
-# ============================================================================
-
-def is_mobile():
-    try:
-        user_agent = st.query_params.get('user_agent', [''])[0]
-        mobile_keywords = ['android', 'iphone', 'ipad', 'mobile']
-        return any(keyword in user_agent.lower() for keyword in mobile_keywords)
-    except:
-        return False
-
-mobile = is_mobile()
-n_colunas = 1 if mobile else 4
 
 # ============================================================================
 # HEADER CIENTÍFICO
@@ -1403,7 +1388,7 @@ with st.sidebar:
         key="file_uploader"
     )
     
-    if uploaded_files and len(uploaded_files) > 0 and not st.session_state.upload_concluido:
+    if uploaded_files and len(uploaded_files) > 0:
         with st.spinner('⚡ Processando...'):
             df, vars_quant, periodos, posicoes, nomes = processar_upload(uploaded_files)
             
@@ -1414,9 +1399,8 @@ with st.sidebar:
                 st.session_state.periodos_selecionados = periodos.copy()
                 st.session_state.todos_posicoes = posicoes
                 st.session_state.posicoes_selecionadas = posicoes.copy()
-                st.session_state.atletas_selecionados = sorted(df['Nome'].unique())
+                st.session_state.atletas_selecionados = sorted(df['Nome'].unique().tolist())
                 st.session_state.upload_files_names = nomes
-                st.session_state.upload_concluido = True
                 
                 if vars_quant and st.session_state.variavel_selecionada is None:
                     st.session_state.variavel_selecionada = vars_quant[0]
@@ -1514,7 +1498,7 @@ with st.sidebar:
         if st.session_state.periodos_selecionados:
             df_temp = df_temp[df_temp['Período'].isin(st.session_state.periodos_selecionados)]
         
-        atletas_disp = sorted(df_temp['Nome'].unique())
+        atletas_disp = sorted(df_temp['Nome'].unique().tolist())
         
         if not st.session_state.atletas_selecionados or len(st.session_state.atletas_selecionados) == 0:
             if atletas_disp:
@@ -1600,7 +1584,7 @@ with st.sidebar:
         
         st.markdown("---")
         
-        pode_processar = (st.session_state.variavel_selecionada and 
+        pode_processar = (st.session_state.variavel_selecionada is not None and 
                          st.session_state.posicoes_selecionadas and 
                          st.session_state.periodos_selecionados and 
                          st.session_state.atletas_selecionados and 
@@ -1683,10 +1667,8 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 col1, col2 = st.columns(2)
                 
                 with col1:
-                    # Novo histograma com distribuição
                     fig_hist = go.Figure()
                     
-                    # Histograma principal
                     fig_hist.add_trace(go.Histogram(
                         x=df_filtrado[variavel],
                         nbinsx=n_classes,
@@ -1696,7 +1678,6 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                         hovertemplate='<b>Valor:</b> %{x}<br><b>Frequência:</b> %{y}<extra></extra>'
                     ))
                     
-                    # Linha da média
                     fig_hist.add_vline(
                         x=media_global,
                         line_dash="dash",
@@ -1707,7 +1688,6 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                         annotation_font=dict(color="#ff00ff")
                     )
                     
-                    # Linha da mediana
                     mediana_val = df_filtrado[variavel].median()
                     fig_hist.add_vline(
                         x=mediana_val,
@@ -1735,12 +1715,10 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     st.plotly_chart(fig_hist, use_container_width=True)
                 
                 with col2:
-                    # QQ Plot com linha R² perfeita
                     dados = df_filtrado[variavel].dropna()
                     quantis_teoricos = stats.norm.ppf(np.linspace(0.01, 0.99, len(dados)))
                     quantis_observados = np.sort(dados)
                     
-                    # Calcular R²
                     z = np.polyfit(quantis_teoricos, quantis_observados, 1)
                     p = np.poly1d(z)
                     residuos = quantis_observados - p(quantis_teoricos)
@@ -1750,7 +1728,6 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     
                     fig_qq = go.Figure()
                     
-                    # Pontos dos dados
                     fig_qq.add_trace(go.Scatter(
                         x=quantis_teoricos,
                         y=quantis_observados,
@@ -1760,7 +1737,6 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                         hovertemplate='<b>Quantil Teórico:</b> %{x:.3f}<br><b>Quantil Observado:</b> %{y:.3f}<extra></extra>'
                     ))
                     
-                    # Linha de referência (R² perfeito)
                     fig_qq.add_trace(go.Scatter(
                         x=[quantis_teoricos.min(), quantis_teoricos.max()],
                         y=[quantis_teoricos.min(), quantis_teoricos.max()],
@@ -1770,7 +1746,6 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                         hovertemplate='<b>Linha de Referência</b><extra></extra>'
                     ))
                     
-                    # Linha de regressão (R² real)
                     fig_qq.add_trace(go.Scatter(
                         x=quantis_teoricos,
                         y=p(quantis_teoricos),
@@ -2136,7 +2111,6 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     if len(vars_corr) >= 2:
                         df_corr = df_filtrado[vars_corr].corr()
                         
-                        # Heatmap com cores mais contrastantes
                         fig_corr = px.imshow(
                             df_corr,
                             text_auto='.2f',
