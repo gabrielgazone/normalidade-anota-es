@@ -1439,73 +1439,51 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
     return fig
 
 # ============================================================================
-# FUNÇÃO DE HEATMAP - VERSÃO ÚNICA E FUNCIONAL
+# FUNÇÃO DE HEATMAP - VERSÃO SIMPLES E FUNCIONAL
 # ============================================================================
 
 def criar_heatmap_correlacao(df_corr, titulo="Matriz de Correlação"):
     """
-    Cria um heatmap de correlação com visualização nítida - VERSÃO FINAL FUNCIONAL
+    Cria um heatmap de correlação simples e funcional
     """
     
-    # Usando plotly.express que é mais estável
-    fig = px.imshow(
-        df_corr,
-        text_auto='.2f',
-        aspect="auto",
-        color_continuous_scale='RdBu_r',
-        title=titulo,
-        zmin=-1, 
+    fig = go.Figure(data=go.Heatmap(
+        z=df_corr.values,
+        x=df_corr.columns,
+        y=df_corr.index,
+        colorscale='RdBu',
+        zmin=-1,
         zmax=1,
-        labels=dict(color="Correlação")
-    )
-    
-    # Ajustes de layout para melhor visualização
-    fig.update_layout(
-        plot_bgcolor='rgba(30, 41, 59, 0.8)',
-        paper_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='white', size=12),
-        title_font=dict(color='#3b82f6', size=18, family="Arial Black"),
-        height=600,
-        width=700,
-        margin=dict(l=100, r=100, t=100, b=100)
-    )
-    
-    # Configurar eixos
-    fig.update_xaxes(
-        tickangle=-45,
-        tickfont=dict(color='white', size=11),
-        gridcolor='#334155',
-        side="bottom"
-    )
-    
-    fig.update_yaxes(
-        tickfont=dict(color='white', size=11),
-        gridcolor='#334155',
-        autorange="reversed"
-    )
-    
-    # Ajustar barra de cores
-    fig.update_coloraxes(
+        text=df_corr.values.round(3),
+        texttemplate='%{text}',
+        textfont={"size": 12, "color": "white"},
+        hovertemplate='<b>%{y} ↔ %{x}</b><br>Correlação: %{z:.3f}<extra></extra>',
         colorbar=dict(
             title="Correlação",
-            titleside="right",
-            titlefont=dict(color='white', size=12),
-            tickfont=dict(color='white', size=10),
-            tickvals=[-1, -0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75, 1],
-            ticktext=['-1.0', '-0.75', '-0.5', '-0.25', '0', '0.25', '0.5', '0.75', '1.0'],
-            len=0.8,
-            thickness=20,
-            borderwidth=1,
-            bordercolor='#334155'
+            titleside="right"
         )
-    )
+    ))
     
-    # Ajustar texto das células para melhor contraste
-    fig.update_traces(
-        textfont=dict(
-            size=12,
-            color='black',
-            family="Arial Black"
+    fig.update_layout(
+        title=dict(
+            text=f"<b>{titulo}</b>",
+            font=dict(size=20, color="white"),
+            x=0.5
+        ),
+        plot_bgcolor='rgba(30,41,59,0.8)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='white'),
+        height=600,
+        width=700,
+        xaxis=dict(
+            tickangle=-45,
+            tickfont=dict(color='white'),
+            gridcolor='#334155'
+        ),
+        yaxis=dict(
+            tickfont=dict(color='white'),
+            gridcolor='#334155',
+            autorange="reversed"
         )
     )
     
@@ -2481,7 +2459,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     if len(vars_corr) >= 2:
                         df_corr = df_filtrado[vars_corr].corr()
                         
-                        # Usando a função de heatmap única e funcional
+                        # Usando a função de heatmap simples e funcional
                         fig_corr = criar_heatmap_correlacao(df_corr, t['tab_correlation'])
                         st.plotly_chart(fig_corr, use_container_width=True)
                         
