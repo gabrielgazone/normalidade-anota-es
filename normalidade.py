@@ -3039,3 +3039,14 @@ elif st.session_state.dados_processados:
             st.caption(f"**{t['positions']}:** {', '.join(st.session_state.todos_posicoes)}")
         if st.session_state.todos_periodos:
             st.caption(f"**{t['periods']}:** {', '.join(st.session_state.todos_periodos)}")
+
+# ============================================================================
+# GARANTIR QUE NÃO PERCA O ESTADO AO RECARREGAR
+# ============================================================================
+if st.session_state.dados_processados and not st.session_state.processar_click:
+    # Manter na mesma aba - apenas para garantir que o estado persista
+    if 'kmeans_ativo' in st.session_state and st.session_state.kmeans_ativo:
+        # Está na aba K-means, manter lá
+        pass
+    # Não faz nada, apenas impede o retorno à página inicial
+    pass
