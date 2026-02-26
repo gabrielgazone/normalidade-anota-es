@@ -1242,12 +1242,13 @@ def time_range_selector(t):
 # ============================================================================
 
 def atualizar_modo_timeline():
-    """Callback para atualizar modo de timeline"""
+    """Callback para atualizar modo de timeline - SEM RERUN"""
     valor_radio = st.session_state.modo_timeline_radio
     if valor_radio == "Gráfico único":
         st.session_state.modo_timeline = 'unico'
     else:
         st.session_state.modo_timeline = 'multiplo'
+    # Removido st.rerun()
 
 def criar_timeline_multipla(df, variavel, periodos, t):
     """Cria múltiplos gráficos de timeline, um para cada período"""
@@ -1352,10 +1353,10 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
         key="periodo_timeline_select"
     )
     
-    # Atualizar session state
+       # Apenas atualizar o session state, sem rerun
     if periodo_escolhido != st.session_state.periodo_timeline:
         st.session_state.periodo_timeline = periodo_escolhido
-        st.rerun()
+        # Removido st.rerun() - isso causava loop
     
     # Filtrar dados conforme seleção
     if periodo_escolhido == 'Todos os períodos':
@@ -1492,22 +1493,22 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
     return fig
 
 # ============================================================================
-# CALLBACKS
+# CALLBACKS - VERSÃO SEM RERUN
 # ============================================================================
 
 def atualizar_metodo_zona():
-    """Callback para atualizar método de zona"""
+    """Callback para atualizar método de zona - SEM RERUN"""
     valor_radio = st.session_state.metodo_zona_radio
     if valor_radio in ["Percentis", "Percentiles"]:
         st.session_state.metodo_zona = 'percentis'
     else:
         st.session_state.metodo_zona = 'based_on_max'
-    st.session_state.zona_key += 1
+    # Não incrementar zona_key aqui - isso causa rerun desnecessário
+    # st.session_state.zona_key += 1
 
 def atualizar_grupos():
     """Callback para atualizar grupos de comparação"""
-    st.session_state.grupo1 = st.session_state.grupo1_select
-    st.session_state.grupo2 = st.session_state.grupo2_select
+    pass  # Removido para evitar loops
 
 # ============================================================================
 # SIDEBAR
@@ -1655,7 +1656,7 @@ with st.sidebar:
             if variavel_selecionada != st.session_state.variavel_selecionada:
                 st.session_state.variavel_selecionada = variavel_selecionada
                 st.session_state.dados_processados = False
-                st.rerun()
+                # st.rerun() removido
             
             df_temp = st.session_state.df_completo[variavel_selecionada].dropna()
             if not df_temp.empty:
@@ -2637,8 +2638,8 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                                    "Se necesitan al menos 2 variables"))
                     
 
-                        # ABA 5: K-MEANS CLUSTERS
-            with tabs[4]:  # Ajuste o índice - será 4 porque agora temos 5 abas
+                                    # ABA 5: K-MEANS CLUSTERS
+            with tabs[4]:
                 st.markdown(f"<h3>{t['tab_kmeans']}</h3>", unsafe_allow_html=True)
                 
                 st.markdown("""
@@ -2648,51 +2649,85 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     <p style="color: #94a3b8; margin: 0;">
                         <span style="color: #8b5cf6;">🎯 Segmentação de Atletas:</span> 
                         Identifique perfis similares baseados em múltiplas variáveis.
-                        Escolha duas variáveis para os eixos X e Y.
                     </p>
                 </div>
                 """, unsafe_allow_html=True)
                 
                 if len(st.session_state.variaveis_quantitativas) >= 2:
+                    # Inicializar session state para K-means se não existir
+                    if 'kmeans_n_clusters' not in st.session_state:
+                        st.session_state.kmeans_n_clusters = 3
+                    if 'kmeans_var_x' not in st.session_state:
+                        st.session_state.kmeans_var_x = st.session_state.variaveis_quantitativas[0]
+                    if 'kmeans_var_y' not in st.session_state:
+                        # Escolher segunda variável diferente da primeira
+                        vars_disponiveis = [v for v in st.session_state.variaveis_quantitativas 
+                                           if v != st.session_state.kmeans_var_x]
+                        st.session_state.kmeans_var_y = vars_disponiveis[0] if vars_disponiveis else None
+                    
                     col_k1, col_k2, col_k3 = st.columns([2, 2, 1])
                     
                     with col_k1:
                         var_x = st.selectbox(
                             "Variável do eixo X",
                             options=st.session_state.variaveis_quantitativas,
-                            index=0,
-                            key="kmeans_var_x"
+                            index=st.session_state.variaveis_quantitativas.index(st.session_state.kmeans_var_x) 
+                                  if st.session_state.kmeans_var_x in st.session_state.variaveis_quantitativas else 0,
+                            key="kmeans_var_x_selector"
                         )
+                        # Atualizar session state sem rerun
+                        if var_x != st.session_state.kmeans_var_x:
+                            st.session_state.kmeans_var_x = var_x
+                            # Resetar var_y se for igual a var_x
+                            if st.session_state.kmeans_var_y == var_x:
+                                vars_disponiveis = [v for v in st.session_state.variaveis_quantitativas if v != var_x]
+                                st.session_state.kmeans_var_y = vars_disponiveis[0] if vars_disponiveis else None
                     
                     with col_k2:
                         # Filtrar para não permitir a mesma variável
                         opcoes_y = [v for v in st.session_state.variaveis_quantitativas if v != var_x]
-                        var_y = st.selectbox(
-                            "Variável do eixo Y",
-                            options=opcoes_y,
-                            index=0 if opcoes_y else None,
-                            key="kmeans_var_y"
-                        )
+                        if opcoes_y:
+                            # Garantir que var_y atual está nas opções
+                            if st.session_state.kmeans_var_y not in opcoes_y:
+                                st.session_state.kmeans_var_y = opcoes_y[0]
+                            
+                            var_y = st.selectbox(
+                                "Variável do eixo Y",
+                                options=opcoes_y,
+                                index=opcoes_y.index(st.session_state.kmeans_var_y) 
+                                      if st.session_state.kmeans_var_y in opcoes_y else 0,
+                                key="kmeans_var_y_selector"
+                            )
+                            if var_y != st.session_state.kmeans_var_y:
+                                st.session_state.kmeans_var_y = var_y
+                        else:
+                            st.warning("Selecione uma variável diferente para o eixo X")
+                            var_y = None
                     
                     with col_k3:
-                        n_clusters = st.slider(
+                        n_clusters = st.number_input(
                             "Nº Clusters",
                             min_value=2,
                             max_value=6,
-                            value=3,
-                            key="kmeans_clusters"
+                            value=st.session_state.kmeans_n_clusters,
+                            step=1,
+                            key="kmeans_n_clusters_input"
                         )
+                        if n_clusters != st.session_state.kmeans_n_clusters:
+                            st.session_state.kmeans_n_clusters = n_clusters
                     
-                    if var_x and var_y:
-                        from sklearn.cluster import KMeans
-                        from sklearn.preprocessing import StandardScaler
-                        
-                        try:
-                            with st.spinner('🔄 Calculando clusters...'):
+                    # Botão para processar (opcional - evita processamento a cada mudança)
+                    if st.button("🔄 Processar Clusters", key="kmeans_process_button"):
+                        st.session_state.kmeans_processar = True
+                    
+                    # Processar apenas quando o botão for clicado
+                    if st.session_state.get('kmeans_processar', False) and var_x and var_y:
+                        with st.spinner('🔄 Calculando clusters...'):
+                            try:
                                 # Preparar dados
                                 dados_cluster = df_filtrado[[var_x, var_y]].dropna()
                                 
-                                if len(dados_cluster) >= n_clusters * 2:  # Mínimo de dados
+                                if len(dados_cluster) >= n_clusters * 2:
                                     # Padronizar
                                     scaler = StandardScaler()
                                     dados_padronizados = scaler.fit_transform(dados_cluster)
@@ -2801,44 +2836,16 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                                         hide_index=True
                                     )
                                     
-                                    # Interpretação
-                                    st.markdown("### 💡 Insights")
-                                    col_ins1, col_ins2 = st.columns(2)
-                                    
-                                    with col_ins1:
-                                        # Encontrar cluster com mais atletas
-                                        idx_mais_atletas = pd.Series([s['Nº Atletas'] for s in stats]).argmax()
-                                        st.markdown(f"""
-                                        <div class="metric-container">
-                                            <h4>🎯 Perfil Dominante</h4>
-                                            <p><strong>Cluster com mais atletas:</strong> 
-                                            Cluster {stats[idx_mais_atletas]['Cluster']}</p>
-                                            <p><strong>Características:</strong> 
-                                            {var_x}: {stats[idx_mais_atletas][f'Média {var_x}']:.1f} | 
-                                            {var_y}: {stats[idx_mais_atletas][f'Média {var_y}']:.1f}</p>
-                                        </div>
-                                        """, unsafe_allow_html=True)
-                                    
-                                    with col_ins2:
-                                        # Calcular variabilidade total
-                                        variabilidades = [s['Desvio X'] + s['Desvio Y'] for s in stats]
-                                        idx_mais_variavel = pd.Series(variabilidades).argmax()
-                                        idx_mais_homogeneo = pd.Series(variabilidades).argmin()
-                                        st.markdown(f"""
-                                        <div class="metric-container">
-                                            <h4>📈 Dispersão</h4>
-                                            <p><strong>Maior variabilidade:</strong> 
-                                            {stats[idx_mais_variavel]['Cluster']}</p>
-                                            <p><strong>Mais homogêneo:</strong> 
-                                            {stats[idx_mais_homogeneo]['Cluster']}</p>
-                                        </div>
-                                        """, unsafe_allow_html=True)
+                                    # Reset do botão
+                                    st.session_state.kmeans_processar = False
                                     
                                 else:
                                     st.warning("⚠️ Dados insuficientes para clustering. Selecione mais dados ou reduza o número de clusters.")
+                                    st.session_state.kmeans_processar = False
                                     
-                        except Exception as e:
-                            st.error(f"Erro na análise: {str(e)}")
+                            except Exception as e:
+                                st.error(f"Erro na análise: {str(e)}")
+                                st.session_state.kmeans_processar = False
                 else:
                     st.info("ℹ️ São necessárias pelo menos 2 variáveis para análise de clusters")
 
