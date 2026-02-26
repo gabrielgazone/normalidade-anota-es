@@ -805,7 +805,7 @@ def init_session_state():
     if 'upload_concluido' not in st.session_state:
         st.session_state.upload_concluido = False
     if 'modo_timeline' not in st.session_state:
-        st.session_state.modo_timeline = 'unico'
+        st.session_state.modo_timeline = 'unico'  # 'unico' ou 'multiplo'
     if 'periodo_timeline' not in st.session_state:
         st.session_state.periodo_timeline = None
 
@@ -960,31 +960,38 @@ def criar_timeline_profissional(df, variavel, t):
     """Timeline com áreas sombreadas para valores acima/abaixo do limiar"""
     fig = go.Figure()
     
+    # Calcular média móvel (5 pontos)
     media_movevel = df[variavel].rolling(window=5, min_periods=1).mean()
+    
+    # Calcular limiar de 80%
     valor_maximo = df[variavel].max()
     limiar_80 = valor_maximo * 0.8
     
+    # Identificar pontos acima e abaixo do limiar
     acima_limiar = df[variavel] > limiar_80
     abaixo_limiar = df[variavel] <= limiar_80
     
+    # Criar área sombreada para valores acima do limiar (vermelho translúcido)
     fig.add_hrect(
         y0=limiar_80,
-        y1=valor_maximo * 1.05,
-        fillcolor="rgba(239, 68, 68, 0.15)",
+        y1=valor_maximo * 1.05,  # Um pouco acima do máximo
+        fillcolor="rgba(239, 68, 68, 0.15)",  # Vermelho translúcido
         line_width=0,
         layer="below",
         name=f"{t['above_threshold']}"
     )
     
+    # Criar área sombreada para valores abaixo do limiar (azul translúcido)
     fig.add_hrect(
         y0=0,
         y1=limiar_80,
-        fillcolor="rgba(59, 130, 246, 0.1)",
+        fillcolor="rgba(59, 130, 246, 0.1)",  # Azul translúcido
         line_width=0,
         layer="below",
         name=f"{t['below_threshold']}"
     )
     
+    # Adicionar linha do limiar (vermelha sólida)
     fig.add_hline(
         y=limiar_80,
         line_dash="solid",
@@ -995,9 +1002,11 @@ def criar_timeline_profissional(df, variavel, t):
         annotation_font=dict(color="white", size=11)
     )
     
+    # Separar dados acima e abaixo do limiar para colorir os pontos
     df_acima = df[acima_limiar].copy()
     df_abaixo = df[abaixo_limiar].copy()
     
+    # Adicionar pontos acima do limiar (vermelhos)
     if not df_acima.empty:
         fig.add_trace(go.Scatter(
             x=df_acima['Minuto'],
@@ -1014,6 +1023,7 @@ def criar_timeline_profissional(df, variavel, t):
                           '<b>Valor:</b> %{y:.2f} (ACIMA DO LIMIAR)<extra></extra>'
         ))
     
+    # Adicionar pontos abaixo do limiar (azuis)
     if not df_abaixo.empty:
         fig.add_trace(go.Scatter(
             x=df_abaixo['Minuto'],
@@ -1030,6 +1040,7 @@ def criar_timeline_profissional(df, variavel, t):
                           '<b>Valor:</b> %{y:.2f}<extra></extra>'
         ))
     
+    # Linha de média móvel
     fig.add_trace(go.Scatter(
         x=df['Minuto'],
         y=media_movevel,
@@ -1038,6 +1049,7 @@ def criar_timeline_profissional(df, variavel, t):
         line=dict(color='#f59e0b', width=2, dash='dot')
     ))
     
+    # Linhas de referência adicionais
     media = df[variavel].mean()
     desvio = df[variavel].std()
     
@@ -1087,6 +1099,7 @@ def criar_tabela_destaque(df, colunas_destaque):
     """Tabela com células destacadas baseado em valores"""
     styled_df = df.style
     
+    # Aplicar gradiente nas colunas numéricas
     for col in colunas_destaque:
         if col in df.select_dtypes(include=[np.number]).columns:
             styled_df = styled_df.background_gradient(
@@ -1094,6 +1107,7 @@ def criar_tabela_destaque(df, colunas_destaque):
                 cmap='viridis'
             )
     
+    # Destacar linha do melhor atleta (maior média)
     if 'Média' in df.columns:
         def highlight_max_row(row):
             if row.name == df['Média'].idxmax():
@@ -1164,6 +1178,7 @@ def sistema_anotacoes(t):
                     })
                     st.rerun()
         
+        # Listar anotações
         for i, anotacao in enumerate(reversed(st.session_state.anotacoes)):
             st.markdown(f"""
             <div class="note-card">
@@ -1194,6 +1209,7 @@ def time_range_selector(t):
         with col3:
             data_fim = st.date_input("Data final", key="data_fim")
     else:
+        # Simulação - em um caso real, você usaria datas reais dos dados
         data_fim = datetime.now()
         if periodo == "Hoje":
             data_inicio = data_fim
@@ -1207,7 +1223,7 @@ def time_range_selector(t):
     return data_inicio, data_fim
 
 # ============================================================================
-# FUNÇÕES PARA TIMELINE
+# FUNÇÕES CORRIGIDAS PARA TIMELINE
 # ============================================================================
 
 def atualizar_modo_timeline():
@@ -1221,6 +1237,7 @@ def atualizar_modo_timeline():
 def criar_timeline_multipla(df, variavel, periodos, t):
     """Cria múltiplos gráficos de timeline, um para cada período"""
     
+    # Criar subplots com n linhas (um por período)
     n_periodos = len(periodos)
     fig = make_subplots(
         rows=n_periodos, 
@@ -1236,9 +1253,11 @@ def criar_timeline_multipla(df, variavel, periodos, t):
         if df_periodo.empty:
             continue
         
+        # Calcular valores para este período
         valor_maximo = df_periodo[variavel].max()
         limiar_80 = valor_maximo * 0.8
         
+        # Adicionar linha de evolução
         fig.add_trace(
             go.Scatter(
                 x=df_periodo['Minuto'],
@@ -1252,6 +1271,7 @@ def criar_timeline_multipla(df, variavel, periodos, t):
             row=i, col=1
         )
         
+        # Adicionar linha do limiar 80%
         fig.add_hline(
             y=limiar_80,
             line_dash="dash",
@@ -1260,6 +1280,7 @@ def criar_timeline_multipla(df, variavel, periodos, t):
             row=i, col=1
         )
         
+        # Adicionar média
         media_periodo = df_periodo[variavel].mean()
         fig.add_hline(
             y=media_periodo,
@@ -1269,6 +1290,7 @@ def criar_timeline_multipla(df, variavel, periodos, t):
             row=i, col=1
         )
         
+        # Configurar eixos
         fig.update_xaxes(
             title_text="Minuto" if i == n_periodos else "",
             gridcolor='#334155',
@@ -1284,6 +1306,7 @@ def criar_timeline_multipla(df, variavel, periodos, t):
             row=i, col=1
         )
     
+    # Configurar layout geral
     fig.update_layout(
         title=f"Evolução Temporal por Período - {variavel}",
         plot_bgcolor='rgba(30,41,59,0.8)',
@@ -1299,8 +1322,10 @@ def criar_timeline_multipla(df, variavel, periodos, t):
 def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
     """Cria uma única timeline com seletor de período"""
     
+    # Seletor de período
     opcoes_periodo = ['Todos os períodos'] + list(periodos_selecionados)
     
+    # CORREÇÃO: Usar session state para manter o valor selecionado
     indice_atual = 0
     if st.session_state.periodo_timeline in opcoes_periodo:
         indice_atual = opcoes_periodo.index(st.session_state.periodo_timeline)
@@ -1312,10 +1337,12 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
         key="periodo_timeline_select"
     )
     
+    # Atualizar session state
     if periodo_escolhido != st.session_state.periodo_timeline:
         st.session_state.periodo_timeline = periodo_escolhido
         st.rerun()
     
+    # Filtrar dados conforme seleção
     if periodo_escolhido == 'Todos os períodos':
         df_plot = df.copy()
         titulo = f"Evolução Temporal - {variavel} (Todos os períodos)"
@@ -1323,10 +1350,13 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
         df_plot = df[df['Período'] == periodo_escolhido].copy()
         titulo = f"Evolução Temporal - {variavel} (Período: {periodo_escolhido})"
     
+    # Ordenar por minuto
     df_plot = df_plot.sort_values('Minuto').reset_index(drop=True)
     
+    # Criar figura
     fig = go.Figure()
     
+    # Se for todos os períodos, colorir por período
     if periodo_escolhido == 'Todos os períodos':
         periodos_unicos = df_plot['Período'].unique()
         cores = px.colors.qualitative.Set2
@@ -1348,11 +1378,13 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
                 text=[periodo] * len(df_periodo)
             ))
     else:
+        # Período único - adicionar todos os recursos visuais
         valor_maximo = df_plot[variavel].max()
         limiar_80 = valor_maximo * 0.8
         media = df_plot[variavel].mean()
         desvio = df_plot[variavel].std()
         
+        # Áreas sombreadas
         fig.add_hrect(
             y0=limiar_80,
             y1=valor_maximo * 1.05,
@@ -1371,6 +1403,7 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
             name="Abaixo do limiar"
         )
         
+        # Linha do limiar
         fig.add_hline(
             y=limiar_80,
             line_dash="solid",
@@ -1380,6 +1413,7 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
             annotation_position="top left"
         )
         
+        # Linha da média
         fig.add_hline(
             y=media,
             line_dash="dash",
@@ -1388,6 +1422,7 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
             annotation_position="top left"
         )
         
+        # Área de ±1 DP
         fig.add_hrect(
             y0=media-desvio,
             y1=media+desvio,
@@ -1397,6 +1432,7 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
             annotation_text="±1 DP"
         )
         
+        # Dados principais
         fig.add_trace(go.Scatter(
             x=df_plot['Minuto'],
             y=df_plot[variavel],
@@ -1408,6 +1444,7 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
                           '<b>Valor:</b> %{y:.2f}<extra></extra>'
         ))
         
+        # Média móvel
         media_movevel = df_plot[variavel].rolling(window=5, min_periods=1).mean()
         fig.add_trace(go.Scatter(
             x=df_plot['Minuto'],
@@ -1417,6 +1454,7 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
             line=dict(color='#f59e0b', width=2, dash='dot')
         ))
     
+    # Configurar layout
     fig.update_layout(
         title=titulo,
         xaxis_title="Minuto",
@@ -1435,57 +1473,6 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
     
     fig.update_xaxes(gridcolor='#334155', tickfont=dict(color='white'), tickangle=-45)
     fig.update_yaxes(gridcolor='#334155', tickfont=dict(color='white'))
-    
-    return fig
-
-# ============================================================================
-# FUNÇÃO DE HEATMAP - VERSÃO SIMPLES E FUNCIONAL
-# ============================================================================
-
-def criar_heatmap_correlacao(df_corr, titulo="Matriz de Correlação"):
-    """
-    Cria um heatmap de correlação simples e funcional
-    """
-    
-    fig = go.Figure(data=go.Heatmap(
-        z=df_corr.values,
-        x=df_corr.columns,
-        y=df_corr.index,
-        colorscale='RdBu',
-        zmin=-1,
-        zmax=1,
-        text=df_corr.values.round(3),
-        texttemplate='%{text}',
-        textfont={"size": 12, "color": "white"},
-        hovertemplate='<b>%{y} ↔ %{x}</b><br>Correlação: %{z:.3f}<extra></extra>',
-        colorbar=dict(
-            title="Correlação",
-            titleside="right"
-        )
-    ))
-    
-    fig.update_layout(
-        title=dict(
-            text=f"<b>{titulo}</b>",
-            font=dict(size=20, color="white"),
-            x=0.5
-        ),
-        plot_bgcolor='rgba(30,41,59,0.8)',
-        paper_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='white'),
-        height=600,
-        width=700,
-        xaxis=dict(
-            tickangle=-45,
-            tickfont=dict(color='white'),
-            gridcolor='#334155'
-        ),
-        yaxis=dict(
-            tickfont=dict(color='white'),
-            gridcolor='#334155',
-            autorange="reversed"
-        )
-    )
     
     return fig
 
@@ -1542,6 +1529,7 @@ with st.sidebar:
         key="file_uploader"
     )
     
+    # Processar upload
     if upload_files and len(upload_files) > 0 and not st.session_state.upload_concluido:
         with st.spinner('🔄 Processando...'):
             time.sleep(0.5)
@@ -1719,27 +1707,33 @@ with st.sidebar:
                     st.session_state.dados_processados = False
                     st.rerun()
         
+        # SELEÇÃO DE ATLETAS
         st.markdown("---")
         st.markdown(f"<h2 class='sidebar-title'>👤 {t['athlete']}</h2>", unsafe_allow_html=True)
         
+        # Filtrar dataframe baseado nas seleções atuais
         df_temp = st.session_state.df_completo.copy()
         if st.session_state.posicoes_selecionadas:
             df_temp = df_temp[df_temp['Posição'].isin(st.session_state.posicoes_selecionadas)]
         if st.session_state.periodos_selecionados:
             df_temp = df_temp[df_temp['Período'].isin(st.session_state.periodos_selecionados)]
         
+        # Obter lista de atletas disponíveis com os filtros atuais
         atletas_disponiveis = sorted(df_temp['Nome'].unique().tolist()) if not df_temp.empty else []
         
         if not atletas_disponiveis:
             st.warning("⚠️ Nenhum atleta disponível com os filtros atuais")
             st.session_state.atletas_selecionados = []
         else:
+            # Filtrar atletas selecionados para manter apenas os que ainda estão disponíveis
             atletas_selecionados_validos = [a for a in st.session_state.atletas_selecionados if a in atletas_disponiveis]
             
+            # Se não houver atletas válidos, selecionar o primeiro disponível
             if not atletas_selecionados_validos:
                 atletas_selecionados_validos = [atletas_disponiveis[0]]
                 st.session_state.atletas_selecionados = atletas_selecionados_validos
             
+            # Checkbox "Selecionar todos"
             selecionar_todos = st.checkbox(
                 f"Selecionar todos os {t['athlete'].lower()}s" if st.session_state.idioma == 'pt' else
                 f"Select all {t['athlete'].lower()}s" if st.session_state.idioma == 'en' else
@@ -1762,10 +1756,12 @@ with st.sidebar:
                     key="atletas_selector"
                 )
                 
+                # Garantir que sempre haja pelo menos um atleta selecionado
                 if atletas_sel != st.session_state.atletas_selecionados:
                     if len(atletas_sel) > 0:
                         st.session_state.atletas_selecionados = atletas_sel
                     else:
+                        # Se o usuário desmarcou todos, manter pelo menos o primeiro disponível
                         st.session_state.atletas_selecionados = [atletas_disponiveis[0]]
                     st.session_state.dados_processados = False
                     st.rerun()
@@ -1773,6 +1769,7 @@ with st.sidebar:
         st.markdown("---")
         st.markdown(f"<h2 class='sidebar-title'>⚙️ {t['config']}</h2>", unsafe_allow_html=True)
         
+        # Configurações
         n_classes = st.slider(f"{t['config']}:", 3, 20, st.session_state.n_classes, key="classes_slider")
         if n_classes != st.session_state.n_classes:
             st.session_state.n_classes = n_classes
@@ -1822,19 +1819,26 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
             st.session_state.dados_processados = True
             t = translations[st.session_state.idioma]
             
+            # ====================================================================
+            # DASHBOARD EXECUTIVO - VISÃO GERAL
+            # ====================================================================
             st.markdown(f"<h2>📊 {t['title'].split('Pro')[0] if 'Pro' in t['title'] else 'Visão Geral'}</h2>", unsafe_allow_html=True)
             
+            # Calcular métricas para os cards executivos
             media_global = df_filtrado[variavel_analise].mean()
             media_posicoes = df_filtrado.groupby('Posição')[variavel_analise].mean()
             melhor_posicao = media_posicoes.idxmax() if not media_posicoes.empty else "N/A"
             pior_posicao = media_posicoes.idxmin() if not media_posicoes.empty else "N/A"
             
+            # Layout responsivo
             if n_colunas == 1:
+                # Mobile - uma coluna
                 executive_card(t['mean'], f"{media_global:.2f}", 5.2, "📊")
                 executive_card("Melhor Posição", melhor_posicao, 8.1, "🏆", "#10b981")
                 executive_card("Pior Posição", pior_posicao, -3.4, "📉", "#ef4444")
                 executive_card(t['observations'], len(df_filtrado), 0, "👥")
             else:
+                # Desktop - 4 colunas
                 cols_exec = st.columns(4)
                 with cols_exec[0]:
                     executive_card(t['mean'], f"{media_global:.2f}", 5.2, "📊")
@@ -1847,10 +1851,16 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
             
             st.markdown("---")
             
+            # ====================================================================
+            # SELEÇÃO DE PERÍODO
+            # ====================================================================
             data_inicio, data_fim = time_range_selector(t)
             
             st.markdown("---")
             
+            # ====================================================================
+            # ABAS PRINCIPAIS
+            # ====================================================================
             tab_titles = [
                 t['tab_distribution'], 
                 t['tab_temporal'], 
@@ -1861,6 +1871,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
             
             tabs = st.tabs(tab_titles)
             
+            # ABA 1: DISTRIBUIÇÃO
             with tabs[0]:
                 st.markdown(f"<h3>{t['tab_distribution']}</h3>", unsafe_allow_html=True)
                 
@@ -1993,11 +2004,13 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     hide_index=True
                 )
             
+            # ABA 2: ESTATÍSTICAS & TEMPORAL (CORRIGIDA)
             with tabs[1]:
                 st.markdown(f"<h3>{t['tab_temporal']}</h3>", unsafe_allow_html=True)
                 
                 df_tempo = df_filtrado.sort_values('Minuto').reset_index(drop=True)
                 
+                # Cards de métricas temporais
                 valor_maximo = df_tempo[variavel_analise].max()
                 valor_minimo = df_tempo[variavel_analise].min()
                 minuto_maximo = extrair_minuto_do_extremo(df_tempo, variavel_analise, 'Minuto', 'max')
@@ -2023,6 +2036,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 st.markdown("---")
                 st.markdown(f"<h4>{t['intensity_zones']}</h4>", unsafe_allow_html=True)
                 
+                # Zonas de intensidade
                 opcoes = [t['percentiles'], t['based_on_max']]
                 idx_atual = 0 if st.session_state.metodo_zona == 'percentis' else 1
                 
@@ -2034,6 +2048,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     on_change=atualizar_metodo_zona
                 )
                 
+                # Usar o valor do session state (atualizado pelo callback)
                 zonas = criar_zonas_intensidade(df_filtrado, variavel_analise, st.session_state.metodo_zona)
                 
                 if zonas:
@@ -2057,8 +2072,13 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                             """, unsafe_allow_html=True)
                 
                 st.markdown("---")
+                
+                # ================================================================
+                # TIMELINE CORRIGIDA COM SELEÇÃO DINÂMICA
+                # ================================================================
                 st.markdown(f"<h4>{t['tab_temporal']}</h4>", unsafe_allow_html=True)
                 
+                # Opções de visualização
                 col_op1, col_op2 = st.columns([1, 3])
                 
                 with col_op1:
@@ -2076,12 +2096,14 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 
                 with col_op2:
                     if st.session_state.modo_timeline == 'unico':
+                        # Gráfico único com seletor de período
                         if len(periodos_selecionados) > 0:
                             fig_tempo = criar_timeline_unica_com_seletor(df_filtrado, variavel_analise, periodos_selecionados, t)
                             st.plotly_chart(fig_tempo, use_container_width=True)
                         else:
                             st.warning("Nenhum período selecionado")
                     else:
+                        # Múltiplos gráficos (um por período)
                         if len(periodos_selecionados) > 1:
                             fig_multipla = criar_timeline_multipla(df_filtrado, variavel_analise, periodos_selecionados, t)
                             st.plotly_chart(fig_multipla, use_container_width=True)
@@ -2298,6 +2320,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 if resumo:
                     df_resumo = pd.DataFrame(resumo)
                     
+                    # Aplicar estilo destacado
                     styled_df = criar_tabela_destaque(df_resumo, ['Média', f'Máx {variavel_analise}', f'Mín {variavel_analise}'])
                     
                     st.dataframe(
@@ -2313,8 +2336,10 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                         hide_index=True
                     )
                     
+                    # Adicionar explicação do IQR ao final da tabela
                     st.caption(f"📌 {t['iqr_title']}: {t['iqr_explanation']}")
             
+            # ABA 3: BOXPLOTS
             with tabs[2]:
                 st.markdown(f"<h3>{t['tab_boxplots']}</h3>", unsafe_allow_html=True)
                 
@@ -2351,6 +2376,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 
                 st.markdown(f"<h4>👥 {t['athlete']}</h4>", unsafe_allow_html=True)
                 
+                # Mostrar todos os atletas, com altura dinâmica
                 fig_box_atl = go.Figure()
                 for atleta in atletas_selecionados:
                     dados_atl = df_filtrado[df_filtrado['Nome'] == atleta][variavel_analise]
@@ -2443,8 +2469,10 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                             hide_index=True
                         )
                     
+                    # Adicionar explicação do IQR ao final
                     st.caption(f"📌 {t['iqr_title']}: {t['iqr_explanation']}")
             
+            # ABA 4: CORRELAÇÕES
             with tabs[3]:
                 st.markdown(f"<h3>{t['tab_correlation']}</h3>", unsafe_allow_html=True)
                 
@@ -2459,39 +2487,64 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     if len(vars_corr) >= 2:
                         df_corr = df_filtrado[vars_corr].corr()
                         
-                        # Usando a função de heatmap simples e funcional
-                        fig_corr = criar_heatmap_correlacao(df_corr, t['tab_correlation'])
-                        st.plotly_chart(fig_corr, use_container_width=True)
+                        # Heatmap com cores suaves
+                        colorscale = [
+                            [0, 'rgba(0, 0, 139, 0.7)'],      # Azul escuro translúcido para -1
+                            [0.25, 'rgba(65, 105, 225, 0.7)'], # Azul médio translúcido para -0.5
+                            [0.45, 'rgba(220, 220, 220, 0.5)'], # Cinza claro translúcido para valores próximos de 0
+                            [0.5, 'rgba(211, 211, 211, 0.3)'],  # Cinza mais claro para a diagonal
+                            [0.55, 'rgba(220, 220, 220, 0.5)'], # Cinza claro translúcido
+                            [0.75, 'rgba(255, 99, 71, 0.7)'],   # Vermelho médio translúcido para 0.5
+                            [1, 'rgba(139, 0, 0, 0.7)']         # Vermelho escuro translúcido para 1
+                        ]
                         
-                        with st.expander("📊 Entendendo as Correlações"):
-                            col_leg1, col_leg2, col_leg3 = st.columns(3)
+                        df_corr_display = df_corr.copy()
+                        
+                        fig_corr = px.imshow(
+                            df_corr_display,
+                            text_auto='.2f',
+                            aspect="auto",
+                            color_continuous_scale=colorscale,
+                            title=f"{t['tab_correlation']}",
+                            zmin=-1, zmax=1
+                        )
+                        
+                        # Destacar a diagonal principal em cinza
+                        for i in range(len(df_corr)):
+                            fig_corr.add_annotation(
+                                x=i,
+                                y=i,
+                                text=f"{df_corr.iloc[i, i]:.2f}",
+                                showarrow=False,
+                                font=dict(color='white', size=12, weight='bold'),
+                                bgcolor='#4a5568',
+                                bordercolor='#718096',
+                                borderwidth=1,
+                                opacity=0.9
+                            )
                             
-                            with col_leg1:
-                                st.markdown("""
-                                <div style="background: rgba(30, 41, 59, 0.8); padding: 15px; border-radius: 10px; border-left: 4px solid #ef4444;">
-                                    <h5 style="color: #ef4444;">Correlação Positiva Forte</h5>
-                                    <p style="color: #94a3b8;">r > 0.7</p>
-                                    <div style="height: 20px; background: linear-gradient(90deg, #ff8a8a, #ef4444); border-radius: 10px;"></div>
-                                </div>
-                                """, unsafe_allow_html=True)
-                            
-                            with col_leg2:
-                                st.markdown("""
-                                <div style="background: rgba(30, 41, 59, 0.8); padding: 15px; border-radius: 10px; border-left: 4px solid #3b82f6;">
-                                    <h5 style="color: #3b82f6;">Correlação Negativa Forte</h5>
-                                    <p style="color: #94a3b8;">r < -0.7</p>
-                                    <div style="height: 20px; background: linear-gradient(90deg, #3b82f6, #1e3a8a); border-radius: 10px;"></div>
-                                </div>
-                                """, unsafe_allow_html=True)
-                            
-                            with col_leg3:
-                                st.markdown("""
-                                <div style="background: rgba(30, 41, 59, 0.8); padding: 15px; border-radius: 10px; border-left: 4px solid #94a3b8;">
-                                    <h5 style="color: #94a3b8;">Correlação Fraca</h5>
-                                    <p style="color: #94a3b8;">-0.3 < r < 0.3</p>
-                                    <div style="height: 20px; background: linear-gradient(90deg, #94a3b8, #cbd5e1); border-radius: 10px;"></div>
-                                </div>
-                                """, unsafe_allow_html=True)
+                            # Adicionar um retângulo cinza no fundo
+                            fig_corr.add_shape(
+                                type="rect",
+                                x0=i - 0.5,
+                                y0=i - 0.5,
+                                x1=i + 0.5,
+                                y1=i + 0.5,
+                                line=dict(width=0),
+                                fillcolor='rgba(74, 85, 104, 0.5)',
+                                layer="below"
+                            )
+                        
+                        fig_corr.update_layout(
+                            plot_bgcolor='rgba(30, 41, 59, 0.8)',
+                            paper_bgcolor='rgba(0,0,0,0)',
+                            font=dict(color='white', size=11),
+                            title_font=dict(color='#3b82f6', size=16),
+                            height=500
+                        )
+                        fig_corr.update_xaxes(gridcolor='#334155', tickfont=dict(color='white'))
+                        fig_corr.update_yaxes(gridcolor='#334155', tickfont=dict(color='white'))
+                        st.plotly_chart(fig_corr, use_container_width=True)
                         
                         st.markdown(f"<h4>📊 {t['tab_correlation']}</h4>", unsafe_allow_html=True)
                         
@@ -2499,10 +2552,9 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                             if pd.isna(val):
                                 return 'color: #94a3b8;'
                             if val == 1.0:
-                                return 'color: gold; font-weight: bold; background-color: rgba(255, 215, 0, 0.2);'
+                                return 'color: #2d3748; font-weight: bold; background-color: #d3d3d3;'
                             color = '#ef4444' if abs(val) > 0.7 else '#f59e0b' if abs(val) > 0.5 else '#3b82f6'
-                            bg_color = f'rgba({255 if val>0 else 59}, {69 if val>0 else 130}, {68 if val>0 else 246}, {abs(val)*0.3})'
-                            return f'color: {color}; font-weight: bold; background-color: {bg_color};'
+                            return f'color: {color}; font-weight: bold;'
                         
                         st.dataframe(
                             df_corr.style.format('{:.3f}').applymap(style_correlation),
@@ -2522,83 +2574,57 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                                 trendline="ols",
                                 color_discrete_sequence=px.colors.qualitative.Set2
                             )
-                            
                             fig_scatter.update_layout(
                                 plot_bgcolor='rgba(30, 41, 59, 0.8)',
                                 paper_bgcolor='rgba(0,0,0,0)',
                                 font=dict(color='white', size=11),
                                 title_font=dict(color='#3b82f6', size=16),
-                                height=500,
-                                legend=dict(font=dict(color='white'), bgcolor='rgba(30,41,59,0.8)', bordercolor='#334155')
+                                height=500
                             )
                             fig_scatter.update_xaxes(gridcolor='#334155', tickfont=dict(color='white'))
                             fig_scatter.update_yaxes(gridcolor='#334155', tickfont=dict(color='white'))
                             st.plotly_chart(fig_scatter, use_container_width=True)
                             
                             corr_valor = df_corr.iloc[0, 1]
-                            
                             if corr_valor > 0.7:
                                 interp_corr = t['strong_positive']
-                                cor_categoria = "#ef4444"
-                                icone = "🔴"
                             elif corr_valor > 0.5:
                                 interp_corr = t['moderate_positive']
-                                cor_categoria = "#f97316"
-                                icone = "🟠"
                             elif corr_valor > 0.3:
                                 interp_corr = t['weak_positive']
-                                cor_categoria = "#f59e0b"
-                                icone = "🟡"
                             elif corr_valor > 0:
                                 interp_corr = t['very_weak_positive']
-                                cor_categoria = "#94a3b8"
-                                icone = "⚪"
                             elif corr_valor > -0.3:
                                 interp_corr = t['very_weak_negative']
-                                cor_categoria = "#94a3b8"
-                                icone = "⚪"
                             elif corr_valor > -0.5:
                                 interp_corr = t['weak_negative']
-                                cor_categoria = "#3b82f6"
-                                icone = "🔵"
                             elif corr_valor > -0.7:
                                 interp_corr = t['moderate_negative']
-                                cor_categoria = "#2563eb"
-                                icone = "🔵"
                             else:
                                 interp_corr = t['strong_negative']
-                                cor_categoria = "#1e3a8a"
-                                icone = "🔵"
                             
                             st.markdown(f"""
-                            <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); 
-                                        padding: 20px; border-radius: 16px; border-left: 6px solid {cor_categoria};
-                                        margin-top: 20px;">
-                                <div style="display: flex; align-items: center; gap: 15px;">
-                                    <div style="font-size: 3rem;">{icone}</div>
-                                    <div>
-                                        <h4 style="color: white; margin: 0;">{t['tab_correlation']}</h4>
-                                        <p style="color: #94a3b8; margin: 5px 0;">
-                                            <strong>Coeficiente de Pearson:</strong> 
-                                            <span style="color: {cor_categoria}; font-size: 1.3rem;">{corr_valor:.3f}</span>
-                                        </p>
-                                        <p style="color: white; margin: 5px 0;">
-                                            <strong>Interpretação:</strong> {interp_corr}
-                                        </p>
-                                    </div>
-                                </div>
+                            <div class="metric-container">
+                                <h4>📊 {t['tab_correlation']}</h4>
+                                <hr style="border-color: #334155;">
+                                <p><strong>Pearson:</strong> {corr_valor:.3f}</p>
+                                <p><strong>{t['tab_correlation']}:</strong> {interp_corr}</p>
                             </div>
                             """, unsafe_allow_html=True)
                     else:
                         st.info("ℹ️ " + ("Selecione pelo menos 2 variáveis" if st.session_state.idioma == 'pt' else 
-                                       "Select at least 2 variables"))
+                                       "Select at least 2 variables" if st.session_state.idioma == 'en' else
+                                       "Seleccione al menos 2 variables"))
                 else:
                     st.info("ℹ️ " + ("São necessárias pelo menos 2 variáveis" if st.session_state.idioma == 'pt' else 
-                                   "At least 2 variables are needed"))
+                                   "At least 2 variables are needed" if st.session_state.idioma == 'en' else
+                                   "Se necesitan al menos 2 variables"))
             
+            # ABA 5: EXECUTIVO
             with tabs[4]:
                 st.markdown(f"<h3>{t['tab_executive']}</h3>", unsafe_allow_html=True)
                 
+                # Comparação de atletas
                 st.markdown("### 🆚 Comparação de Atletas")
                 if len(atletas_selecionados) >= 2:
                     col_atl1, col_atl2 = st.columns(2)
@@ -2634,13 +2660,16 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 
                 st.markdown("---")
                 
+                # Sistema de anotações
                 sistema_anotacoes(t)
             
+            # Dados brutos
             with st.expander("📋 " + ("Visualizar dados brutos filtrados" if st.session_state.idioma == 'pt' else 
                                      "View filtered raw data" if st.session_state.idioma == 'en' else
                                      "Ver datos brutos filtrados")):
                 st.dataframe(df_filtrado, use_container_width=True)
     
+    # Reset do botão após processamento
     st.session_state.processar_click = False
 
 elif st.session_state.df_completo is None:
