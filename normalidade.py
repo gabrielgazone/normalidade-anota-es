@@ -805,7 +805,7 @@ def init_session_state():
     if 'upload_concluido' not in st.session_state:
         st.session_state.upload_concluido = False
     if 'modo_timeline' not in st.session_state:
-        st.session_state.modo_timeline = 'unico'  # 'unico' ou 'multiplo'
+        st.session_state.modo_timeline = 'unico'
     if 'periodo_timeline' not in st.session_state:
         st.session_state.periodo_timeline = None
 
@@ -959,299 +959,32 @@ def criar_zonas_intensidade(df, variavel, metodo='percentis'):
 def criar_timeline_profissional(df, variavel, t):
     """Timeline com áreas sombreadas para valores acima/abaixo do limiar"""
     fig = go.Figure()
-
-# ============================================================================
-# FUNÇÕES PARA HEATMAP DE CORRELAÇÃO MELHORADO
-# ============================================================================
-
-def criar_heatmap_correlacao_impactante(df_corr, titulo="Matriz de Correlação"):
-    """
-    Cria um heatmap de correlação extremamente impactante e visualmente atraente
-    """
     
-    # Escala de cores profissional e impactante
-    colorscale = [
-        [0.0, 'rgb(0, 0, 139)'],        # Azul escuro (correlação -1)
-        [0.25, 'rgb(65, 105, 225)'],     # Azul royal
-        [0.45, 'rgb(135, 206, 250)'],    # Azul claro
-        [0.49, 'rgb(255, 255, 255)'],    # Branco (correlação 0)
-        [0.5, 'rgb(255, 255, 255)'],      # Branco (centro)
-        [0.51, 'rgb(255, 228, 225)'],     # Rosa muito claro
-        [0.6, 'rgb(255, 182, 193)'],      # Rosa claro
-        [0.75, 'rgb(255, 105, 180)'],     # Rosa médio
-        [0.9, 'rgb(220, 20, 60)'],        # Vermelho escuro
-        [1.0, 'rgb(139, 0, 0)']           # Vermelho profundo (correlação 1)
-    ]
-    
-    fig = go.Figure()
-    
-    # Adicionar o heatmap principal
-    fig.add_trace(go.Heatmap(
-        z=df_corr.values,
-        x=df_corr.columns,
-        y=df_corr.index,
-        colorscale=colorscale,
-        zmin=-1,
-        zmax=1,
-        text=df_corr.values.round(3),
-        texttemplate='%{text:.3f}',
-        textfont={"size": 14, "color": "white", "family": "Arial Black"},
-        hovertemplate='<b>%{y} ↔ %{x}</b><br><b>Correlação:</b> %{z:.3f}<br><extra></extra>',
-        colorbar=dict(
-            title="Correlação",
-            titleside="right",
-            titlefont=dict(size=14, color="white"),
-            tickfont=dict(size=12, color="white"),
-            tickvals=[-1, -0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75, 1],
-            ticktext=['-1.0', '-0.75', '-0.5', '-0.25', '0', '0.25', '0.5', '0.75', '1.0'],
-            len=0.8,
-            thickness=25,
-            borderwidth=1,
-            bordercolor='#334155',
-            bgcolor='rgba(30, 41, 59, 0.9)'
-        )
-    ))
-    
-    # Destacar diagonal principal
-    for i in range(len(df_corr)):
-        fig.add_shape(
-            type="circle",
-            x0=i - 0.35,
-            y0=i - 0.35,
-            x1=i + 0.35,
-            y1=i + 0.35,
-            line=dict(color="gold", width=2),
-            fillcolor="rgba(255, 215, 0, 0.2)",
-            layer="above"
-        )
-        
-        fig.add_annotation(
-            x=i,
-            y=i,
-            text=f"<b>{df_corr.iloc[i, i]:.3f}</b>",
-            showarrow=False,
-            font=dict(size=16, color="gold", family="Arial Black"),
-            bgcolor="rgba(0, 0, 0, 0.6)",
-            bordercolor="gold",
-            borderwidth=2,
-            borderpad=4
-        )
-    
-    # Adicionar bordas entre células
-    for i in range(len(df_corr.index)):
-        for j in range(len(df_corr.columns)):
-            fig.add_shape(
-                type="rect",
-                x0=j - 0.5,
-                y0=i - 0.5,
-                x1=j + 0.5,
-                y1=i + 0.5,
-                line=dict(color="rgba(255,255,255,0.15)", width=1),
-                fillcolor="rgba(0,0,0,0)",
-                layer="below"
-            )
-    
-    # Configurar layout
-    fig.update_layout(
-        title=dict(
-            text=f"<b>{titulo}</b>",
-            font=dict(size=24, color="white", family="Arial Black"),
-            x=0.5
-        ),
-        plot_bgcolor='rgba(30, 41, 59, 0.95)',
-        paper_bgcolor='rgba(0, 0, 0, 0)',
-        font=dict(color='white', size=12),
-        height=600,
-        width=700,
-        margin=dict(l=100, r=100, t=100, b=100),
-        xaxis=dict(
-            tickangle=-45,
-            tickfont=dict(size=12, color="white"),
-            gridcolor='#334155',
-            side="bottom"
-        ),
-        yaxis=dict(
-            tickfont=dict(size=12, color="white"),
-            gridcolor='#334155',
-            autorange="reversed"
-        ),
-        shapes=[dict(
-            type="rect",
-            xref="paper",
-            yref="paper",
-            x0=0,
-            y0=0,
-            x1=1,
-            y1=1,
-            line=dict(color="rgba(59, 130, 246, 0.3)", width=2),
-            fillcolor="rgba(0,0,0,0)"
-        )]
-    )
-    
-    return fig
-
-
-def criar_heatmap_circular(df_corr, titulo="Matriz de Correlação Circular"):
-    """Versão com células circulares"""
-    n = len(df_corr)
-    fig = go.Figure()
-    
-    for i, var_y in enumerate(df_corr.index):
-        for j, var_x in enumerate(df_corr.columns):
-            corr_val = df_corr.iloc[i, j]
-            
-            if corr_val >= 0:
-                intensidade = min(1, corr_val)
-                cor = f'rgba(255, {int(99 + (156 * (1-intensidade)))}, 71, {0.5 + intensidade*0.5})'
-            else:
-                intensidade = min(1, abs(corr_val))
-                cor = f'rgba({int(0 + (59 * (1-intensidade)))}, {int(0 + (130 * (1-intensidade)))}, 255, {0.5 + intensidade*0.5})'
-            
-            tamanho = 20 + abs(corr_val) * 30
-            
-            fig.add_trace(go.Scatter(
-                x=[j],
-                y=[i],
-                mode='markers+text',
-                marker=dict(
-                    size=tamanho,
-                    color=cor,
-                    line=dict(color='white', width=2 if abs(corr_val) > 0.7 else 1),
-                    symbol='circle'
-                ),
-                text=[f'{corr_val:.2f}'],
-                textposition="middle center",
-                textfont=dict(size=10 + abs(corr_val) * 8, color='white', family='Arial Black'),
-                showlegend=False,
-                hovertemplate='<b>%{customdata[0]} ↔ %{customdata[1]}</b><br><b>Correlação:</b> %{marker.color}<br><extra></extra>',
-                customdata=[[var_y, var_x]]
-            ))
-    
-    fig.update_layout(
-        title=dict(text=f"<b>{titulo}</b>", font=dict(size=24, color="white"), x=0.5),
-        plot_bgcolor='rgba(30, 41, 59, 0.95)',
-        paper_bgcolor='rgba(0,0,0,0)',
-        height=600,
-        width=700,
-        xaxis=dict(tickvals=list(range(n)), ticktext=df_corr.columns, tickangle=-45, tickfont=dict(color="white")),
-        yaxis=dict(tickvals=list(range(n)), ticktext=df_corr.index, tickfont=dict(color="white"), autorange="reversed")
-    )
-    
-    return fig
-
-
-def criar_heatmap_3d(df_corr, titulo="Matriz de Correlação 3D"):
-    """Versão 3D"""
-    fig = go.Figure(data=go.Surface(
-        z=df_corr.values,
-        x=list(df_corr.columns),
-        y=list(df_corr.index),
-        colorscale=[
-            [0, 'rgb(0, 0, 139)'],
-            [0.25, 'rgb(65, 105, 225)'],
-            [0.5, 'rgb(255, 255, 255)'],
-            [0.75, 'rgb(255, 182, 193)'],
-            [1, 'rgb(139, 0, 0)']
-        ],
-        contours=dict(z=dict(show=True, usecolormap=True, project=dict(z=True))),
-        colorbar=dict(title="Correlação", titlefont=dict(color="white"), tickfont=dict(color="white")),
-        hovertemplate='<b>%{y} ↔ %{x}</b><br><b>Correlação:</b> %{z:.3f}<br><extra></extra>'
-    ))
-    
-    fig.update_layout(
-        title=dict(text=f"<b>{titulo}</b>", font=dict(size=24, color="white"), x=0.5),
-        scene=dict(
-            xaxis=dict(title="", tickfont=dict(color="white")),
-            yaxis=dict(title="", tickfont=dict(color="white")),
-            zaxis=dict(title="Correlação", tickfont=dict(color="white"), range=[-1, 1]),
-            bgcolor='rgba(30, 41, 59, 0.95)'
-        ),
-        paper_bgcolor='rgba(0,0,0,0)',
-        height=600,
-        width=700
-    )
-    
-    return fig
-
-
-def criar_heatmap_com_estrelas(df_corr, titulo="Matriz de Correlação"):
-    """Versão com estrelas"""
-    fig = go.Figure()
-    
-    fig.add_trace(go.Heatmap(
-        z=df_corr.values,
-        x=df_corr.columns,
-        y=df_corr.index,
-        colorscale=[
-            [0, 'rgb(0, 0, 139)'],
-            [0.25, 'rgb(65, 105, 225)'],
-            [0.5, 'rgb(255, 255, 255)'],
-            [0.75, 'rgb(255, 182, 193)'],
-            [1, 'rgb(139, 0, 0)']
-        ],
-        zmin=-1,
-        zmax=1,
-        text=df_corr.values.round(3),
-        texttemplate='%{text:.3f}',
-        textfont={"size": 12},
-        colorbar=dict(title="Correlação", titlefont=dict(color="white"), tickfont=dict(color="white")),
-        hovertemplate='<b>%{y} ↔ %{x}</b><br><b>Correlação:</b> %{z:.3f}<br><extra></extra>'
-    ))
-    
-    # Adicionar estrelas para correlações significativas
-    for i in range(len(df_corr.index)):
-        for j in range(len(df_corr.columns)):
-            corr_val = abs(df_corr.iloc[i, j])
-            if corr_val > 0.7:
-                fig.add_annotation(x=j, y=i, text="⭐", showarrow=False, font=dict(size=16), xshift=15, yshift=10)
-            elif corr_val > 0.5:
-                fig.add_annotation(x=j, y=i, text="✨", showarrow=False, font=dict(size=14), xshift=15, yshift=10)
-    
-    fig.update_layout(
-        title=dict(text=f"<b>{titulo}</b>", font=dict(size=24, color="white"), x=0.5),
-        plot_bgcolor='rgba(30, 41, 59, 0.95)',
-        paper_bgcolor='rgba(0,0,0,0)',
-        height=600,
-        width=700,
-        xaxis=dict(tickangle=-45, tickfont=dict(color="white")),
-        yaxis=dict(tickfont=dict(color="white"), autorange="reversed")
-    )
-    
-    return fig
-
-    
-    # Calcular média móvel (5 pontos)
     media_movevel = df[variavel].rolling(window=5, min_periods=1).mean()
-    
-    # Calcular limiar de 80%
     valor_maximo = df[variavel].max()
     limiar_80 = valor_maximo * 0.8
     
-    # Identificar pontos acima e abaixo do limiar
     acima_limiar = df[variavel] > limiar_80
     abaixo_limiar = df[variavel] <= limiar_80
     
-    # Criar área sombreada para valores acima do limiar (vermelho translúcido)
     fig.add_hrect(
         y0=limiar_80,
-        y1=valor_maximo * 1.05,  # Um pouco acima do máximo
-        fillcolor="rgba(239, 68, 68, 0.15)",  # Vermelho translúcido
+        y1=valor_maximo * 1.05,
+        fillcolor="rgba(239, 68, 68, 0.15)",
         line_width=0,
         layer="below",
         name=f"{t['above_threshold']}"
     )
     
-    # Criar área sombreada para valores abaixo do limiar (azul translúcido)
     fig.add_hrect(
         y0=0,
         y1=limiar_80,
-        fillcolor="rgba(59, 130, 246, 0.1)",  # Azul translúcido
+        fillcolor="rgba(59, 130, 246, 0.1)",
         line_width=0,
         layer="below",
         name=f"{t['below_threshold']}"
     )
     
-    # Adicionar linha do limiar (vermelha sólida)
     fig.add_hline(
         y=limiar_80,
         line_dash="solid",
@@ -1262,11 +995,9 @@ def criar_heatmap_com_estrelas(df_corr, titulo="Matriz de Correlação"):
         annotation_font=dict(color="white", size=11)
     )
     
-    # Separar dados acima e abaixo do limiar para colorir os pontos
     df_acima = df[acima_limiar].copy()
     df_abaixo = df[abaixo_limiar].copy()
     
-    # Adicionar pontos acima do limiar (vermelhos)
     if not df_acima.empty:
         fig.add_trace(go.Scatter(
             x=df_acima['Minuto'],
@@ -1283,7 +1014,6 @@ def criar_heatmap_com_estrelas(df_corr, titulo="Matriz de Correlação"):
                           '<b>Valor:</b> %{y:.2f} (ACIMA DO LIMIAR)<extra></extra>'
         ))
     
-    # Adicionar pontos abaixo do limiar (azuis)
     if not df_abaixo.empty:
         fig.add_trace(go.Scatter(
             x=df_abaixo['Minuto'],
@@ -1300,7 +1030,6 @@ def criar_heatmap_com_estrelas(df_corr, titulo="Matriz de Correlação"):
                           '<b>Valor:</b> %{y:.2f}<extra></extra>'
         ))
     
-    # Linha de média móvel
     fig.add_trace(go.Scatter(
         x=df['Minuto'],
         y=media_movevel,
@@ -1309,7 +1038,6 @@ def criar_heatmap_com_estrelas(df_corr, titulo="Matriz de Correlação"):
         line=dict(color='#f59e0b', width=2, dash='dot')
     ))
     
-    # Linhas de referência adicionais
     media = df[variavel].mean()
     desvio = df[variavel].std()
     
@@ -1359,7 +1087,6 @@ def criar_tabela_destaque(df, colunas_destaque):
     """Tabela com células destacadas baseado em valores"""
     styled_df = df.style
     
-    # Aplicar gradiente nas colunas numéricas
     for col in colunas_destaque:
         if col in df.select_dtypes(include=[np.number]).columns:
             styled_df = styled_df.background_gradient(
@@ -1367,7 +1094,6 @@ def criar_tabela_destaque(df, colunas_destaque):
                 cmap='viridis'
             )
     
-    # Destacar linha do melhor atleta (maior média)
     if 'Média' in df.columns:
         def highlight_max_row(row):
             if row.name == df['Média'].idxmax():
@@ -1438,7 +1164,6 @@ def sistema_anotacoes(t):
                     })
                     st.rerun()
         
-        # Listar anotações
         for i, anotacao in enumerate(reversed(st.session_state.anotacoes)):
             st.markdown(f"""
             <div class="note-card">
@@ -1469,7 +1194,6 @@ def time_range_selector(t):
         with col3:
             data_fim = st.date_input("Data final", key="data_fim")
     else:
-        # Simulação - em um caso real, você usaria datas reais dos dados
         data_fim = datetime.now()
         if periodo == "Hoje":
             data_inicio = data_fim
@@ -1483,7 +1207,7 @@ def time_range_selector(t):
     return data_inicio, data_fim
 
 # ============================================================================
-# FUNÇÕES CORRIGIDAS PARA TIMELINE
+# FUNÇÕES PARA TIMELINE
 # ============================================================================
 
 def atualizar_modo_timeline():
@@ -1497,7 +1221,6 @@ def atualizar_modo_timeline():
 def criar_timeline_multipla(df, variavel, periodos, t):
     """Cria múltiplos gráficos de timeline, um para cada período"""
     
-    # Criar subplots com n linhas (um por período)
     n_periodos = len(periodos)
     fig = make_subplots(
         rows=n_periodos, 
@@ -1513,11 +1236,9 @@ def criar_timeline_multipla(df, variavel, periodos, t):
         if df_periodo.empty:
             continue
         
-        # Calcular valores para este período
         valor_maximo = df_periodo[variavel].max()
         limiar_80 = valor_maximo * 0.8
         
-        # Adicionar linha de evolução
         fig.add_trace(
             go.Scatter(
                 x=df_periodo['Minuto'],
@@ -1531,7 +1252,6 @@ def criar_timeline_multipla(df, variavel, periodos, t):
             row=i, col=1
         )
         
-        # Adicionar linha do limiar 80%
         fig.add_hline(
             y=limiar_80,
             line_dash="dash",
@@ -1540,7 +1260,6 @@ def criar_timeline_multipla(df, variavel, periodos, t):
             row=i, col=1
         )
         
-        # Adicionar média
         media_periodo = df_periodo[variavel].mean()
         fig.add_hline(
             y=media_periodo,
@@ -1550,7 +1269,6 @@ def criar_timeline_multipla(df, variavel, periodos, t):
             row=i, col=1
         )
         
-        # Configurar eixos
         fig.update_xaxes(
             title_text="Minuto" if i == n_periodos else "",
             gridcolor='#334155',
@@ -1566,7 +1284,6 @@ def criar_timeline_multipla(df, variavel, periodos, t):
             row=i, col=1
         )
     
-    # Configurar layout geral
     fig.update_layout(
         title=f"Evolução Temporal por Período - {variavel}",
         plot_bgcolor='rgba(30,41,59,0.8)',
@@ -1582,10 +1299,8 @@ def criar_timeline_multipla(df, variavel, periodos, t):
 def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
     """Cria uma única timeline com seletor de período"""
     
-    # Seletor de período
     opcoes_periodo = ['Todos os períodos'] + list(periodos_selecionados)
     
-    # CORREÇÃO: Usar session state para manter o valor selecionado
     indice_atual = 0
     if st.session_state.periodo_timeline in opcoes_periodo:
         indice_atual = opcoes_periodo.index(st.session_state.periodo_timeline)
@@ -1597,12 +1312,10 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
         key="periodo_timeline_select"
     )
     
-    # Atualizar session state
     if periodo_escolhido != st.session_state.periodo_timeline:
         st.session_state.periodo_timeline = periodo_escolhido
         st.rerun()
     
-    # Filtrar dados conforme seleção
     if periodo_escolhido == 'Todos os períodos':
         df_plot = df.copy()
         titulo = f"Evolução Temporal - {variavel} (Todos os períodos)"
@@ -1610,13 +1323,10 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
         df_plot = df[df['Período'] == periodo_escolhido].copy()
         titulo = f"Evolução Temporal - {variavel} (Período: {periodo_escolhido})"
     
-    # Ordenar por minuto
     df_plot = df_plot.sort_values('Minuto').reset_index(drop=True)
     
-    # Criar figura
     fig = go.Figure()
     
-    # Se for todos os períodos, colorir por período
     if periodo_escolhido == 'Todos os períodos':
         periodos_unicos = df_plot['Período'].unique()
         cores = px.colors.qualitative.Set2
@@ -1638,13 +1348,11 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
                 text=[periodo] * len(df_periodo)
             ))
     else:
-        # Período único - adicionar todos os recursos visuais
         valor_maximo = df_plot[variavel].max()
         limiar_80 = valor_maximo * 0.8
         media = df_plot[variavel].mean()
         desvio = df_plot[variavel].std()
         
-        # Áreas sombreadas
         fig.add_hrect(
             y0=limiar_80,
             y1=valor_maximo * 1.05,
@@ -1663,7 +1371,6 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
             name="Abaixo do limiar"
         )
         
-        # Linha do limiar
         fig.add_hline(
             y=limiar_80,
             line_dash="solid",
@@ -1673,7 +1380,6 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
             annotation_position="top left"
         )
         
-        # Linha da média
         fig.add_hline(
             y=media,
             line_dash="dash",
@@ -1682,7 +1388,6 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
             annotation_position="top left"
         )
         
-        # Área de ±1 DP
         fig.add_hrect(
             y0=media-desvio,
             y1=media+desvio,
@@ -1692,7 +1397,6 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
             annotation_text="±1 DP"
         )
         
-        # Dados principais
         fig.add_trace(go.Scatter(
             x=df_plot['Minuto'],
             y=df_plot[variavel],
@@ -1704,7 +1408,6 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
                           '<b>Valor:</b> %{y:.2f}<extra></extra>'
         ))
         
-        # Média móvel
         media_movevel = df_plot[variavel].rolling(window=5, min_periods=1).mean()
         fig.add_trace(go.Scatter(
             x=df_plot['Minuto'],
@@ -1714,7 +1417,6 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
             line=dict(color='#f59e0b', width=2, dash='dot')
         ))
     
-    # Configurar layout
     fig.update_layout(
         title=titulo,
         xaxis_title="Minuto",
@@ -1733,6 +1435,313 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
     
     fig.update_xaxes(gridcolor='#334155', tickfont=dict(color='white'), tickangle=-45)
     fig.update_yaxes(gridcolor='#334155', tickfont=dict(color='white'))
+    
+    return fig
+
+# ============================================================================
+# FUNÇÕES PARA HEATMAP DE CORRELAÇÃO MELHORADO
+# ============================================================================
+
+def criar_heatmap_correlacao_impactante(df_corr, titulo="Matriz de Correlação"):
+    """
+    Cria um heatmap de correlação extremamente impactante e visualmente atraente
+    """
+    
+    colorscale = [
+        [0.0, 'rgb(0, 0, 139)'],
+        [0.25, 'rgb(65, 105, 225)'],
+        [0.45, 'rgb(135, 206, 250)'],
+        [0.49, 'rgb(255, 255, 255)'],
+        [0.5, 'rgb(255, 255, 255)'],
+        [0.51, 'rgb(255, 228, 225)'],
+        [0.6, 'rgb(255, 182, 193)'],
+        [0.75, 'rgb(255, 105, 180)'],
+        [0.9, 'rgb(220, 20, 60)'],
+        [1.0, 'rgb(139, 0, 0)']
+    ]
+    
+    fig = go.Figure()
+    
+    fig.add_trace(go.Heatmap(
+        z=df_corr.values,
+        x=df_corr.columns,
+        y=df_corr.index,
+        colorscale=colorscale,
+        zmin=-1,
+        zmax=1,
+        text=df_corr.values.round(3),
+        texttemplate='%{text:.3f}',
+        textfont={"size": 14, "color": "white", "family": "Arial Black"},
+        hovertemplate='<b>%{y} ↔ %{x}</b><br><b>Correlação:</b> %{z:.3f}<br><extra></extra>',
+        colorbar=dict(
+            title="Correlação",
+            titleside="right",
+            titlefont=dict(size=14, color="white"),
+            tickfont=dict(size=12, color="white"),
+            tickvals=[-1, -0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75, 1],
+            ticktext=['-1.0', '-0.75', '-0.5', '-0.25', '0', '0.25', '0.5', '0.75', '1.0'],
+            len=0.8,
+            thickness=25,
+            borderwidth=1,
+            bordercolor='#334155',
+            bgcolor='rgba(30, 41, 59, 0.9)'
+        )
+    ))
+    
+    for i in range(len(df_corr)):
+        fig.add_shape(
+            type="circle",
+            x0=i - 0.35,
+            y0=i - 0.35,
+            x1=i + 0.35,
+            y1=i + 0.35,
+            line=dict(color="gold", width=2),
+            fillcolor="rgba(255, 215, 0, 0.2)",
+            layer="above"
+        )
+        
+        fig.add_annotation(
+            x=i,
+            y=i,
+            text=f"<b>{df_corr.iloc[i, i]:.3f}</b>",
+            showarrow=False,
+            font=dict(size=16, color="gold", family="Arial Black"),
+            bgcolor="rgba(0, 0, 0, 0.6)",
+            bordercolor="gold",
+            borderwidth=2,
+            borderpad=4
+        )
+    
+    for i in range(len(df_corr.index)):
+        for j in range(len(df_corr.columns)):
+            fig.add_shape(
+                type="rect",
+                x0=j - 0.5,
+                y0=i - 0.5,
+                x1=j + 0.5,
+                y1=i + 0.5,
+                line=dict(color="rgba(255,255,255,0.15)", width=1),
+                fillcolor="rgba(0,0,0,0)",
+                layer="below"
+            )
+    
+    fig.update_layout(
+        title=dict(
+            text=f"<b>{titulo}</b>",
+            font=dict(size=24, color="white", family="Arial Black"),
+            x=0.5,
+            xanchor="center"
+        ),
+        plot_bgcolor='rgba(30, 41, 59, 0.95)',
+        paper_bgcolor='rgba(0, 0, 0, 0)',
+        font=dict(color='white', size=12, family="Arial"),
+        height=600,
+        width=700,
+        margin=dict(l=100, r=100, t=100, b=100),
+        xaxis=dict(
+            title="",
+            tickangle=-45,
+            tickfont=dict(size=12, color="white", family="Arial"),
+            gridcolor='#334155',
+            showgrid=True,
+            side="bottom"
+        ),
+        yaxis=dict(
+            title="",
+            tickfont=dict(size=12, color="white", family="Arial"),
+            gridcolor='#334155',
+            showgrid=True,
+            autorange="reversed"
+        )
+    )
+    
+    fig.add_shape(
+        type="rect",
+        xref="paper",
+        yref="paper",
+        x0=0,
+        y0=0,
+        x1=1,
+        y1=1,
+        line=dict(color="rgba(59, 130, 246, 0.3)", width=2),
+        fillcolor="rgba(0,0,0,0)",
+        layer="below"
+    )
+    
+    return fig
+
+def criar_heatmap_circular(df_corr, titulo="Matriz de Correlação Circular"):
+    """Versão com células circulares"""
+    n = len(df_corr)
+    fig = go.Figure()
+    
+    for i, var_y in enumerate(df_corr.index):
+        for j, var_x in enumerate(df_corr.columns):
+            corr_val = df_corr.iloc[i, j]
+            
+            if corr_val >= 0:
+                intensidade = min(1, corr_val)
+                cor = f'rgba(255, {int(99 + (156 * (1-intensidade)))}, 71, {0.5 + intensidade*0.5})'
+            else:
+                intensidade = min(1, abs(corr_val))
+                cor = f'rgba({int(0 + (59 * (1-intensidade)))}, {int(0 + (130 * (1-intensidade)))}, 255, {0.5 + intensidade*0.5})'
+            
+            tamanho = 20 + abs(corr_val) * 30
+            
+            fig.add_trace(go.Scatter(
+                x=[j],
+                y=[i],
+                mode='markers+text',
+                marker=dict(
+                    size=tamanho,
+                    color=cor,
+                    line=dict(color='white', width=2 if abs(corr_val) > 0.7 else 1),
+                    symbol='circle'
+                ),
+                text=[f'{corr_val:.2f}'],
+                textposition="middle center",
+                textfont=dict(size=10 + abs(corr_val) * 8, color='white', family='Arial Black'),
+                showlegend=False,
+                hovertemplate='<b>%{customdata[0]} ↔ %{customdata[1]}</b><br><b>Correlação:</b> %{marker.color}<br><extra></extra>',
+                customdata=[[var_y, var_x]]
+            ))
+    
+    fig.update_layout(
+        title=dict(text=f"<b>{titulo}</b>", font=dict(size=24, color="white"), x=0.5),
+        plot_bgcolor='rgba(30, 41, 59, 0.95)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        height=600,
+        width=700,
+        xaxis=dict(
+            tickvals=list(range(n)), 
+            ticktext=df_corr.columns, 
+            tickangle=-45, 
+            tickfont=dict(color="white"),
+            gridcolor='#334155'
+        ),
+        yaxis=dict(
+            tickvals=list(range(n)), 
+            ticktext=df_corr.index, 
+            tickfont=dict(color="white"), 
+            autorange="reversed",
+            gridcolor='#334155'
+        )
+    )
+    
+    return fig
+
+def criar_heatmap_3d(df_corr, titulo="Matriz de Correlação 3D"):
+    """Versão 3D"""
+    fig = go.Figure(data=go.Surface(
+        z=df_corr.values,
+        x=list(df_corr.columns),
+        y=list(df_corr.index),
+        colorscale=[
+            [0, 'rgb(0, 0, 139)'],
+            [0.25, 'rgb(65, 105, 225)'],
+            [0.5, 'rgb(255, 255, 255)'],
+            [0.75, 'rgb(255, 182, 193)'],
+            [1, 'rgb(139, 0, 0)']
+        ],
+        contours=dict(z=dict(show=True, usecolormap=True, project=dict(z=True))),
+        colorbar=dict(
+            title="Correlação", 
+            titlefont=dict(size=14, color="white"), 
+            tickfont=dict(size=12, color="white")
+        ),
+        hovertemplate='<b>%{y} ↔ %{x}</b><br><b>Correlação:</b> %{z:.3f}<br><extra></extra>'
+    ))
+    
+    fig.update_layout(
+        title=dict(text=f"<b>{titulo}</b>", font=dict(size=24, color="white"), x=0.5),
+        scene=dict(
+            xaxis=dict(title="", tickfont=dict(color="white")),
+            yaxis=dict(title="", tickfont=dict(color="white")),
+            zaxis=dict(title="Correlação", tickfont=dict(color="white"), range=[-1, 1]),
+            bgcolor='rgba(30, 41, 59, 0.95)'
+        ),
+        paper_bgcolor='rgba(0,0,0,0)',
+        height=600,
+        width=700,
+        font=dict(color='white')
+    )
+    
+    return fig
+
+def criar_heatmap_com_estrelas(df_corr, titulo="Matriz de Correlação"):
+    """Versão com estrelas"""
+    fig = go.Figure()
+    
+    fig.add_trace(go.Heatmap(
+        z=df_corr.values,
+        x=df_corr.columns,
+        y=df_corr.index,
+        colorscale=[
+            [0, 'rgb(0, 0, 139)'],
+            [0.25, 'rgb(65, 105, 225)'],
+            [0.5, 'rgb(255, 255, 255)'],
+            [0.75, 'rgb(255, 182, 193)'],
+            [1, 'rgb(139, 0, 0)']
+        ],
+        zmin=-1,
+        zmax=1,
+        text=df_corr.values.round(3),
+        texttemplate='%{text:.3f}',
+        textfont={"size": 12, "color": "white"},
+        colorbar=dict(
+            title="Correlação",
+            titleside="right",
+            titlefont=dict(size=14, color="white"),
+            tickfont=dict(size=12, color="white")
+        ),
+        hovertemplate='<b>%{y} ↔ %{x}</b><br><b>Correlação:</b> %{z:.3f}<br><extra></extra>'
+    ))
+    
+    for i in range(len(df_corr.index)):
+        for j in range(len(df_corr.columns)):
+            corr_val = abs(df_corr.iloc[i, j])
+            if corr_val > 0.7:
+                fig.add_annotation(
+                    x=j, 
+                    y=i, 
+                    text="⭐", 
+                    showarrow=False, 
+                    font=dict(size=16), 
+                    xshift=15, 
+                    yshift=10
+                )
+            elif corr_val > 0.5:
+                fig.add_annotation(
+                    x=j, 
+                    y=i, 
+                    text="✨", 
+                    showarrow=False, 
+                    font=dict(size=14), 
+                    xshift=15, 
+                    yshift=10
+                )
+    
+    fig.update_layout(
+        title=dict(
+            text=f"<b>{titulo}</b>", 
+            font=dict(size=24, color="white"), 
+            x=0.5
+        ),
+        plot_bgcolor='rgba(30, 41, 59, 0.95)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        height=600,
+        width=700,
+        xaxis=dict(
+            tickangle=-45, 
+            tickfont=dict(color="white"),
+            gridcolor='#334155'
+        ),
+        yaxis=dict(
+            tickfont=dict(color="white"), 
+            autorange="reversed",
+            gridcolor='#334155'
+        )
+    )
     
     return fig
 
@@ -1789,7 +1798,6 @@ with st.sidebar:
         key="file_uploader"
     )
     
-    # Processar upload
     if upload_files and len(upload_files) > 0 and not st.session_state.upload_concluido:
         with st.spinner('🔄 Processando...'):
             time.sleep(0.5)
@@ -1967,33 +1975,27 @@ with st.sidebar:
                     st.session_state.dados_processados = False
                     st.rerun()
         
-        # SELEÇÃO DE ATLETAS
         st.markdown("---")
         st.markdown(f"<h2 class='sidebar-title'>👤 {t['athlete']}</h2>", unsafe_allow_html=True)
         
-        # Filtrar dataframe baseado nas seleções atuais
         df_temp = st.session_state.df_completo.copy()
         if st.session_state.posicoes_selecionadas:
             df_temp = df_temp[df_temp['Posição'].isin(st.session_state.posicoes_selecionadas)]
         if st.session_state.periodos_selecionados:
             df_temp = df_temp[df_temp['Período'].isin(st.session_state.periodos_selecionados)]
         
-        # Obter lista de atletas disponíveis com os filtros atuais
         atletas_disponiveis = sorted(df_temp['Nome'].unique().tolist()) if not df_temp.empty else []
         
         if not atletas_disponiveis:
             st.warning("⚠️ Nenhum atleta disponível com os filtros atuais")
             st.session_state.atletas_selecionados = []
         else:
-            # Filtrar atletas selecionados para manter apenas os que ainda estão disponíveis
             atletas_selecionados_validos = [a for a in st.session_state.atletas_selecionados if a in atletas_disponiveis]
             
-            # Se não houver atletas válidos, selecionar o primeiro disponível
             if not atletas_selecionados_validos:
                 atletas_selecionados_validos = [atletas_disponiveis[0]]
                 st.session_state.atletas_selecionados = atletas_selecionados_validos
             
-            # Checkbox "Selecionar todos"
             selecionar_todos = st.checkbox(
                 f"Selecionar todos os {t['athlete'].lower()}s" if st.session_state.idioma == 'pt' else
                 f"Select all {t['athlete'].lower()}s" if st.session_state.idioma == 'en' else
@@ -2016,12 +2018,10 @@ with st.sidebar:
                     key="atletas_selector"
                 )
                 
-                # Garantir que sempre haja pelo menos um atleta selecionado
                 if atletas_sel != st.session_state.atletas_selecionados:
                     if len(atletas_sel) > 0:
                         st.session_state.atletas_selecionados = atletas_sel
                     else:
-                        # Se o usuário desmarcou todos, manter pelo menos o primeiro disponível
                         st.session_state.atletas_selecionados = [atletas_disponiveis[0]]
                     st.session_state.dados_processados = False
                     st.rerun()
@@ -2029,7 +2029,6 @@ with st.sidebar:
         st.markdown("---")
         st.markdown(f"<h2 class='sidebar-title'>⚙️ {t['config']}</h2>", unsafe_allow_html=True)
         
-        # Configurações
         n_classes = st.slider(f"{t['config']}:", 3, 20, st.session_state.n_classes, key="classes_slider")
         if n_classes != st.session_state.n_classes:
             st.session_state.n_classes = n_classes
@@ -2079,26 +2078,19 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
             st.session_state.dados_processados = True
             t = translations[st.session_state.idioma]
             
-            # ====================================================================
-            # DASHBOARD EXECUTIVO - VISÃO GERAL
-            # ====================================================================
             st.markdown(f"<h2>📊 {t['title'].split('Pro')[0] if 'Pro' in t['title'] else 'Visão Geral'}</h2>", unsafe_allow_html=True)
             
-            # Calcular métricas para os cards executivos
             media_global = df_filtrado[variavel_analise].mean()
             media_posicoes = df_filtrado.groupby('Posição')[variavel_analise].mean()
             melhor_posicao = media_posicoes.idxmax() if not media_posicoes.empty else "N/A"
             pior_posicao = media_posicoes.idxmin() if not media_posicoes.empty else "N/A"
             
-            # Layout responsivo
             if n_colunas == 1:
-                # Mobile - uma coluna
                 executive_card(t['mean'], f"{media_global:.2f}", 5.2, "📊")
                 executive_card("Melhor Posição", melhor_posicao, 8.1, "🏆", "#10b981")
                 executive_card("Pior Posição", pior_posicao, -3.4, "📉", "#ef4444")
                 executive_card(t['observations'], len(df_filtrado), 0, "👥")
             else:
-                # Desktop - 4 colunas
                 cols_exec = st.columns(4)
                 with cols_exec[0]:
                     executive_card(t['mean'], f"{media_global:.2f}", 5.2, "📊")
@@ -2111,16 +2103,10 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
             
             st.markdown("---")
             
-            # ====================================================================
-            # SELEÇÃO DE PERÍODO
-            # ====================================================================
             data_inicio, data_fim = time_range_selector(t)
             
             st.markdown("---")
             
-            # ====================================================================
-            # ABAS PRINCIPAIS
-            # ====================================================================
             tab_titles = [
                 t['tab_distribution'], 
                 t['tab_temporal'], 
@@ -2131,7 +2117,6 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
             
             tabs = st.tabs(tab_titles)
             
-            # ABA 1: DISTRIBUIÇÃO
             with tabs[0]:
                 st.markdown(f"<h3>{t['tab_distribution']}</h3>", unsafe_allow_html=True)
                 
@@ -2264,13 +2249,11 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     hide_index=True
                 )
             
-            # ABA 2: ESTATÍSTICAS & TEMPORAL (CORRIGIDA)
             with tabs[1]:
                 st.markdown(f"<h3>{t['tab_temporal']}</h3>", unsafe_allow_html=True)
                 
                 df_tempo = df_filtrado.sort_values('Minuto').reset_index(drop=True)
                 
-                # Cards de métricas temporais
                 valor_maximo = df_tempo[variavel_analise].max()
                 valor_minimo = df_tempo[variavel_analise].min()
                 minuto_maximo = extrair_minuto_do_extremo(df_tempo, variavel_analise, 'Minuto', 'max')
@@ -2296,7 +2279,6 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 st.markdown("---")
                 st.markdown(f"<h4>{t['intensity_zones']}</h4>", unsafe_allow_html=True)
                 
-                # Zonas de intensidade
                 opcoes = [t['percentiles'], t['based_on_max']]
                 idx_atual = 0 if st.session_state.metodo_zona == 'percentis' else 1
                 
@@ -2308,7 +2290,6 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     on_change=atualizar_metodo_zona
                 )
                 
-                # Usar o valor do session state (atualizado pelo callback)
                 zonas = criar_zonas_intensidade(df_filtrado, variavel_analise, st.session_state.metodo_zona)
                 
                 if zonas:
@@ -2332,13 +2313,8 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                             """, unsafe_allow_html=True)
                 
                 st.markdown("---")
-                
-                # ================================================================
-                # TIMELINE CORRIGIDA COM SELEÇÃO DINÂMICA
-                # ================================================================
                 st.markdown(f"<h4>{t['tab_temporal']}</h4>", unsafe_allow_html=True)
                 
-                # Opções de visualização
                 col_op1, col_op2 = st.columns([1, 3])
                 
                 with col_op1:
@@ -2356,14 +2332,12 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 
                 with col_op2:
                     if st.session_state.modo_timeline == 'unico':
-                        # Gráfico único com seletor de período
                         if len(periodos_selecionados) > 0:
                             fig_tempo = criar_timeline_unica_com_seletor(df_filtrado, variavel_analise, periodos_selecionados, t)
                             st.plotly_chart(fig_tempo, use_container_width=True)
                         else:
                             st.warning("Nenhum período selecionado")
                     else:
-                        # Múltiplos gráficos (um por período)
                         if len(periodos_selecionados) > 1:
                             fig_multipla = criar_timeline_multipla(df_filtrado, variavel_analise, periodos_selecionados, t)
                             st.plotly_chart(fig_multipla, use_container_width=True)
@@ -2580,7 +2554,6 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 if resumo:
                     df_resumo = pd.DataFrame(resumo)
                     
-                    # Aplicar estilo destacado
                     styled_df = criar_tabela_destaque(df_resumo, ['Média', f'Máx {variavel_analise}', f'Mín {variavel_analise}'])
                     
                     st.dataframe(
@@ -2596,10 +2569,8 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                         hide_index=True
                     )
                     
-                    # Adicionar explicação do IQR ao final da tabela
                     st.caption(f"📌 {t['iqr_title']}: {t['iqr_explanation']}")
             
-            # ABA 3: BOXPLOTS
             with tabs[2]:
                 st.markdown(f"<h3>{t['tab_boxplots']}</h3>", unsafe_allow_html=True)
                 
@@ -2636,7 +2607,6 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 
                 st.markdown(f"<h4>👥 {t['athlete']}</h4>", unsafe_allow_html=True)
                 
-                # Mostrar todos os atletas, com altura dinâmica
                 fig_box_atl = go.Figure()
                 for atleta in atletas_selecionados:
                     dados_atl = df_filtrado[df_filtrado['Nome'] == atleta][variavel_analise]
@@ -2729,15 +2699,12 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                             hide_index=True
                         )
                     
-                    # Adicionar explicação do IQR ao final
                     st.caption(f"📌 {t['iqr_title']}: {t['iqr_explanation']}")
             
-                        # ABA 4: CORRELAÇÕES (COM HEATMAPS IMPACTANTES)
             with tabs[3]:
                 st.markdown(f"<h3>{t['tab_correlation']}</h3>", unsafe_allow_html=True)
                 
                 if len(st.session_state.variaveis_quantitativas) > 1:
-                    # Adicionar seletor de estilo de visualização
                     st.markdown("### 🎨 Estilo de Visualização")
                     
                     col_style1, col_style2 = st.columns([1, 3])
@@ -2773,7 +2740,6 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     if len(vars_corr) >= 2:
                         df_corr = df_filtrado[vars_corr].corr()
                         
-                        # Aplicar o estilo selecionado
                         if estilo_heatmap == "Impactante":
                             fig_corr = criar_heatmap_correlacao_impactante(df_corr, t['tab_correlation'])
                         elif estilo_heatmap == "Circular":
@@ -2783,14 +2749,12 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                         elif estilo_heatmap == "Com Estrelas":
                             fig_corr = criar_heatmap_com_estrelas(df_corr, t['tab_correlation'])
                         
-                        # Atualizar eixos
                         if estilo_heatmap != "3D":
                             fig_corr.update_xaxes(gridcolor='#334155', tickfont=dict(color='white'))
                             fig_corr.update_yaxes(gridcolor='#334155', tickfont=dict(color='white'))
                         
                         st.plotly_chart(fig_corr, use_container_width=True)
                         
-                        # Legenda explicativa
                         with st.expander("📊 Entendendo as Correlações"):
                             col_leg1, col_leg2, col_leg3 = st.columns(3)
                             
@@ -2923,13 +2887,10 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 else:
                     st.info("ℹ️ " + ("São necessárias pelo menos 2 variáveis" if st.session_state.idioma == 'pt' else 
                                    "At least 2 variables are needed"))
-                    
             
-            # ABA 5: EXECUTIVO
             with tabs[4]:
                 st.markdown(f"<h3>{t['tab_executive']}</h3>", unsafe_allow_html=True)
                 
-                # Comparação de atletas
                 st.markdown("### 🆚 Comparação de Atletas")
                 if len(atletas_selecionados) >= 2:
                     col_atl1, col_atl2 = st.columns(2)
@@ -2965,16 +2926,13 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 
                 st.markdown("---")
                 
-                # Sistema de anotações
                 sistema_anotacoes(t)
             
-            # Dados brutos
             with st.expander("📋 " + ("Visualizar dados brutos filtrados" if st.session_state.idioma == 'pt' else 
                                      "View filtered raw data" if st.session_state.idioma == 'en' else
                                      "Ver datos brutos filtrados")):
                 st.dataframe(df_filtrado, use_container_width=True)
     
-    # Reset do botão após processamento
     st.session_state.processar_click = False
 
 elif st.session_state.df_completo is None:
