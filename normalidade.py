@@ -959,6 +959,266 @@ def criar_zonas_intensidade(df, variavel, metodo='percentis'):
 def criar_timeline_profissional(df, variavel, t):
     """Timeline com áreas sombreadas para valores acima/abaixo do limiar"""
     fig = go.Figure()
+
+# ============================================================================
+# FUNÇÕES PARA HEATMAP DE CORRELAÇÃO MELHORADO
+# ============================================================================
+
+def criar_heatmap_correlacao_impactante(df_corr, titulo="Matriz de Correlação"):
+    """
+    Cria um heatmap de correlação extremamente impactante e visualmente atraente
+    """
+    
+    # Escala de cores profissional e impactante
+    colorscale = [
+        [0.0, 'rgb(0, 0, 139)'],        # Azul escuro (correlação -1)
+        [0.25, 'rgb(65, 105, 225)'],     # Azul royal
+        [0.45, 'rgb(135, 206, 250)'],    # Azul claro
+        [0.49, 'rgb(255, 255, 255)'],    # Branco (correlação 0)
+        [0.5, 'rgb(255, 255, 255)'],      # Branco (centro)
+        [0.51, 'rgb(255, 228, 225)'],     # Rosa muito claro
+        [0.6, 'rgb(255, 182, 193)'],      # Rosa claro
+        [0.75, 'rgb(255, 105, 180)'],     # Rosa médio
+        [0.9, 'rgb(220, 20, 60)'],        # Vermelho escuro
+        [1.0, 'rgb(139, 0, 0)']           # Vermelho profundo (correlação 1)
+    ]
+    
+    fig = go.Figure()
+    
+    # Adicionar o heatmap principal
+    fig.add_trace(go.Heatmap(
+        z=df_corr.values,
+        x=df_corr.columns,
+        y=df_corr.index,
+        colorscale=colorscale,
+        zmin=-1,
+        zmax=1,
+        text=df_corr.values.round(3),
+        texttemplate='%{text:.3f}',
+        textfont={"size": 14, "color": "white", "family": "Arial Black"},
+        hovertemplate='<b>%{y} ↔ %{x}</b><br><b>Correlação:</b> %{z:.3f}<br><extra></extra>',
+        colorbar=dict(
+            title="Correlação",
+            titleside="right",
+            titlefont=dict(size=14, color="white"),
+            tickfont=dict(size=12, color="white"),
+            tickvals=[-1, -0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75, 1],
+            ticktext=['-1.0', '-0.75', '-0.5', '-0.25', '0', '0.25', '0.5', '0.75', '1.0'],
+            len=0.8,
+            thickness=25,
+            borderwidth=1,
+            bordercolor='#334155',
+            bgcolor='rgba(30, 41, 59, 0.9)'
+        )
+    ))
+    
+    # Destacar diagonal principal
+    for i in range(len(df_corr)):
+        fig.add_shape(
+            type="circle",
+            x0=i - 0.35,
+            y0=i - 0.35,
+            x1=i + 0.35,
+            y1=i + 0.35,
+            line=dict(color="gold", width=2),
+            fillcolor="rgba(255, 215, 0, 0.2)",
+            layer="above"
+        )
+        
+        fig.add_annotation(
+            x=i,
+            y=i,
+            text=f"<b>{df_corr.iloc[i, i]:.3f}</b>",
+            showarrow=False,
+            font=dict(size=16, color="gold", family="Arial Black"),
+            bgcolor="rgba(0, 0, 0, 0.6)",
+            bordercolor="gold",
+            borderwidth=2,
+            borderpad=4
+        )
+    
+    # Adicionar bordas entre células
+    for i in range(len(df_corr.index)):
+        for j in range(len(df_corr.columns)):
+            fig.add_shape(
+                type="rect",
+                x0=j - 0.5,
+                y0=i - 0.5,
+                x1=j + 0.5,
+                y1=i + 0.5,
+                line=dict(color="rgba(255,255,255,0.15)", width=1),
+                fillcolor="rgba(0,0,0,0)",
+                layer="below"
+            )
+    
+    # Configurar layout
+    fig.update_layout(
+        title=dict(
+            text=f"<b>{titulo}</b>",
+            font=dict(size=24, color="white", family="Arial Black"),
+            x=0.5
+        ),
+        plot_bgcolor='rgba(30, 41, 59, 0.95)',
+        paper_bgcolor='rgba(0, 0, 0, 0)',
+        font=dict(color='white', size=12),
+        height=600,
+        width=700,
+        margin=dict(l=100, r=100, t=100, b=100),
+        xaxis=dict(
+            tickangle=-45,
+            tickfont=dict(size=12, color="white"),
+            gridcolor='#334155',
+            side="bottom"
+        ),
+        yaxis=dict(
+            tickfont=dict(size=12, color="white"),
+            gridcolor='#334155',
+            autorange="reversed"
+        ),
+        shapes=[dict(
+            type="rect",
+            xref="paper",
+            yref="paper",
+            x0=0,
+            y0=0,
+            x1=1,
+            y1=1,
+            line=dict(color="rgba(59, 130, 246, 0.3)", width=2),
+            fillcolor="rgba(0,0,0,0)"
+        )]
+    )
+    
+    return fig
+
+
+def criar_heatmap_circular(df_corr, titulo="Matriz de Correlação Circular"):
+    """Versão com células circulares"""
+    n = len(df_corr)
+    fig = go.Figure()
+    
+    for i, var_y in enumerate(df_corr.index):
+        for j, var_x in enumerate(df_corr.columns):
+            corr_val = df_corr.iloc[i, j]
+            
+            if corr_val >= 0:
+                intensidade = min(1, corr_val)
+                cor = f'rgba(255, {int(99 + (156 * (1-intensidade)))}, 71, {0.5 + intensidade*0.5})'
+            else:
+                intensidade = min(1, abs(corr_val))
+                cor = f'rgba({int(0 + (59 * (1-intensidade)))}, {int(0 + (130 * (1-intensidade)))}, 255, {0.5 + intensidade*0.5})'
+            
+            tamanho = 20 + abs(corr_val) * 30
+            
+            fig.add_trace(go.Scatter(
+                x=[j],
+                y=[i],
+                mode='markers+text',
+                marker=dict(
+                    size=tamanho,
+                    color=cor,
+                    line=dict(color='white', width=2 if abs(corr_val) > 0.7 else 1),
+                    symbol='circle'
+                ),
+                text=[f'{corr_val:.2f}'],
+                textposition="middle center",
+                textfont=dict(size=10 + abs(corr_val) * 8, color='white', family='Arial Black'),
+                showlegend=False,
+                hovertemplate='<b>%{customdata[0]} ↔ %{customdata[1]}</b><br><b>Correlação:</b> %{marker.color}<br><extra></extra>',
+                customdata=[[var_y, var_x]]
+            ))
+    
+    fig.update_layout(
+        title=dict(text=f"<b>{titulo}</b>", font=dict(size=24, color="white"), x=0.5),
+        plot_bgcolor='rgba(30, 41, 59, 0.95)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        height=600,
+        width=700,
+        xaxis=dict(tickvals=list(range(n)), ticktext=df_corr.columns, tickangle=-45, tickfont=dict(color="white")),
+        yaxis=dict(tickvals=list(range(n)), ticktext=df_corr.index, tickfont=dict(color="white"), autorange="reversed")
+    )
+    
+    return fig
+
+
+def criar_heatmap_3d(df_corr, titulo="Matriz de Correlação 3D"):
+    """Versão 3D"""
+    fig = go.Figure(data=go.Surface(
+        z=df_corr.values,
+        x=list(df_corr.columns),
+        y=list(df_corr.index),
+        colorscale=[
+            [0, 'rgb(0, 0, 139)'],
+            [0.25, 'rgb(65, 105, 225)'],
+            [0.5, 'rgb(255, 255, 255)'],
+            [0.75, 'rgb(255, 182, 193)'],
+            [1, 'rgb(139, 0, 0)']
+        ],
+        contours=dict(z=dict(show=True, usecolormap=True, project=dict(z=True))),
+        colorbar=dict(title="Correlação", titlefont=dict(color="white"), tickfont=dict(color="white")),
+        hovertemplate='<b>%{y} ↔ %{x}</b><br><b>Correlação:</b> %{z:.3f}<br><extra></extra>'
+    ))
+    
+    fig.update_layout(
+        title=dict(text=f"<b>{titulo}</b>", font=dict(size=24, color="white"), x=0.5),
+        scene=dict(
+            xaxis=dict(title="", tickfont=dict(color="white")),
+            yaxis=dict(title="", tickfont=dict(color="white")),
+            zaxis=dict(title="Correlação", tickfont=dict(color="white"), range=[-1, 1]),
+            bgcolor='rgba(30, 41, 59, 0.95)'
+        ),
+        paper_bgcolor='rgba(0,0,0,0)',
+        height=600,
+        width=700
+    )
+    
+    return fig
+
+
+def criar_heatmap_com_estrelas(df_corr, titulo="Matriz de Correlação"):
+    """Versão com estrelas"""
+    fig = go.Figure()
+    
+    fig.add_trace(go.Heatmap(
+        z=df_corr.values,
+        x=df_corr.columns,
+        y=df_corr.index,
+        colorscale=[
+            [0, 'rgb(0, 0, 139)'],
+            [0.25, 'rgb(65, 105, 225)'],
+            [0.5, 'rgb(255, 255, 255)'],
+            [0.75, 'rgb(255, 182, 193)'],
+            [1, 'rgb(139, 0, 0)']
+        ],
+        zmin=-1,
+        zmax=1,
+        text=df_corr.values.round(3),
+        texttemplate='%{text:.3f}',
+        textfont={"size": 12},
+        colorbar=dict(title="Correlação", titlefont=dict(color="white"), tickfont=dict(color="white")),
+        hovertemplate='<b>%{y} ↔ %{x}</b><br><b>Correlação:</b> %{z:.3f}<br><extra></extra>'
+    ))
+    
+    # Adicionar estrelas para correlações significativas
+    for i in range(len(df_corr.index)):
+        for j in range(len(df_corr.columns)):
+            corr_val = abs(df_corr.iloc[i, j])
+            if corr_val > 0.7:
+                fig.add_annotation(x=j, y=i, text="⭐", showarrow=False, font=dict(size=16), xshift=15, yshift=10)
+            elif corr_val > 0.5:
+                fig.add_annotation(x=j, y=i, text="✨", showarrow=False, font=dict(size=14), xshift=15, yshift=10)
+    
+    fig.update_layout(
+        title=dict(text=f"<b>{titulo}</b>", font=dict(size=24, color="white"), x=0.5),
+        plot_bgcolor='rgba(30, 41, 59, 0.95)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        height=600,
+        width=700,
+        xaxis=dict(tickangle=-45, tickfont=dict(color="white")),
+        yaxis=dict(tickfont=dict(color="white"), autorange="reversed")
+    )
+    
+    return fig
+
     
     # Calcular média móvel (5 pontos)
     media_movevel = df[variavel].rolling(window=5, min_periods=1).mean()
@@ -2472,11 +2732,37 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     # Adicionar explicação do IQR ao final
                     st.caption(f"📌 {t['iqr_title']}: {t['iqr_explanation']}")
             
-            # ABA 4: CORRELAÇÕES
+                        # ABA 4: CORRELAÇÕES (COM HEATMAPS IMPACTANTES)
             with tabs[3]:
                 st.markdown(f"<h3>{t['tab_correlation']}</h3>", unsafe_allow_html=True)
                 
                 if len(st.session_state.variaveis_quantitativas) > 1:
+                    # Adicionar seletor de estilo de visualização
+                    st.markdown("### 🎨 Estilo de Visualização")
+                    
+                    col_style1, col_style2 = st.columns([1, 3])
+                    
+                    with col_style1:
+                        estilo_heatmap = st.radio(
+                            "Selecione o estilo:",
+                            ["Impactante", "Circular", "3D", "Com Estrelas"],
+                            index=0,
+                            key="estilo_heatmap"
+                        )
+                    
+                    with col_style2:
+                        st.markdown("""
+                        <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); 
+                                    padding: 15px; border-radius: 12px; border-left: 4px solid #3b82f6;">
+                            <p style="color: #94a3b8; margin: 0;">
+                                <span style="color: #3b82f6;">💡 Dica:</span> 
+                                Escolha diferentes estilos para melhor visualização dos dados.
+                            </p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    st.markdown("---")
+                    
                     vars_corr = st.multiselect(
                         t['tab_correlation'].replace('🔥', '').strip(),
                         options=st.session_state.variaveis_quantitativas,
@@ -2487,64 +2773,53 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     if len(vars_corr) >= 2:
                         df_corr = df_filtrado[vars_corr].corr()
                         
-                        # Heatmap com cores suaves
-                        colorscale = [
-                            [0, 'rgba(0, 0, 139, 0.7)'],      # Azul escuro translúcido para -1
-                            [0.25, 'rgba(65, 105, 225, 0.7)'], # Azul médio translúcido para -0.5
-                            [0.45, 'rgba(220, 220, 220, 0.5)'], # Cinza claro translúcido para valores próximos de 0
-                            [0.5, 'rgba(211, 211, 211, 0.3)'],  # Cinza mais claro para a diagonal
-                            [0.55, 'rgba(220, 220, 220, 0.5)'], # Cinza claro translúcido
-                            [0.75, 'rgba(255, 99, 71, 0.7)'],   # Vermelho médio translúcido para 0.5
-                            [1, 'rgba(139, 0, 0, 0.7)']         # Vermelho escuro translúcido para 1
-                        ]
+                        # Aplicar o estilo selecionado
+                        if estilo_heatmap == "Impactante":
+                            fig_corr = criar_heatmap_correlacao_impactante(df_corr, t['tab_correlation'])
+                        elif estilo_heatmap == "Circular":
+                            fig_corr = criar_heatmap_circular(df_corr, t['tab_correlation'])
+                        elif estilo_heatmap == "3D":
+                            fig_corr = criar_heatmap_3d(df_corr, t['tab_correlation'])
+                        elif estilo_heatmap == "Com Estrelas":
+                            fig_corr = criar_heatmap_com_estrelas(df_corr, t['tab_correlation'])
                         
-                        df_corr_display = df_corr.copy()
+                        # Atualizar eixos
+                        if estilo_heatmap != "3D":
+                            fig_corr.update_xaxes(gridcolor='#334155', tickfont=dict(color='white'))
+                            fig_corr.update_yaxes(gridcolor='#334155', tickfont=dict(color='white'))
                         
-                        fig_corr = px.imshow(
-                            df_corr_display,
-                            text_auto='.2f',
-                            aspect="auto",
-                            color_continuous_scale=colorscale,
-                            title=f"{t['tab_correlation']}",
-                            zmin=-1, zmax=1
-                        )
-                        
-                        # Destacar a diagonal principal em cinza
-                        for i in range(len(df_corr)):
-                            fig_corr.add_annotation(
-                                x=i,
-                                y=i,
-                                text=f"{df_corr.iloc[i, i]:.2f}",
-                                showarrow=False,
-                                font=dict(color='white', size=12, weight='bold'),
-                                bgcolor='#4a5568',
-                                bordercolor='#718096',
-                                borderwidth=1,
-                                opacity=0.9
-                            )
-                            
-                            # Adicionar um retângulo cinza no fundo
-                            fig_corr.add_shape(
-                                type="rect",
-                                x0=i - 0.5,
-                                y0=i - 0.5,
-                                x1=i + 0.5,
-                                y1=i + 0.5,
-                                line=dict(width=0),
-                                fillcolor='rgba(74, 85, 104, 0.5)',
-                                layer="below"
-                            )
-                        
-                        fig_corr.update_layout(
-                            plot_bgcolor='rgba(30, 41, 59, 0.8)',
-                            paper_bgcolor='rgba(0,0,0,0)',
-                            font=dict(color='white', size=11),
-                            title_font=dict(color='#3b82f6', size=16),
-                            height=500
-                        )
-                        fig_corr.update_xaxes(gridcolor='#334155', tickfont=dict(color='white'))
-                        fig_corr.update_yaxes(gridcolor='#334155', tickfont=dict(color='white'))
                         st.plotly_chart(fig_corr, use_container_width=True)
+                        
+                        # Legenda explicativa
+                        with st.expander("📊 Entendendo as Correlações"):
+                            col_leg1, col_leg2, col_leg3 = st.columns(3)
+                            
+                            with col_leg1:
+                                st.markdown("""
+                                <div style="background: rgba(30, 41, 59, 0.8); padding: 15px; border-radius: 10px; border-left: 4px solid #ef4444;">
+                                    <h5 style="color: #ef4444;">Correlação Positiva Forte</h5>
+                                    <p style="color: #94a3b8;">r > 0.7</p>
+                                    <div style="height: 20px; background: linear-gradient(90deg, #ff8a8a, #ef4444); border-radius: 10px;"></div>
+                                </div>
+                                """, unsafe_allow_html=True)
+                            
+                            with col_leg2:
+                                st.markdown("""
+                                <div style="background: rgba(30, 41, 59, 0.8); padding: 15px; border-radius: 10px; border-left: 4px solid #3b82f6;">
+                                    <h5 style="color: #3b82f6;">Correlação Negativa Forte</h5>
+                                    <p style="color: #94a3b8;">r < -0.7</p>
+                                    <div style="height: 20px; background: linear-gradient(90deg, #3b82f6, #1e3a8a); border-radius: 10px;"></div>
+                                </div>
+                                """, unsafe_allow_html=True)
+                            
+                            with col_leg3:
+                                st.markdown("""
+                                <div style="background: rgba(30, 41, 59, 0.8); padding: 15px; border-radius: 10px; border-left: 4px solid #94a3b8;">
+                                    <h5 style="color: #94a3b8;">Correlação Fraca</h5>
+                                    <p style="color: #94a3b8;">-0.3 < r < 0.3</p>
+                                    <div style="height: 20px; background: linear-gradient(90deg, #94a3b8, #cbd5e1); border-radius: 10px;"></div>
+                                </div>
+                                """, unsafe_allow_html=True)
                         
                         st.markdown(f"<h4>📊 {t['tab_correlation']}</h4>", unsafe_allow_html=True)
                         
@@ -2552,9 +2827,10 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                             if pd.isna(val):
                                 return 'color: #94a3b8;'
                             if val == 1.0:
-                                return 'color: #2d3748; font-weight: bold; background-color: #d3d3d3;'
+                                return 'color: gold; font-weight: bold; background-color: rgba(255, 215, 0, 0.2);'
                             color = '#ef4444' if abs(val) > 0.7 else '#f59e0b' if abs(val) > 0.5 else '#3b82f6'
-                            return f'color: {color}; font-weight: bold;'
+                            bg_color = f'rgba({255 if val>0 else 59}, {69 if val>0 else 130}, {68 if val>0 else 246}, {abs(val)*0.3})'
+                            return f'color: {color}; font-weight: bold; background-color: {bg_color};'
                         
                         st.dataframe(
                             df_corr.style.format('{:.3f}').applymap(style_correlation),
@@ -2574,51 +2850,80 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                                 trendline="ols",
                                 color_discrete_sequence=px.colors.qualitative.Set2
                             )
+                            
                             fig_scatter.update_layout(
                                 plot_bgcolor='rgba(30, 41, 59, 0.8)',
                                 paper_bgcolor='rgba(0,0,0,0)',
                                 font=dict(color='white', size=11),
                                 title_font=dict(color='#3b82f6', size=16),
-                                height=500
+                                height=500,
+                                legend=dict(font=dict(color='white'), bgcolor='rgba(30,41,59,0.8)', bordercolor='#334155')
                             )
                             fig_scatter.update_xaxes(gridcolor='#334155', tickfont=dict(color='white'))
                             fig_scatter.update_yaxes(gridcolor='#334155', tickfont=dict(color='white'))
                             st.plotly_chart(fig_scatter, use_container_width=True)
                             
                             corr_valor = df_corr.iloc[0, 1]
+                            
                             if corr_valor > 0.7:
                                 interp_corr = t['strong_positive']
+                                cor_categoria = "#ef4444"
+                                icone = "🔴"
                             elif corr_valor > 0.5:
                                 interp_corr = t['moderate_positive']
+                                cor_categoria = "#f97316"
+                                icone = "🟠"
                             elif corr_valor > 0.3:
                                 interp_corr = t['weak_positive']
+                                cor_categoria = "#f59e0b"
+                                icone = "🟡"
                             elif corr_valor > 0:
                                 interp_corr = t['very_weak_positive']
+                                cor_categoria = "#94a3b8"
+                                icone = "⚪"
                             elif corr_valor > -0.3:
                                 interp_corr = t['very_weak_negative']
+                                cor_categoria = "#94a3b8"
+                                icone = "⚪"
                             elif corr_valor > -0.5:
                                 interp_corr = t['weak_negative']
+                                cor_categoria = "#3b82f6"
+                                icone = "🔵"
                             elif corr_valor > -0.7:
                                 interp_corr = t['moderate_negative']
+                                cor_categoria = "#2563eb"
+                                icone = "🔵"
                             else:
                                 interp_corr = t['strong_negative']
+                                cor_categoria = "#1e3a8a"
+                                icone = "🔵"
                             
                             st.markdown(f"""
-                            <div class="metric-container">
-                                <h4>📊 {t['tab_correlation']}</h4>
-                                <hr style="border-color: #334155;">
-                                <p><strong>Pearson:</strong> {corr_valor:.3f}</p>
-                                <p><strong>{t['tab_correlation']}:</strong> {interp_corr}</p>
+                            <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); 
+                                        padding: 20px; border-radius: 16px; border-left: 6px solid {cor_categoria};
+                                        margin-top: 20px;">
+                                <div style="display: flex; align-items: center; gap: 15px;">
+                                    <div style="font-size: 3rem;">{icone}</div>
+                                    <div>
+                                        <h4 style="color: white; margin: 0;">{t['tab_correlation']}</h4>
+                                        <p style="color: #94a3b8; margin: 5px 0;">
+                                            <strong>Coeficiente de Pearson:</strong> 
+                                            <span style="color: {cor_categoria}; font-size: 1.3rem;">{corr_valor:.3f}</span>
+                                        </p>
+                                        <p style="color: white; margin: 5px 0;">
+                                            <strong>Interpretação:</strong> {interp_corr}
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
                             """, unsafe_allow_html=True)
                     else:
                         st.info("ℹ️ " + ("Selecione pelo menos 2 variáveis" if st.session_state.idioma == 'pt' else 
-                                       "Select at least 2 variables" if st.session_state.idioma == 'en' else
-                                       "Seleccione al menos 2 variables"))
+                                       "Select at least 2 variables"))
                 else:
                     st.info("ℹ️ " + ("São necessárias pelo menos 2 variáveis" if st.session_state.idioma == 'pt' else 
-                                   "At least 2 variables are needed" if st.session_state.idioma == 'en' else
-                                   "Se necesitan al menos 2 variables"))
+                                   "At least 2 variables are needed"))
+                    
             
             # ABA 5: EXECUTIVO
             with tabs[4]:
