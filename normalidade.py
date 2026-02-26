@@ -51,6 +51,8 @@ translations = {
         'tab_boxplots': '📦 Boxplots',
         'tab_correlation': '🔥 Correlações',
         'tab_kmeans': '🤖 K-means Clusters',
+        'tab_comparador': '🆚 Comparador de Atletas',
+        'tab_analise_avancada': '🔬 Análise Avançada',
         'tab_executive': '📋 Executivo',
         'positions': 'Posições',
         'periods': 'Períodos',
@@ -146,6 +148,8 @@ translations = {
         'tab_boxplots': '📦 Boxplots',
         'tab_correlation': '🔥 Correlations',
         'tab_kmeans': '🤖 K-means Clusters',
+        'tab_comparador': '🆚 Athlete Comparator',
+        'tab_analise_avancada': '🔬 Advanced Analysis',
         'tab_executive': '📋 Executive',
         'positions': 'Positions',
         'periods': 'Periods',
@@ -241,6 +245,8 @@ translations = {
         'tab_boxplots': '📦 Boxplots',
         'tab_correlation': '🔥 Correlaciones',
         'tab_kmeans': '🤖 Clústeres K-means',
+        'tab_comparador': '🆚 Comparador de Atletas',
+        'tab_analise_avancada': '🔬 Analises Avanzadas',
         'tab_executive': '📋 Ejecutivo',
         'positions': 'Posiciones',
         'periods': 'Períodos',
@@ -1451,6 +1457,435 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
     return fig
 
 # ============================================================================
+# FUNÇÕES PARA ANÁLISE AVANÇADA
+# ============================================================================
+
+def analisar_eventos_criticos(df, variavel, t):
+    """
+    Identifica e analisa eventos críticos durante a partida
+    """
+    insights = []
+    
+    # Calcular métricas base
+    media = df[variavel].mean()
+    desvio = df[variavel].std()
+    maximo = df[variavel].max()
+    minimo = df[variavel].min()
+    limiar_80 = maximo * 0.8
+    limiar_60 = maximo * 0.6
+    
+    # ============================================================
+    # 1. ANÁLISE DE PICOS DE DESEMPENHO
+    # ============================================================
+    picos = df[df[variavel] > limiar_80].copy()
+    if not picos.empty:
+        # Agrupar picos por período
+        picos_por_periodo = picos.groupby('Período').size()
+        
+        for periodo, qtd in picos_por_periodo.items():
+            duracao_total = len(picos[picos['Período'] == periodo]) * 1  # cada ponto = 1 minuto
+            pct_tempo = (duracao_total / len(df[df['Período'] == periodo])) * 100
+            
+            insights.append({
+                'tipo': '⚠️ ALTA INTENSIDADE',
+                'periodo': periodo,
+                'mensagem': f"{qtd} picos de esforço máximo ({pct_tempo:.1f}% do tempo)",
+                'severidade': 'alta' if pct_tempo > 15 else 'media' if pct_tempo > 8 else 'baixa',
+                'acao': 'Monitorar recuperação' if pct_tempo > 15 else 'Dentro do esperado'
+            })
+    
+    # ============================================================
+    # 2. ANÁLISE DE QUEDAS DE RENDIMENTO
+    # ============================================================
+    quedas = df[df[variavel] < limiar_60].copy()
+    if not quedas.empty:
+        # Identificar momentos de baixa intensidade
+        quedas_por_periodo = quedas.groupby('Período').size()
+        
+        for periodo, qtd in quedas_por_periodo.items():
+            duracao_queda = len(quedas[quedas['Período'] == periodo])
+            pct_queda = (duracao_queda / len(df[df['Período'] == periodo])) * 100
+            
+            # Verificar se são quedas estratégicas ou fadiga
+            if pct_queda > 25:
+                causa = "possível fadiga acumulada"
+                acao = "AVALIAR SUBSTITUIÇÃO"
+            elif pct_queda > 15:
+                causa = "momento de baixa intensidade"
+                acao = "Incentivar aumento de ritmo"
+            else:
+                causa = "recuperação ativa"
+                acao = "Normal para o esporte"
+            
+            insights.append({
+                'tipo': '📉 BAIXA INTENSIDADE',
+                'periodo': periodo,
+                'mensagem': f"{duracao_queda} minutos em baixa intensidade ({pct_queda:.1f}% do tempo) - {causa}",
+                'severidade': 'alta' if pct_queda > 25 else 'media' if pct_queda > 15 else 'baixa',
+                'acao': acao
+            })
+    
+    # ============================================================
+    # 3. ANÁLISE DE CONSISTÊNCIA
+    # ============================================================
+    cv = (desvio / media) * 100 if media != 0 else 0
+    
+    if cv < 15:
+        consistencia = "EXCELENTE"
+        acao = "Manter estratégia atual"
+    elif cv < 25:
+        consistencia = "BOA"
+        acao = "Pequenos ajustes pontuais"
+    elif cv < 35:
+        consistencia = "REGULAR"
+        acao = "Trabalhar consistência nos treinos"
+    else:
+        consistencia = "INCONSISTENTE"
+        acao = "REVISAR PROGRAMAÇÃO DE TREINOS"
+    
+    insights.append({
+        'tipo': '📊 CONSISTÊNCIA',
+        'periodo': 'Geral',
+        'mensagem': f"CV = {cv:.1f}% - Desempenho {consistencia}",
+        'severidade': 'baixa' if cv < 25 else 'media' if cv < 35 else 'alta',
+        'acao': acao
+    })
+    
+    return insights
+
+def analisar_relacoes_entre_metricas(df, var_principal, var_secundarias, t):
+    """
+    Analisa relações entre diferentes métricas de desempenho
+    """
+    insights_relacoes = []
+    
+    for var_sec in var_secundarias:
+        if var_sec == var_principal:
+            continue
+            
+        # Calcular correlação
+        correlacao = df[[var_principal, var_sec]].corr().iloc[0, 1]
+        
+        # Análise de proporção
+        razao = df[var_principal].mean() / df[var_sec].mean() if df[var_sec].mean() != 0 else 0
+        
+        # Identificar momentos onde as métricas se comportam de forma diferente
+        diff_normalizada = abs(df[var_principal] - df[var_sec] * razao) / df[var_sec].std()
+        anomalias = df[diff_normalizada > 2].copy()
+        
+        # Interpretar correlação
+        if abs(correlacao) > 0.7:
+            forca = "FORTE"
+            cor = "🟢" if correlacao > 0 else "🔴"
+        elif abs(correlacao) > 0.5:
+            forca = "MODERADA"
+            cor = "🟡" if correlacao > 0 else "🟠"
+        else:
+            forca = "FRACA"
+            cor = "⚪"
+        
+        # Gerar insight
+        if correlacao > 0.7:
+            insight = f"{cor} Quando {var_principal} aumenta, {var_sec} também aumenta significativamente"
+        elif correlacao < -0.7:
+            insight = f"{cor} Quando {var_principal} aumenta, {var_sec} diminui significativamente"
+        elif abs(correlacao) > 0.5:
+            insight = f"{cor} Relação {forca.lower()} entre as variáveis"
+        else:
+            insight = f"{cor} Pouca relação linear entre as variáveis"
+        
+        insights_relacoes.append({
+            'variaveis': f'{var_principal} × {var_sec}',
+            'correlacao': correlacao,
+            'forca': forca,
+            'insight': insight,
+            'anomalias': len(anomalias),
+            'razao_media': razao
+        })
+    
+    return insights_relacoes
+
+def analisar_fadiga_e_recuperacao(df, variavel, t):
+    """
+    Analisa padrões de fadiga ao longo da partida
+    """
+    insights_fadiga = []
+    
+    # Dividir a partida em quartis
+    total_minutos = len(df)
+    quartil_1 = df.iloc[:total_minutos//4][variavel].mean()
+    quartil_2 = df.iloc[total_minutos//4:total_minutos//2][variavel].mean()
+    quartil_3 = df.iloc[total_minutos//2:3*total_minutos//4][variavel].mean()
+    quartil_4 = df.iloc[3*total_minutos//4:][variavel].mean()
+    
+    # Calcular queda percentual
+    queda_1_4 = ((quartil_1 - quartil_4) / quartil_1) * 100 if quartil_1 > 0 else 0
+    
+    # Análise de fadiga
+    if queda_1_4 > 20:
+        nivel_fadiga = "ALTA"
+        acao = "✅ PRIORIDADE: Aumentar preparo físico e rodízio"
+        cor = "🔴"
+    elif queda_1_4 > 10:
+        nivel_fadiga = "MODERADA"
+        acao = "📊 Monitorar carga de treinos"
+        cor = "🟡"
+    else:
+        nivel_fadiga = "BAIXA"
+        acao = "💪 Manter condicionamento atual"
+        cor = "🟢"
+    
+    insights_fadiga.append({
+        'tipo': '💨 FADIGA',
+        'metrica': f'Queda de rendimento: {queda_1_4:.1f}%',
+        'nivel': nivel_fadiga,
+        'analise': f'{cor} {acao}',
+        'detalhes': f'1º quartil: {quartil_1:.1f} | 4º quartil: {quartil_4:.1f}'
+    })
+    
+    # Identificar momento de maior queda
+    diferencas = [
+        quartil_1 - quartil_2,
+        quartil_2 - quartil_3,
+        quartil_3 - quartil_4
+    ]
+    maior_queda = max(diferencas)
+    idx_maior_queda = diferencas.index(maior_queda) + 1
+    
+    momentos = ['1º-2º quartil', '2º-3º quartil', '3º-4º quartil']
+    
+    insights_fadiga.append({
+        'tipo': '⏱️ MOMENTO CRÍTICO',
+        'metrica': f'Maior queda no {momentos[idx_maior_queda-1]}',
+        'nivel': 'ATENÇÃO',
+        'analise': f'Queda de {maior_queda:.1f} unidades',
+        'detalhes': 'Reforçar preparo para este período'
+    })
+    
+    return insights_fadiga
+
+def analisar_desempenho_por_atleta(df, atletas, variavel, t):
+    """
+    Compara desempenho entre atletas e identifica destaques
+    """
+    ranking = []
+    
+    for atleta in atletas:
+        dados_atleta = df[df['Nome'] == atleta][variavel]
+        
+        if len(dados_atleta) > 0:
+            media = dados_atleta.mean()
+            maximo = dados_atleta.max()
+            minimo = dados_atleta.min()
+            desvio = dados_atleta.std()
+            cv = (desvio / media) * 100 if media != 0 else 0
+            
+            ranking.append({
+                'atleta': atleta,
+                'media': media,
+                'maximo': maximo,
+                'minimo': minimo,
+                'cv': cv,
+                'consistencia': 'Alta' if cv < 20 else 'Média' if cv < 30 else 'Baixa'
+            })
+    
+    # Ordenar por média
+    ranking.sort(key=lambda x: x['media'], reverse=True)
+    
+    insights_atletas = []
+    
+    # Destaques
+    if ranking:
+        melhor = ranking[0]
+        insights_atletas.append({
+            'tipo': '🏆 DESTAQUE',
+            'atleta': melhor['atleta'],
+            'metrica': f'Média: {melhor["media"]:.1f}',
+            'analise': f'Melhor desempenho geral',
+            'consistencia': melhor['consistencia']
+        })
+        
+        mais_consistente = min(ranking, key=lambda x: x['cv'])
+        insights_atletas.append({
+            'tipo': '🎯 CONSISTÊNCIA',
+            'atleta': mais_consistente['atleta'],
+            'metrica': f'CV: {mais_consistente["cv"]:.1f}%',
+            'analise': f'Atleta mais regular',
+            'consistencia': mais_consistente['consistencia']
+        })
+        
+        if len(ranking) > 1:
+            pior = ranking[-1]
+            insights_atletas.append({
+                'tipo': '📉 OPORTUNIDADE',
+                'atleta': pior['atleta'],
+                'metrica': f'Média: {pior["media"]:.1f}',
+                'analise': f'Necessita atenção especial',
+                'consistencia': pior['consistencia']
+            })
+    
+    return insights_atletas, ranking
+
+# ============================================================================
+# FUNÇÕES PARA COMPARADOR DE ATLETAS
+# ============================================================================
+
+def criar_grafico_radar(df_atleta, df_posicao, df_geral, atleta_nome, posicao, variaveis, titulo="Comparação de Desempenho"):
+    """
+    Cria um gráfico de radar comparando atleta vs média da posição vs média geral
+    """
+    
+    # Calcular valores para cada métrica
+    valores_atleta = []
+    valores_posicao = []
+    valores_geral = []
+    
+    for var in variaveis:
+        # Valor do atleta
+        val_atleta = df_atleta[var].mean()
+        valores_atleta.append(val_atleta)
+        
+        # Média da posição
+        val_posicao = df_posicao[var].mean()
+        valores_posicao.append(val_posicao)
+        
+        # Média geral
+        val_geral = df_geral[var].mean()
+        valores_geral.append(val_geral)
+    
+    # Criar figura
+    fig = go.Figure()
+    
+    # Adicionar trace do atleta
+    fig.add_trace(go.Scatterpolar(
+        r=valores_atleta + [valores_atleta[0]],  # Fechar o polígono
+        theta=variaveis + [variaveis[0]],
+        fill='toself',
+        name=f'🏃 {atleta_nome}',
+        line=dict(color='#3b82f6', width=3),
+        fillcolor='rgba(59, 130, 246, 0.3)'
+    ))
+    
+    # Adicionar trace da posição
+    fig.add_trace(go.Scatterpolar(
+        r=valores_posicao + [valores_posicao[0]],
+        theta=variaveis + [variaveis[0]],
+        fill='toself',
+        name=f'📊 Média {posicao}',
+        line=dict(color='#f59e0b', width=2, dash='dash'),
+        fillcolor='rgba(245, 158, 11, 0.2)'
+    ))
+    
+    # Adicionar trace geral
+    fig.add_trace(go.Scatterpolar(
+        r=valores_geral + [valores_geral[0]],
+        theta=variaveis + [variaveis[0]],
+        fill='toself',
+        name='📈 Média Geral',
+        line=dict(color='#94a3b8', width=2, dash='dot'),
+        fillcolor='rgba(148, 163, 184, 0.2)'
+    ))
+    
+    # Configurar layout
+    fig.update_layout(
+        title=dict(
+            text=f"<b>{titulo}</b>",
+            font=dict(size=20, color='white'),
+            x=0.5
+        ),
+        polar=dict(
+            radialaxis=dict(
+                visible=True,
+                gridcolor='#334155',
+                gridwidth=1,
+                tickfont=dict(color='white', size=10),
+                tickformat='.1f'
+            ),
+            angularaxis=dict(
+                gridcolor='#334155',
+                tickfont=dict(color='white', size=11, weight='bold'),
+                rotation=90
+            ),
+            bgcolor='rgba(30,41,59,0.5)'
+        ),
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='white'),
+        height=600,
+        showlegend=True,
+        legend=dict(
+            font=dict(color='white', size=12),
+            bgcolor='rgba(30,41,59,0.8)',
+            bordercolor='#334155',
+            borderwidth=1,
+            orientation='h',
+            yanchor='bottom',
+            y=1.1,
+            xanchor='center',
+            x=0.5
+        )
+    )
+    
+    return fig, valores_atleta, valores_posicao, valores_geral
+
+def criar_tabela_comparativa(atleta_nome, posicao, variaveis, valores_atleta, valores_posicao, valores_geral):
+    """
+    Cria uma tabela comparativa com diferenças percentuais
+    """
+    dados = []
+    
+    for i, var in enumerate(variaveis):
+        val_atleta = valores_atleta[i]
+        val_posicao = valores_posicao[i]
+        val_geral = valores_geral[i]
+        
+        # Calcular diferenças percentuais
+        diff_vs_posicao = ((val_atleta - val_posicao) / val_posicao) * 100 if val_posicao != 0 else 0
+        diff_vs_geral = ((val_atleta - val_geral) / val_geral) * 100 if val_geral != 0 else 0
+        
+        # Determinar ícones e cores
+        icone_pos = '▲' if diff_vs_posicao > 0 else '▼' if diff_vs_posicao < 0 else '◆'
+        cor_pos = '#10b981' if diff_vs_posicao > 0 else '#ef4444' if diff_vs_posicao < 0 else '#94a3b8'
+        
+        icone_geral = '▲' if diff_vs_geral > 0 else '▼' if diff_vs_geral < 0 else '◆'
+        cor_geral = '#10b981' if diff_vs_geral > 0 else '#ef4444' if diff_vs_geral < 0 else '#94a3b8'
+        
+        dados.append({
+            '📊 Métrica': var,
+            '🏃 Atleta': f'{val_atleta:.2f}',
+            '📊 Média Posição': f'{val_posicao:.2f}',
+            '📈 Média Geral': f'{val_geral:.2f}',
+            '🎯 vs Posição': f'{icone_pos} {abs(diff_vs_posicao):.1f}%',
+            '🌍 vs Geral': f'{icone_geral} {abs(diff_vs_geral):.1f}%'
+        })
+    
+    return dados
+
+def criar_card_resumo(atleta_nome, posicao, dados_comparativos):
+    """
+    Cria cards de resumo com os destaques do atleta
+    """
+    # Encontrar maiores diferenças
+    maiores_vantagens = []
+    maiores_desvantagens = []
+    
+    for item in dados_comparativos:
+        # Extrair valor percentual da string
+        valor_str = item['🎯 vs Posição']
+        if '▲' in valor_str:
+            pct = float(valor_str.replace('▲', '').replace('%', '').strip())
+            maiores_vantagens.append((item['📊 Métrica'], pct))
+        elif '▼' in valor_str:
+            pct = float(valor_str.replace('▼', '').replace('%', '').strip())
+            maiores_desvantagens.append((item['📊 Métrica'], pct))
+    
+    # Ordenar
+    maiores_vantagens.sort(key=lambda x: x[1], reverse=True)
+    maiores_desvantagens.sort(key=lambda x: x[1], reverse=True)
+    
+    return maiores_vantagens[:3], maiores_desvantagens[:3]
+
+# ============================================================================
 # CALLBACKS
 # ============================================================================
 
@@ -1828,6 +2263,8 @@ if st.session_state.df_completo is not None:
             t['tab_boxplots'], 
             t['tab_correlation'],
             t['tab_kmeans'],
+            t['tab_comparador'],
+            t['tab_analise_avancada'],
             t['tab_executive']
         ]
         
@@ -2800,7 +3237,535 @@ if st.session_state.df_completo is not None:
             else:
                 st.info("ℹ️ São necessárias pelo menos 2 variáveis para análise de clusters")
         
-        with tabs[5]:
+        with tabs[5]:  # NOVA ABA: COMPARADOR DE ATLETAS
+            st.markdown(f"<h3>{t['tab_comparador']}</h3>", unsafe_allow_html=True)
+            
+            st.markdown("""
+            <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); 
+                        padding: 20px; border-radius: 16px; margin-bottom: 25px;
+                        border-left: 4px solid #8b5cf6;">
+                <p style="color: #94a3b8; margin: 0;">
+                    <span style="color: #8b5cf6; font-size: 1.2rem;">🆚 Comparação Individual</span><br>
+                    Compare o desempenho de um atleta com a média da sua posição e a média geral de todos os atletas.
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Verificar se há dados suficientes
+            if len(st.session_state.variaveis_quantitativas) >= 3 and len(atletas_selecionados) >= 1:
+                
+                # ============================================================
+                # SELEÇÕES
+                # ============================================================
+                col_s1, col_s2, col_s3 = st.columns([2, 2, 1])
+                
+                with col_s1:
+                    atleta_comp = st.selectbox(
+                        "Selecione o Atleta",
+                        options=atletas_selecionados,
+                        key="comp_atleta"
+                    )
+                
+                # Obter posição do atleta selecionado
+                if not df_filtrado[df_filtrado['Nome'] == atleta_comp].empty:
+                    posicao_atleta = df_filtrado[df_filtrado['Nome'] == atleta_comp]['Posição'].iloc[0]
+                else:
+                    posicao_atleta = None
+                
+                with col_s2:
+                    # Mostrar posição do atleta
+                    st.markdown(f"""
+                    <div style="background: rgba(30, 41, 59, 0.8); padding: 10px; border-radius: 8px; margin-top: 25px;">
+                        <p style="color: #94a3b8; margin: 0;">Posição do Atleta</p>
+                        <p style="color: white; font-size: 1.2rem; margin: 0;">{posicao_atleta}</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                
+                with col_s3:
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    processar_comp = st.button(
+                        "🔍 COMPARAR",
+                        type="primary",
+                        use_container_width=True,
+                        key="comp_processar"
+                    )
+                
+                # Seleção de variáveis para comparar
+                vars_comp = st.multiselect(
+                    "Selecione as variáveis para comparação (mínimo 3, máximo 8)",
+                    options=st.session_state.variaveis_quantitativas,
+                    default=st.session_state.variaveis_quantitativas[:min(5, len(st.session_state.variaveis_quantitativas))],
+                    max_selections=8,
+                    key="comp_vars"
+                )
+                
+                if processar_comp and len(vars_comp) >= 3:
+                    with st.spinner('🔄 Gerando comparação...'):
+                        time.sleep(0.5)
+                        
+                        # Filtrar dados
+                        df_atleta = df_filtrado[df_filtrado['Nome'] == atleta_comp].copy()
+                        df_posicao = df_filtrado[df_filtrado['Posição'] == posicao_atleta].copy()
+                        df_geral = df_filtrado.copy()
+                        
+                        if not df_atleta.empty and not df_posicao.empty:
+                            
+                            # ============================================================
+                            # GRÁFICO DE RADAR
+                            # ============================================================
+                            fig_radar, valores_atleta, valores_posicao, valores_geral = criar_grafico_radar(
+                                df_atleta, df_posicao, df_geral,
+                                atleta_comp, posicao_atleta, vars_comp,
+                                f"Comparação: {atleta_comp} vs Média da Posição vs Média Geral"
+                            )
+                            
+                            st.plotly_chart(fig_radar, use_container_width=True)
+                            
+                            # ============================================================
+                            # TABELA COMPARATIVA
+                            # ============================================================
+                            st.markdown("### 📊 Tabela Comparativa Detalhada")
+                            
+                            dados_tabela = criar_tabela_comparativa(
+                                atleta_comp, posicao_atleta, vars_comp,
+                                valores_atleta, valores_posicao, valores_geral
+                            )
+                            
+                            # Criar DataFrame
+                            df_comp = pd.DataFrame(dados_tabela)
+                            
+                            # Aplicar cores condicionais
+                            def color_diff(val):
+                                if '▲' in str(val):
+                                    return 'color: #10b981; font-weight: bold;'
+                                elif '▼' in str(val):
+                                    return 'color: #ef4444; font-weight: bold;'
+                                return 'color: #94a3b8;'
+                            
+                            styled_df = df_comp[['📊 Métrica', '🏃 Atleta', '📊 Média Posição', '📈 Média Geral', '🎯 vs Posição', '🌍 vs Geral']].style.applymap(
+                                color_diff, subset=['🎯 vs Posição', '🌍 vs Geral']
+                            )
+                            
+                            st.dataframe(
+                                styled_df,
+                                use_container_width=True,
+                                hide_index=True
+                            )
+                            
+                            # ============================================================
+                            # CARDS DE DESTAQUE
+                            # ============================================================
+                            st.markdown("### 🏆 Destaques do Atleta")
+                            
+                            vantagens, desvantagens = criar_card_resumo(atleta_comp, posicao_atleta, dados_tabela)
+                            
+                            col_d1, col_d2 = st.columns(2)
+                            
+                            with col_d1:
+                                st.markdown("""
+                                <div style="background: rgba(30, 41, 59, 0.8); padding: 20px; 
+                                            border-radius: 16px; border-left: 4px solid #10b981;">
+                                    <h4 style="color: #10b981; margin-top: 0;">✅ Pontos Fortes</h4>
+                                """, unsafe_allow_html=True)
+                                
+                                if vantagens:
+                                    for metrica, pct in vantagens:
+                                        st.markdown(f"""
+                                        <div style="display: flex; justify-content: space-between; margin: 10px 0;">
+                                            <span style="color: white;">{metrica}</span>
+                                            <span style="color: #10b981; font-weight: bold;">+{pct:.1f}%</span>
+                                        </div>
+                                        """, unsafe_allow_html=True)
+                                else:
+                                    st.markdown("<p style='color: #94a3b8;'>Nenhum destaque significativo</p>", unsafe_allow_html=True)
+                                
+                                st.markdown("</div>", unsafe_allow_html=True)
+                            
+                            with col_d2:
+                                st.markdown("""
+                                <div style="background: rgba(30, 41, 59, 0.8); padding: 20px; 
+                                            border-radius: 16px; border-left: 4px solid #ef4444;">
+                                    <h4 style="color: #ef4444; margin-top: 0;">⚠️ Pontos a Desenvolver</h4>
+                                """, unsafe_allow_html=True)
+                                
+                                if desvantagens:
+                                    for metrica, pct in desvantagens:
+                                        st.markdown(f"""
+                                        <div style="display: flex; justify-content: space-between; margin: 10px 0;">
+                                            <span style="color: white;">{metrica}</span>
+                                            <span style="color: #ef4444; font-weight: bold;">-{pct:.1f}%</span>
+                                        </div>
+                                        """, unsafe_allow_html=True)
+                                else:
+                                    st.markdown("<p style='color: #94a3b8;'>Acima da média em todas as métricas!</p>", unsafe_allow_html=True)
+                                
+                                st.markdown("</div>", unsafe_allow_html=True)
+                            
+                            # ============================================================
+                            # INSIGHTS AUTOMÁTICOS
+                            # ============================================================
+                            st.markdown("---")
+                            st.markdown("### 💡 Insights Automáticos")
+                            
+                            # Calcular performance geral
+                            performance_media = 0
+                            count = 0
+                            for i, v in enumerate(valores_atleta):
+                                if valores_posicao[i] != 0:
+                                    performance_media += (v - valores_posicao[i]) / valores_posicao[i]
+                                    count += 1
+                            
+                            if count > 0:
+                                performance_media = (performance_media / count) * 100
+                                
+                                if performance_media > 10:
+                                    status = "EXCELENTE"
+                                    cor = "#10b981"
+                                    icone = "🏆"
+                                elif performance_media > 0:
+                                    status = "ACIMA DA MÉDIA"
+                                    cor = "#3b82f6"
+                                    icone = "📈"
+                                elif performance_media > -10:
+                                    status = "NA MÉDIA"
+                                    cor = "#94a3b8"
+                                    icone = "📊"
+                                else:
+                                    status = "ABAIXO DA MÉDIA"
+                                    cor = "#ef4444"
+                                    icone = "📉"
+                                
+                                st.markdown(f"""
+                                <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+                                            padding: 20px; border-radius: 16px; margin-top: 20px;
+                                            border-left: 6px solid {cor};">
+                                    <div style="display: flex; align-items: center; gap: 20px;">
+                                        <div style="font-size: 3rem;">{icone}</div>
+                                        <div>
+                                            <h4 style="color: white; margin: 0;">Desempenho Geral: <span style="color: {cor};">{status}</span></h4>
+                                            <p style="color: #94a3b8; margin: 5px 0;">
+                                                {atleta_comp} está {performance_media:+.1f}% acima da média da posição
+                                            </p>
+                                            <p style="color: #64748b; margin: 5px 0; font-size: 0.9rem;">
+                                                { 'Destaque absoluto da posição!' if performance_media > 20 else 
+                                                 'Bom desempenho, pode ser referência.' if performance_media > 10 else
+                                                 'Desempenho sólido e consistente.' if performance_media > 0 else
+                                                 'Necessita atenção em algumas áreas.' }
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                """, unsafe_allow_html=True)
+                            else:
+                                st.info("Não foi possível calcular a performance geral.")
+                            
+                        else:
+                            st.warning("⚠️ Dados insuficientes para o atleta selecionado")
+                
+                elif processar_comp and len(vars_comp) < 3:
+                    st.warning("⚠️ Selecione pelo menos 3 variáveis para uma comparação significativa")
+            
+            else:
+                st.info("ℹ️ São necessários pelo menos 3 atletas e 3 variáveis para comparação")
+        
+        with tabs[6]:
+            st.markdown(f"<h3>{t['tab_analise_avancada']}</h3>", unsafe_allow_html=True)
+            
+            st.markdown("""
+            <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); 
+                        padding: 20px; border-radius: 16px; margin-bottom: 25px;
+                        border-left: 4px solid #f59e0b;">
+                <p style="color: #94a3b8; margin: 0;">
+                    <span style="color: #f59e0b; font-size: 1.2rem;">🔬 Análise Profunda de Dados</span><br>
+                    Insights automáticos, relações entre métricas e recomendações baseadas em eventos reais.
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # ============================================================
+            # SELEÇÃO DE VARIÁVEL PARA ANÁLISE
+            # ============================================================
+            col_av1, col_av2 = st.columns([3, 1])
+            
+            with col_av1:
+                var_analise_avancada = st.selectbox(
+                    "Variável principal para análise",
+                    options=st.session_state.variaveis_quantitativas,
+                    index=st.session_state.variaveis_quantitativas.index(variavel_analise) 
+                          if variavel_analise in st.session_state.variaveis_quantitativas else 0,
+                    key="var_analise_avancada"
+                )
+            
+            with col_av2:
+                st.markdown("<br>", unsafe_allow_html=True)
+                processar_avancado = st.button(
+                    "🔍 GERAR ANÁLISE",
+                    type="primary",
+                    use_container_width=True,
+                    key="processar_avancado"
+                )
+            
+            if processar_avancado:
+                with st.spinner('🔄 Analisando dados em profundidade...'):
+                    time.sleep(0.5)
+                    
+                    # ============================================================
+                    # 1. ANÁLISE DE EVENTOS CRÍTICOS
+                    # ============================================================
+                    st.markdown("### ⚡ Eventos Críticos e Momentos Decisivos")
+                    
+                    insights_eventos = analisar_eventos_criticos(df_filtrado, var_analise_avancada, t)
+                    
+                    # Cards de eventos
+                    cols_eventos = st.columns(3)
+                    for i, insight in enumerate(insights_eventos[:3]):
+                        with cols_eventos[i % 3]:
+                            cor_borda = {
+                                'alta': '#ef4444',
+                                'media': '#f59e0b',
+                                'baixa': '#10b981'
+                            }.get(insight['severidade'], '#3b82f6')
+                            
+                            st.markdown(f"""
+                            <div style="background: rgba(30, 41, 59, 0.8); padding: 15px; 
+                                        border-radius: 12px; margin: 10px 0;
+                                        border-left: 4px solid {cor_borda};">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span style="font-size: 1.5rem;">{insight['tipo'].split()[0]}</span>
+                                    <div>
+                                        <p style="color: #94a3b8; margin: 0; font-size: 0.9rem;">
+                                            {insight['periodo']}
+                                        </p>
+                                        <p style="color: white; margin: 5px 0; font-weight: 600;">
+                                            {insight['mensagem']}
+                                        </p>
+                                        <p style="color: {cor_borda}; margin: 0; font-size: 0.9rem;">
+                                            ▶ {insight['acao']}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            """, unsafe_allow_html=True)
+                    
+                    # Tabela completa de eventos
+                    with st.expander("📋 Ver todos os eventos detectados"):
+                        df_eventos = pd.DataFrame(insights_eventos)
+                        st.dataframe(df_eventos, use_container_width=True, hide_index=True)
+                    
+                    st.markdown("---")
+                    
+                    # ============================================================
+                    # 2. ANÁLISE DE RELAÇÕES ENTRE MÉTRICAS
+                    # ============================================================
+                    st.markdown("### 🔗 Relações entre Métricas de Desempenho")
+                    
+                    if len(st.session_state.variaveis_quantitativas) >= 2:
+                        insights_relacoes = analisar_relacoes_entre_metricas(
+                            df_filtrado, 
+                            var_analise_avancada,
+                            st.session_state.variaveis_quantitativas,
+                            t
+                        )
+                        
+                        # Cards de correlações
+                        cols_rel = st.columns(3)
+                        for i, rel in enumerate(insights_relacoes[:3]):
+                            with cols_rel[i % 3]:
+                                cor_rel = '#10b981' if abs(rel['correlacao']) > 0.7 else '#f59e0b' if abs(rel['correlacao']) > 0.5 else '#94a3b8'
+                                
+                                st.markdown(f"""
+                                <div style="background: rgba(30, 41, 59, 0.8); padding: 15px; 
+                                            border-radius: 12px; margin: 10px 0;">
+                                    <p style="color: #94a3b8; margin: 0;">{rel['variaveis']}</p>
+                                    <p style="color: white; font-size: 1.3rem; margin: 5px 0;">
+                                        {rel['correlacao']:.3f}
+                                    </p>
+                                    <p style="color: {cor_rel}; margin: 0; font-size: 0.9rem;">
+                                        {rel['insight']}
+                                    </p>
+                                    <p style="color: #64748b; margin: 5px 0 0 0; font-size: 0.8rem;">
+                                        {rel['anomalias']} momentos atípicos detectados
+                                    </p>
+                                </div>
+                                """, unsafe_allow_html=True)
+                        
+                        # Gráfico de correlações em barras
+                        df_rel_plot = pd.DataFrame(insights_relacoes)
+                        fig_rel = px.bar(
+                            df_rel_plot,
+                            x='variaveis',
+                            y='correlacao',
+                            color='correlacao',
+                            color_continuous_scale='RdBu',
+                            range_color=[-1, 1],
+                            title="Correlações com a variável principal",
+                            labels={'correlacao': 'Correlação', 'variaveis': ''}
+                        )
+                        fig_rel.update_layout(
+                            plot_bgcolor='rgba(30,41,59,0.8)',
+                            paper_bgcolor='rgba(0,0,0,0)',
+                            font=dict(color='white'),
+                            height=400
+                        )
+                        fig_rel.update_xaxes(tickangle=-45, tickfont=dict(color='white'))
+                        fig_rel.update_yaxes(tickfont=dict(color='white'), gridcolor='#334155')
+                        st.plotly_chart(fig_rel, use_container_width=True)
+                    
+                    else:
+                        st.info("ℹ️ São necessárias pelo menos 2 variáveis para análise de relações")
+                    
+                    st.markdown("---")
+                    
+                    # ============================================================
+                    # 3. ANÁLISE DE FADIGA
+                    # ============================================================
+                    st.markdown("### 💨 Análise de Fadiga ao Longo da Partida")
+                    
+                    insights_fadiga = analisar_fadiga_e_recuperacao(df_filtrado, var_analise_avancada, t)
+                    
+                    col_fad1, col_fad2 = st.columns(2)
+                    
+                    with col_fad1:
+                        for insight in insights_fadiga[:2]:
+                            st.markdown(f"""
+                            <div style="background: rgba(30, 41, 59, 0.8); padding: 15px; 
+                                        border-radius: 12px; margin: 10px 0;
+                                        border-left: 4px solid #8b5cf6;">
+                                <p style="color: #94a3b8; margin: 0;">{insight['tipo']}</p>
+                                <p style="color: white; font-size: 1.2rem; margin: 5px 0;">
+                                    {insight['metrica']}
+                                </p>
+                                <p style="color: #8b5cf6; margin: 0;">{insight['analise']}</p>
+                                <p style="color: #64748b; margin: 5px 0 0 0; font-size: 0.9rem;">
+                                    {insight['detalhes']}
+                                </p>
+                            </div>
+                            """, unsafe_allow_html=True)
+                    
+                    with col_fad2:
+                        # Gráfico de evolução por quartis
+                        quartis = df_filtrado[var_analise_avancada].tolist()
+                        tamanho = len(quartis)
+                        if tamanho >= 4:
+                            q1 = np.mean(quartis[:tamanho//4])
+                            q2 = np.mean(quartis[tamanho//4:tamanho//2])
+                            q3 = np.mean(quartis[tamanho//2:3*tamanho//4])
+                            q4 = np.mean(quartis[3*tamanho//4:])
+                            
+                            fig_quartis = go.Figure(data=go.Scatter(
+                                x=['1º Quartil', '2º Quartil', '3º Quartil', '4º Quartil'],
+                                y=[q1, q2, q3, q4],
+                                mode='lines+markers',
+                                line=dict(color='#8b5cf6', width=3),
+                                marker=dict(size=12, color='#8b5cf6')
+                            ))
+                            fig_quartis.update_layout(
+                                title="Evolução do Desempenho",
+                                plot_bgcolor='rgba(30,41,59,0.8)',
+                                paper_bgcolor='rgba(0,0,0,0)',
+                                font=dict(color='white'),
+                                height=250
+                            )
+                            fig_quartis.update_yaxes(gridcolor='#334155')
+                            st.plotly_chart(fig_quartis, use_container_width=True)
+                    
+                    st.markdown("---")
+                    
+                    # ============================================================
+                    # 4. RANKING E COMPARAÇÃO ENTRE ATLETAS
+                    # ============================================================
+                    st.markdown("### 🏆 Análise Comparativa entre Atletas")
+                    
+                    insights_atletas, ranking = analisar_desempenho_por_atleta(
+                        df_filtrado, 
+                        atletas_selecionados, 
+                        var_analise_avancada, 
+                        t
+                    )
+                    
+                    # Cards de destaque
+                    cols_rank = st.columns(3)
+                    for i, insight in enumerate(insights_atletas):
+                        with cols_rank[i]:
+                            st.markdown(f"""
+                            <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+                                        padding: 20px; border-radius: 16px; text-align: center;
+                                        border: 1px solid #334155;">
+                                <p style="color: #f59e0b; font-size: 2rem; margin: 0;">{insight['tipo'][0]}</p>
+                                <p style="color: white; font-size: 1.3rem; margin: 10px 0;">
+                                    {insight['atleta']}
+                                </p>
+                                <p style="color: #94a3b8; margin: 5px 0;">{insight['metrica']}</p>
+                                <p style="color: #10b981; margin: 5px 0;">{insight['analise']}</p>
+                                <p style="color: #8b5cf6; margin: 5px 0;">Consistência: {insight['consistencia']}</p>
+                            </div>
+                            """, unsafe_allow_html=True)
+                    
+                    # Tabela de ranking
+                    with st.expander("📊 Ver ranking completo dos atletas"):
+                        df_ranking = pd.DataFrame(ranking)
+                        st.dataframe(
+                            df_ranking.style.format({
+                                'media': '{:.2f}',
+                                'maximo': '{:.2f}',
+                                'minimo': '{:.2f}',
+                                'cv': '{:.1f}%'
+                            }),
+                            use_container_width=True,
+                            hide_index=True
+                        )
+                    
+                    # ============================================================
+                    # 5. RECOMENDAÇÕES FINAIS
+                    # ============================================================
+                    st.markdown("---")
+                    st.markdown("### 💡 Recomendações Estratégicas")
+                    
+                    # Gerar recomendações baseadas em todas as análises
+                    cols_rec = st.columns(2)
+                    
+                    with cols_rec[0]:
+                        st.markdown("""
+                        <div style="background: rgba(30, 41, 59, 0.8); padding: 20px; 
+                                    border-radius: 16px; height: 100%;">
+                            <h4 style="color: #10b981; margin-top: 0;">✅ Pontos Fortes</h4>
+                        """, unsafe_allow_html=True)
+                        
+                        # Identificar pontos fortes
+                        if insights_eventos:
+                            for insight in insights_eventos[:2]:
+                                if insight['severidade'] == 'baixa':
+                                    st.markdown(f"• {insight['mensagem']}")
+                        
+                        if insights_fadiga[0]['nivel'] == 'BAIXA':
+                            st.markdown("• Boa resistência ao longo da partida")
+                        
+                        if ranking and ranking[0]['consistencia'] == 'Alta':
+                            st.markdown(f"• {ranking[0]['atleta']} é extremamente consistente")
+                        
+                        st.markdown("</div>", unsafe_allow_html=True)
+                    
+                    with cols_rec[1]:
+                        st.markdown("""
+                        <div style="background: rgba(30, 41, 59, 0.8); padding: 20px; 
+                                    border-radius: 16px; height: 100%;">
+                            <h4 style="color: #ef4444; margin-top: 0;">⚠️ Pontos de Atenção</h4>
+                        """, unsafe_allow_html=True)
+                        
+                        # Identificar pontos fracos
+                        for insight in insights_eventos:
+                            if insight['severidade'] == 'alta':
+                                st.markdown(f"• {insight['mensagem']} - {insight['acao']}")
+                        
+                        if insights_fadiga[0]['nivel'] == 'ALTA':
+                            st.markdown("• Fadiga significativa no final da partida")
+                        
+                        if len(ranking) > 1 and ranking[-1]['media'] < ranking[0]['media'] * 0.7:
+                            st.markdown(f"• Grande disparidade entre {ranking[-1]['atleta']} e {ranking[0]['atleta']}")
+                        
+                        st.markdown("</div>", unsafe_allow_html=True)
+        
+        with tabs[7]:
             st.markdown(f"<h3>{t['tab_executive']}</h3>", unsafe_allow_html=True)
             
             st.markdown("### 🆚 Comparação de Atletas")
@@ -2826,7 +3791,7 @@ if st.session_state.df_completo is not None:
                         "Variáveis para comparar",
                         st.session_state.variaveis_quantitativas,
                         default=st.session_state.variaveis_quantitativas[:3],
-                        key="vars_comp"
+                        key="vars_comp_exec"
                     )
                     
                     if len(vars_comp) >= 1:
