@@ -820,9 +820,11 @@ def init_session_state():
     if 'upload_concluido' not in st.session_state:
         st.session_state.upload_concluido = False
     if 'modo_timeline' not in st.session_state:
-        st.session_state.modo_timeline = 'unico'  # 'unico' ou 'multiplo'
+        st.session_state.modo_timeline = 'unico'
     if 'periodo_timeline' not in st.session_state:
         st.session_state.periodo_timeline = None
+    if 'df_filtrado' not in st.session_state:
+        st.session_state.df_filtrado = None
     if 'kmeans_ativo' not in st.session_state:
         st.session_state.kmeans_ativo = False
     if 'kmeans_var_x' not in st.session_state:
@@ -889,7 +891,6 @@ def verificar_estruturas_arquivos(dataframes):
     return True, primeira_estrutura
 
 def executive_card(titulo, valor, delta, icone, cor_status="#3b82f6"):
-    """Card profissional estilo dashboard executivo"""
     delta_icon = "▲" if delta > 0 else "▼"
     delta_color = "#10b981" if delta > 0 else "#ef4444"
     
@@ -971,7 +972,7 @@ def criar_zonas_intensidade(df, variavel, metodo='percentis'):
             'Alta': df[variavel].quantile(0.8),
             'Muito Alta': df[variavel].quantile(1.0)
         }
-    else:  # based_on_max
+    else:
         max_val = df[variavel].max()
         return {
             'Muito Baixa': max_val * 0.2,
@@ -982,41 +983,33 @@ def criar_zonas_intensidade(df, variavel, metodo='percentis'):
         }
 
 def criar_timeline_profissional(df, variavel, t):
-    """Timeline com áreas sombreadas para valores acima/abaixo do limiar"""
     fig = go.Figure()
     
-    # Calcular média móvel (5 pontos)
     media_movevel = df[variavel].rolling(window=5, min_periods=1).mean()
-    
-    # Calcular limiar de 80%
     valor_maximo = df[variavel].max()
     limiar_80 = valor_maximo * 0.8
     
-    # Identificar pontos acima e abaixo do limiar
     acima_limiar = df[variavel] > limiar_80
     abaixo_limiar = df[variavel] <= limiar_80
     
-    # Criar área sombreada para valores acima do limiar (vermelho translúcido)
     fig.add_hrect(
         y0=limiar_80,
-        y1=valor_maximo * 1.05,  # Um pouco acima do máximo
-        fillcolor="rgba(239, 68, 68, 0.15)",  # Vermelho translúcido
+        y1=valor_maximo * 1.05,
+        fillcolor="rgba(239, 68, 68, 0.15)",
         line_width=0,
         layer="below",
         name=f"{t['above_threshold']}"
     )
     
-    # Criar área sombreada para valores abaixo do limiar (azul translúcido)
     fig.add_hrect(
         y0=0,
         y1=limiar_80,
-        fillcolor="rgba(59, 130, 246, 0.1)",  # Azul translúcido
+        fillcolor="rgba(59, 130, 246, 0.1)",
         line_width=0,
         layer="below",
         name=f"{t['below_threshold']}"
     )
     
-    # Adicionar linha do limiar (vermelha sólida)
     fig.add_hline(
         y=limiar_80,
         line_dash="solid",
@@ -1027,11 +1020,9 @@ def criar_timeline_profissional(df, variavel, t):
         annotation_font=dict(color="white", size=11)
     )
     
-    # Separar dados acima e abaixo do limiar para colorir os pontos
     df_acima = df[acima_limiar].copy()
     df_abaixo = df[abaixo_limiar].copy()
     
-    # Adicionar pontos acima do limiar (vermelhos)
     if not df_acima.empty:
         fig.add_trace(go.Scatter(
             x=df_acima['Minuto'],
@@ -1048,7 +1039,6 @@ def criar_timeline_profissional(df, variavel, t):
                           '<b>Valor:</b> %{y:.2f} (ACIMA DO LIMIAR)<extra></extra>'
         ))
     
-    # Adicionar pontos abaixo do limiar (azuis)
     if not df_abaixo.empty:
         fig.add_trace(go.Scatter(
             x=df_abaixo['Minuto'],
@@ -1065,7 +1055,6 @@ def criar_timeline_profissional(df, variavel, t):
                           '<b>Valor:</b> %{y:.2f}<extra></extra>'
         ))
     
-    # Linha de média móvel
     fig.add_trace(go.Scatter(
         x=df['Minuto'],
         y=media_movevel,
@@ -1074,7 +1063,6 @@ def criar_timeline_profissional(df, variavel, t):
         line=dict(color='#f59e0b', width=2, dash='dot')
     ))
     
-    # Linhas de referência adicionais
     media = df[variavel].mean()
     desvio = df[variavel].std()
     
@@ -1121,10 +1109,8 @@ def criar_timeline_profissional(df, variavel, t):
     return fig
 
 def criar_tabela_destaque(df, colunas_destaque):
-    """Tabela com células destacadas baseado em valores"""
     styled_df = df.style
     
-    # Aplicar gradiente nas colunas numéricas
     for col in colunas_destaque:
         if col in df.select_dtypes(include=[np.number]).columns:
             styled_df = styled_df.background_gradient(
@@ -1132,7 +1118,6 @@ def criar_tabela_destaque(df, colunas_destaque):
                 cmap='viridis'
             )
     
-    # Destacar linha do melhor atleta (maior média)
     if 'Média' in df.columns:
         def highlight_max_row(row):
             if row.name == df['Média'].idxmax():
@@ -1144,8 +1129,6 @@ def criar_tabela_destaque(df, colunas_destaque):
     return styled_df
 
 def comparar_atletas(df, atleta1, atleta2, variaveis, t):
-    """Comparação lado a lado de dois atletas"""
-    
     dados1 = df[df['Nome'] == atleta1][variaveis].mean()
     dados2 = df[df['Nome'] == atleta2][variaveis].mean()
     
@@ -1186,8 +1169,6 @@ def comparar_atletas(df, atleta1, atleta2, variaveis, t):
             """, unsafe_allow_html=True)
 
 def sistema_anotacoes(t):
-    """Sistema de anotações profissionais"""
-    
     with st.expander("📝 Anotações da Análise"):
         col1, col2 = st.columns([3, 1])
         
@@ -1203,7 +1184,6 @@ def sistema_anotacoes(t):
                     })
                     st.rerun()
         
-        # Listar anotações
         for i, anotacao in enumerate(reversed(st.session_state.anotacoes)):
             st.markdown(f"""
             <div class="note-card">
@@ -1213,8 +1193,6 @@ def sistema_anotacoes(t):
             """, unsafe_allow_html=True)
 
 def time_range_selector(t):
-    """Seletor de período estilo Google Analytics"""
-    
     col1, col2, col3 = st.columns(3)
     
     with col1:
@@ -1234,7 +1212,6 @@ def time_range_selector(t):
         with col3:
             data_fim = st.date_input("Data final", key="data_fim")
     else:
-        # Simulação - em um caso real, você usaria datas reais dos dados
         data_fim = datetime.now()
         if periodo == "Hoje":
             data_inicio = data_fim
@@ -1248,22 +1225,17 @@ def time_range_selector(t):
     return data_inicio, data_fim
 
 # ============================================================================
-# FUNÇÕES CORRIGIDAS PARA TIMELINE
+# FUNÇÕES PARA TIMELINE
 # ============================================================================
 
 def atualizar_modo_timeline():
-    """Callback para atualizar modo de timeline - SEM RERUN"""
     valor_radio = st.session_state.modo_timeline_radio
     if valor_radio == "Gráfico único":
         st.session_state.modo_timeline = 'unico'
     else:
         st.session_state.modo_timeline = 'multiplo'
-    # Removido st.rerun()
 
 def criar_timeline_multipla(df, variavel, periodos, t):
-    """Cria múltiplos gráficos de timeline, um para cada período"""
-    
-    # Criar subplots com n linhas (um por período)
     n_periodos = len(periodos)
     fig = make_subplots(
         rows=n_periodos, 
@@ -1279,11 +1251,9 @@ def criar_timeline_multipla(df, variavel, periodos, t):
         if df_periodo.empty:
             continue
         
-        # Calcular valores para este período
         valor_maximo = df_periodo[variavel].max()
         limiar_80 = valor_maximo * 0.8
         
-        # Adicionar linha de evolução
         fig.add_trace(
             go.Scatter(
                 x=df_periodo['Minuto'],
@@ -1297,7 +1267,6 @@ def criar_timeline_multipla(df, variavel, periodos, t):
             row=i, col=1
         )
         
-        # Adicionar linha do limiar 80%
         fig.add_hline(
             y=limiar_80,
             line_dash="dash",
@@ -1306,7 +1275,6 @@ def criar_timeline_multipla(df, variavel, periodos, t):
             row=i, col=1
         )
         
-        # Adicionar média
         media_periodo = df_periodo[variavel].mean()
         fig.add_hline(
             y=media_periodo,
@@ -1316,7 +1284,6 @@ def criar_timeline_multipla(df, variavel, periodos, t):
             row=i, col=1
         )
         
-        # Configurar eixos
         fig.update_xaxes(
             title_text="Minuto" if i == n_periodos else "",
             gridcolor='#334155',
@@ -1332,7 +1299,6 @@ def criar_timeline_multipla(df, variavel, periodos, t):
             row=i, col=1
         )
     
-    # Configurar layout geral
     fig.update_layout(
         title=f"Evolução Temporal por Período - {variavel}",
         plot_bgcolor='rgba(30,41,59,0.8)',
@@ -1346,12 +1312,8 @@ def criar_timeline_multipla(df, variavel, periodos, t):
     return fig
 
 def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
-    """Cria uma única timeline com seletor de período"""
-    
-    # Seletor de período
     opcoes_periodo = ['Todos os períodos'] + list(periodos_selecionados)
     
-    # CORREÇÃO: Usar session state para manter o valor selecionado
     indice_atual = 0
     if st.session_state.periodo_timeline in opcoes_periodo:
         indice_atual = opcoes_periodo.index(st.session_state.periodo_timeline)
@@ -1363,12 +1325,9 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
         key="periodo_timeline_select"
     )
     
-       # Apenas atualizar o session state, sem rerun
     if periodo_escolhido != st.session_state.periodo_timeline:
         st.session_state.periodo_timeline = periodo_escolhido
-        # Removido st.rerun() - isso causava loop
     
-    # Filtrar dados conforme seleção
     if periodo_escolhido == 'Todos os períodos':
         df_plot = df.copy()
         titulo = f"Evolução Temporal - {variavel} (Todos os períodos)"
@@ -1376,13 +1335,10 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
         df_plot = df[df['Período'] == periodo_escolhido].copy()
         titulo = f"Evolução Temporal - {variavel} (Período: {periodo_escolhido})"
     
-    # Ordenar por minuto
     df_plot = df_plot.sort_values('Minuto').reset_index(drop=True)
     
-    # Criar figura
     fig = go.Figure()
     
-    # Se for todos os períodos, colorir por período
     if periodo_escolhido == 'Todos os períodos':
         periodos_unicos = df_plot['Período'].unique()
         cores = px.colors.qualitative.Set2
@@ -1404,13 +1360,11 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
                 text=[periodo] * len(df_periodo)
             ))
     else:
-        # Período único - adicionar todos os recursos visuais
         valor_maximo = df_plot[variavel].max()
         limiar_80 = valor_maximo * 0.8
         media = df_plot[variavel].mean()
         desvio = df_plot[variavel].std()
         
-        # Áreas sombreadas
         fig.add_hrect(
             y0=limiar_80,
             y1=valor_maximo * 1.05,
@@ -1429,7 +1383,6 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
             name="Abaixo do limiar"
         )
         
-        # Linha do limiar
         fig.add_hline(
             y=limiar_80,
             line_dash="solid",
@@ -1439,7 +1392,6 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
             annotation_position="top left"
         )
         
-        # Linha da média
         fig.add_hline(
             y=media,
             line_dash="dash",
@@ -1448,7 +1400,6 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
             annotation_position="top left"
         )
         
-        # Área de ±1 DP
         fig.add_hrect(
             y0=media-desvio,
             y1=media+desvio,
@@ -1458,7 +1409,6 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
             annotation_text="±1 DP"
         )
         
-        # Dados principais
         fig.add_trace(go.Scatter(
             x=df_plot['Minuto'],
             y=df_plot[variavel],
@@ -1470,7 +1420,6 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
                           '<b>Valor:</b> %{y:.2f}<extra></extra>'
         ))
         
-        # Média móvel
         media_movevel = df_plot[variavel].rolling(window=5, min_periods=1).mean()
         fig.add_trace(go.Scatter(
             x=df_plot['Minuto'],
@@ -1480,7 +1429,6 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
             line=dict(color='#f59e0b', width=2, dash='dot')
         ))
     
-    # Configurar layout
     fig.update_layout(
         title=titulo,
         xaxis_title="Minuto",
@@ -1503,22 +1451,18 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
     return fig
 
 # ============================================================================
-# CALLBACKS - VERSÃO SEM RERUN
+# CALLBACKS
 # ============================================================================
 
 def atualizar_metodo_zona():
-    """Callback para atualizar método de zona - SEM RERUN"""
     valor_radio = st.session_state.metodo_zona_radio
     if valor_radio in ["Percentis", "Percentiles"]:
         st.session_state.metodo_zona = 'percentis'
     else:
         st.session_state.metodo_zona = 'based_on_max'
-    # Não incrementar zona_key aqui - isso causa rerun desnecessário
-    # st.session_state.zona_key += 1
 
 def atualizar_grupos():
-    """Callback para atualizar grupos de comparação"""
-    pass  # Removido para evitar loops
+    pass
 
 # ============================================================================
 # SIDEBAR
@@ -1555,7 +1499,6 @@ with st.sidebar:
         key="file_uploader"
     )
     
-    # Processar upload
     if upload_files and len(upload_files) > 0 and not st.session_state.upload_concluido:
         with st.spinner('🔄 Processando...'):
             time.sleep(0.5)
@@ -1666,7 +1609,6 @@ with st.sidebar:
             if variavel_selecionada != st.session_state.variavel_selecionada:
                 st.session_state.variavel_selecionada = variavel_selecionada
                 st.session_state.dados_processados = False
-                # st.rerun() removido
             
             df_temp = st.session_state.df_completo[variavel_selecionada].dropna()
             if not df_temp.empty:
@@ -1733,33 +1675,27 @@ with st.sidebar:
                     st.session_state.dados_processados = False
                     st.rerun()
         
-        # SELEÇÃO DE ATLETAS
         st.markdown("---")
         st.markdown(f"<h2 class='sidebar-title'>👤 {t['athlete']}</h2>", unsafe_allow_html=True)
         
-        # Filtrar dataframe baseado nas seleções atuais
         df_temp = st.session_state.df_completo.copy()
         if st.session_state.posicoes_selecionadas:
             df_temp = df_temp[df_temp['Posição'].isin(st.session_state.posicoes_selecionadas)]
         if st.session_state.periodos_selecionados:
             df_temp = df_temp[df_temp['Período'].isin(st.session_state.periodos_selecionados)]
         
-        # Obter lista de atletas disponíveis com os filtros atuais
         atletas_disponiveis = sorted(df_temp['Nome'].unique().tolist()) if not df_temp.empty else []
         
         if not atletas_disponiveis:
             st.warning("⚠️ Nenhum atleta disponível com os filtros atuais")
             st.session_state.atletas_selecionados = []
         else:
-            # Filtrar atletas selecionados para manter apenas os que ainda estão disponíveis
             atletas_selecionados_validos = [a for a in st.session_state.atletas_selecionados if a in atletas_disponiveis]
             
-            # Se não houver atletas válidos, selecionar o primeiro disponível
             if not atletas_selecionados_validos:
                 atletas_selecionados_validos = [atletas_disponiveis[0]]
                 st.session_state.atletas_selecionados = atletas_selecionados_validos
             
-            # Checkbox "Selecionar todos"
             selecionar_todos = st.checkbox(
                 f"Selecionar todos os {t['athlete'].lower()}s" if st.session_state.idioma == 'pt' else
                 f"Select all {t['athlete'].lower()}s" if st.session_state.idioma == 'en' else
@@ -1782,12 +1718,10 @@ with st.sidebar:
                     key="atletas_selector"
                 )
                 
-                # Garantir que sempre haja pelo menos um atleta selecionado
                 if atletas_sel != st.session_state.atletas_selecionados:
                     if len(atletas_sel) > 0:
                         st.session_state.atletas_selecionados = atletas_sel
                     else:
-                        # Se o usuário desmarcou todos, manter pelo menos o primeiro disponível
                         st.session_state.atletas_selecionados = [atletas_disponiveis[0]]
                     st.session_state.dados_processados = False
                     st.rerun()
@@ -1795,7 +1729,6 @@ with st.sidebar:
         st.markdown("---")
         st.markdown(f"<h2 class='sidebar-title'>⚙️ {t['config']}</h2>", unsafe_allow_html=True)
         
-        # Configurações
         n_classes = st.slider(f"{t['config']}:", 3, 20, st.session_state.n_classes, key="classes_slider")
         if n_classes != st.session_state.n_classes:
             st.session_state.n_classes = n_classes
@@ -1809,1169 +1742,1112 @@ with st.sidebar:
         
         if st.button(t['process'], use_container_width=True, disabled=not pode_processar, key="process_button"):
             st.session_state.processar_click = True
-            st.session_state.kmeans_ativo = False  # Reset K-means ao processar novos dados
+            st.session_state.kmeans_ativo = False
             st.rerun()
 
 # ============================================================================
 # ÁREA PRINCIPAL
 # ============================================================================
 
-# Verificar se deve processar ou se já tem dados processados
-if (st.session_state.processar_click or st.session_state.dados_processados) and st.session_state.df_completo is not None:
+if st.session_state.df_completo is not None:
     
-    # Se for um novo processamento
     if st.session_state.processar_click:
         with st.spinner('🔄 ' + ("Gerando análises..." if st.session_state.idioma == 'pt' else 
                                  "Generating analysis..." if st.session_state.idioma == 'en' else
                                  "Generando análisis...")):
             time.sleep(0.5)
-            st.session_state.processar_click = False
-    else:
-        # Já tem dados processados, apenas continuar
-        pass
-        
-        df_completo = st.session_state.df_completo
+            
+            df_completo = st.session_state.df_completo
+            atletas_selecionados = st.session_state.atletas_selecionados
+            posicoes_selecionadas = st.session_state.posicoes_selecionadas
+            periodos_selecionados = st.session_state.periodos_selecionados
+            variavel_analise = st.session_state.variavel_selecionada
+            n_classes = st.session_state.n_classes
+            
+            df_filtrado = df_completo[
+                df_completo['Nome'].isin(atletas_selecionados) & 
+                df_completo['Posição'].isin(posicoes_selecionadas) &
+                df_completo['Período'].isin(periodos_selecionados)
+            ].copy()
+            
+            df_filtrado = df_filtrado.dropna(subset=[variavel_analise])
+            
+            if df_filtrado.empty:
+                st.warning("⚠️ " + ("Nenhum dado encontrado" if st.session_state.idioma == 'pt' else 
+                                   "No data found" if st.session_state.idioma == 'en' else
+                                   "No se encontraron datos"))
+                st.session_state.dados_processados = False
+                st.session_state.df_filtrado = None
+            else:
+                st.session_state.dados_processados = True
+                st.session_state.df_filtrado = df_filtrado
+                st.session_state.processar_click = False
+                st.rerun()
+    
+    elif st.session_state.dados_processados and st.session_state.df_filtrado is not None:
+        df_filtrado = st.session_state.df_filtrado
         atletas_selecionados = st.session_state.atletas_selecionados
         posicoes_selecionadas = st.session_state.posicoes_selecionadas
         periodos_selecionados = st.session_state.periodos_selecionados
         variavel_analise = st.session_state.variavel_selecionada
         n_classes = st.session_state.n_classes
+        t = translations[st.session_state.idioma]
         
-        df_filtrado = df_completo[
-            df_completo['Nome'].isin(atletas_selecionados) & 
-            df_completo['Posição'].isin(posicoes_selecionadas) &
-            df_completo['Período'].isin(periodos_selecionados)
-        ].copy()
+        st.markdown(f"<h2>📊 {t['title'].split('Pro')[0] if 'Pro' in t['title'] else 'Visão Geral'}</h2>", unsafe_allow_html=True)
         
-        df_filtrado = df_filtrado.dropna(subset=[variavel_analise])
+        media_global = df_filtrado[variavel_analise].mean()
+        media_posicoes = df_filtrado.groupby('Posição')[variavel_analise].mean()
+        melhor_posicao = media_posicoes.idxmax() if not media_posicoes.empty else "N/A"
+        pior_posicao = media_posicoes.idxmin() if not media_posicoes.empty else "N/A"
         
-        if df_filtrado.empty:
-            st.warning("⚠️ " + ("Nenhum dado encontrado" if st.session_state.idioma == 'pt' else 
-                               "No data found" if st.session_state.idioma == 'en' else
-                               "No se encontraron datos"))
+        if n_colunas == 1:
+            executive_card(t['mean'], f"{media_global:.2f}", 5.2, "📊")
+            executive_card("Melhor Posição", melhor_posicao, 8.1, "🏆", "#10b981")
+            executive_card("Pior Posição", pior_posicao, -3.4, "📉", "#ef4444")
+            executive_card(t['observations'], len(df_filtrado), 0, "👥")
         else:
-            st.session_state.dados_processados = True
-            t = translations[st.session_state.idioma]
-            
-            # ====================================================================
-            # DASHBOARD EXECUTIVO - VISÃO GERAL
-            # ====================================================================
-            st.markdown(f"<h2>📊 {t['title'].split('Pro')[0] if 'Pro' in t['title'] else 'Visão Geral'}</h2>", unsafe_allow_html=True)
-            
-            # Calcular métricas para os cards executivos
-            media_global = df_filtrado[variavel_analise].mean()
-            media_posicoes = df_filtrado.groupby('Posição')[variavel_analise].mean()
-            melhor_posicao = media_posicoes.idxmax() if not media_posicoes.empty else "N/A"
-            pior_posicao = media_posicoes.idxmin() if not media_posicoes.empty else "N/A"
-            
-            # Layout responsivo
-            if n_colunas == 1:
-                # Mobile - uma coluna
+            cols_exec = st.columns(4)
+            with cols_exec[0]:
                 executive_card(t['mean'], f"{media_global:.2f}", 5.2, "📊")
+            with cols_exec[1]:
                 executive_card("Melhor Posição", melhor_posicao, 8.1, "🏆", "#10b981")
+            with cols_exec[2]:
                 executive_card("Pior Posição", pior_posicao, -3.4, "📉", "#ef4444")
+            with cols_exec[3]:
                 executive_card(t['observations'], len(df_filtrado), 0, "👥")
+        
+        st.markdown("---")
+        
+        data_inicio, data_fim = time_range_selector(t)
+        
+        st.markdown("---")
+        
+        tab_titles = [
+            t['tab_distribution'], 
+            t['tab_temporal'], 
+            t['tab_boxplots'], 
+            t['tab_correlation'],
+            t['tab_kmeans'],
+            t['tab_executive']
+        ]
+        
+        tabs = st.tabs(tab_titles)
+        
+        with tabs[0]:
+            st.markdown(f"<h3>{t['tab_distribution']}</h3>", unsafe_allow_html=True)
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                dados_hist = df_filtrado[variavel_analise].dropna()
+                
+                fig_hist = go.Figure()
+                fig_hist.add_trace(go.Histogram(
+                    x=dados_hist,
+                    nbinsx=n_classes,
+                    name='Frequência',
+                    marker_color='#3b82f6',
+                    opacity=0.8
+                ))
+                
+                media_hist = dados_hist.mean()
+                fig_hist.add_vline(
+                    x=media_hist,
+                    line_dash="dash",
+                    line_color="#ef4444",
+                    line_width=2,
+                    annotation_text=f"{t['mean']}: {media_hist:.2f}",
+                    annotation_position="top",
+                    annotation_font_color="white"
+                )
+                
+                mediana_hist = dados_hist.median()
+                fig_hist.add_vline(
+                    x=mediana_hist,
+                    line_dash="dot",
+                    line_color="#f59e0b",
+                    line_width=2,
+                    annotation_text=f"{t['median']}: {mediana_hist:.2f}",
+                    annotation_position="bottom",
+                    annotation_font_color="white"
+                )
+                
+                fig_hist.update_layout(
+                    title=f"Histograma - {variavel_analise} ({n_classes} classes)",
+                    plot_bgcolor='rgba(30, 41, 59, 0.8)',
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    font=dict(color='white', size=11),
+                    title_font=dict(color='#3b82f6', size=16),
+                    xaxis_title=variavel_analise,
+                    yaxis_title="Frequência",
+                    showlegend=False,
+                    bargap=0.1
+                )
+                fig_hist.update_xaxes(gridcolor='#334155', tickfont=dict(color='white'))
+                fig_hist.update_yaxes(gridcolor='#334155', tickfont=dict(color='white'))
+                
+                st.plotly_chart(fig_hist, use_container_width=True)
+            
+            with col2:
+                dados_qq = df_filtrado[variavel_analise].dropna()
+                quantis_teoricos = stats.norm.ppf(np.linspace(0.01, 0.99, len(dados_qq)))
+                quantis_observados = np.sort(dados_qq)
+                
+                z = np.polyfit(quantis_teoricos, quantis_observados, 1)
+                linha_ref = np.poly1d(z)
+                residuos = quantis_observados - linha_ref(quantis_teoricos)
+                ss_res = np.sum(residuos**2)
+                ss_tot = np.sum((quantis_observados - np.mean(quantis_observados))**2)
+                r2 = 1 - (ss_res / ss_tot) if ss_tot != 0 else 0
+                
+                fig_qq = go.Figure()
+                
+                fig_qq.add_trace(go.Scatter(
+                    x=quantis_teoricos,
+                    y=quantis_observados,
+                    mode='markers',
+                    name='Dados',
+                    marker=dict(color='#3b82f6', size=8, opacity=0.7)
+                ))
+                
+                fig_qq.add_trace(go.Scatter(
+                    x=quantis_teoricos,
+                    y=linha_ref(quantis_teoricos),
+                    mode='lines',
+                    name=f'Referência (R² = {r2:.3f})',
+                    line=dict(color='#ef4444', width=2)
+                ))
+                
+                fig_qq.update_layout(
+                    title=f"QQ Plot - {variavel_analise}",
+                    plot_bgcolor='rgba(30, 41, 59, 0.8)',
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    font=dict(color='white', size=11),
+                    title_font=dict(color='#3b82f6', size=16),
+                    xaxis_title="Quantis Teóricos",
+                    yaxis_title="Quantis Observados"
+                )
+                fig_qq.update_xaxes(gridcolor='#334155', tickfont=dict(color='white'))
+                fig_qq.update_yaxes(gridcolor='#334155', tickfont=dict(color='white'))
+                
+                st.plotly_chart(fig_qq, use_container_width=True)
+            
+            st.markdown("---")
+            st.markdown(f"<h4>📋 {t['tab_distribution'].replace('📊 ', '')} ({n_classes} classes)</h4>", unsafe_allow_html=True)
+            
+            minimo = df_filtrado[variavel_analise].min()
+            maximo = df_filtrado[variavel_analise].max()
+            amplitude = maximo - minimo
+            largura_classe = amplitude / n_classes if amplitude > 0 else 1
+            
+            limites = [minimo + i * largura_classe for i in range(n_classes + 1)]
+            rotulos = [f"[{limites[i]:.2f} - {limites[i+1]:.2f})" for i in range(n_classes)]
+            
+            categorias = pd.cut(df_filtrado[variavel_analise], bins=limites, labels=rotulos, include_lowest=True, right=False)
+            contagens = categorias.value_counts()
+            
+            freq_table = pd.DataFrame({
+                'Faixa de Valores': rotulos,
+                'Frequência': [int(contagens.get(r, 0)) for r in rotulos],
+                'Percentual (%)': [contagens.get(r, 0) / len(df_filtrado) * 100 for r in rotulos]
+            })
+            freq_table['Frequência Acumulada'] = freq_table['Frequência'].cumsum()
+            freq_table['Percentual Acumulado (%)'] = freq_table['Percentual (%)'].cumsum()
+            
+            st.dataframe(
+                freq_table.style.format({
+                    'Frequência': '{:.0f}',
+                    'Percentual (%)': '{:.2f}',
+                    'Frequência Acumulada': '{:.0f}',
+                    'Percentual Acumulado (%)': '{:.2f}'
+                }),
+                use_container_width=True,
+                hide_index=True
+            )
+        
+        with tabs[1]:
+            st.markdown(f"<h3>{t['tab_temporal']}</h3>", unsafe_allow_html=True)
+            
+            df_tempo = df_filtrado.sort_values('Minuto').reset_index(drop=True)
+            
+            valor_maximo = df_tempo[variavel_analise].max()
+            valor_minimo = df_tempo[variavel_analise].min()
+            minuto_maximo = extrair_minuto_do_extremo(df_tempo, variavel_analise, 'Minuto', 'max')
+            minuto_minimo = extrair_minuto_do_extremo(df_tempo, variavel_analise, 'Minuto', 'min')
+            media_tempo = df_tempo[variavel_analise].mean()
+            limiar_80 = valor_maximo * 0.8
+            
+            eventos_acima_80 = (df_tempo[variavel_analise] > limiar_80).sum()
+            percentual_acima_80 = (eventos_acima_80 / len(df_tempo)) * 100 if len(df_tempo) > 0 else 0
+            
+            cols_t = st.columns(5)
+            with cols_t[0]:
+                time_metric_card(t['max_value'], f"{valor_maximo:.2f}", f"{t['minute_of_max']}: {minuto_maximo}", "#ef4444")
+            with cols_t[1]:
+                time_metric_card(t['min_value'], f"{valor_minimo:.2f}", f"{t['minute_of_min']}: {minuto_minimo}", "#10b981")
+            with cols_t[2]:
+                time_metric_card(t['mean'], f"{media_tempo:.2f}", t['mean'], "#3b82f6")
+            with cols_t[3]:
+                time_metric_card(t['threshold_80'], f"{limiar_80:.2f}", f"80% do máx ({valor_maximo:.2f})", "#f59e0b")
+            with cols_t[4]:
+                warning_card(t['critical_events'], f"{eventos_acima_80}", f"{percentual_acima_80:.1f}% {t['above_threshold']}", "⚠️")
+            
+            st.markdown("---")
+            st.markdown(f"<h4>{t['intensity_zones']}</h4>", unsafe_allow_html=True)
+            
+            opcoes = [t['percentiles'], t['based_on_max']]
+            idx_atual = 0 if st.session_state.metodo_zona == 'percentis' else 1
+            
+            metodo_zona = st.radio(
+                t['zone_method'],
+                opcoes,
+                index=idx_atual,
+                key="metodo_zona_radio",
+                on_change=atualizar_metodo_zona
+            )
+            
+            zonas = criar_zonas_intensidade(df_filtrado, variavel_analise, st.session_state.metodo_zona)
+            
+            if zonas:
+                cores_zonas = ['#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#10b981']
+                st.markdown("##### Limiares das Zonas:")
+                cols_zone = st.columns(5)
+                for i, (zona, limite) in enumerate(zonas.items()):
+                    with cols_zone[i]:
+                        if i == 0:
+                            count = df_filtrado[variavel_analise] <= limite
+                        else:
+                            limite_anterior = list(zonas.values())[i-1]
+                            count = (df_filtrado[variavel_analise] > limite_anterior) & (df_filtrado[variavel_analise] <= limite)
+                        n_obs = count.sum()
+                        st.markdown(f"""
+                        <div class="zone-card" style="border-left-color: {cores_zonas[i]};" key="zona_{i}_{st.session_state.zona_key}">
+                            <div class="zone-name">{zona}</div>
+                            <div class="zone-value">{limite:.1f}</div>
+                            <div class="zone-count">{n_obs} obs ({n_obs/len(df_filtrado)*100:.0f}%)</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+            
+            st.markdown("---")
+            st.markdown(f"<h4>{t['tab_temporal']}</h4>", unsafe_allow_html=True)
+            
+            col_op1, col_op2 = st.columns([1, 3])
+            
+            with col_op1:
+                opcoes_timeline = ["Gráfico único", "Comparar períodos"]
+                idx_timeline = 0 if st.session_state.modo_timeline == 'unico' else 1
+                
+                modo_timeline = st.radio(
+                    "Modo de visualização",
+                    opcoes_timeline,
+                    index=idx_timeline,
+                    key="modo_timeline_radio",
+                    on_change=atualizar_modo_timeline,
+                    label_visibility="collapsed"
+                )
+            
+            with col_op2:
+                if st.session_state.modo_timeline == 'unico':
+                    if len(periodos_selecionados) > 0:
+                        fig_tempo = criar_timeline_unica_com_seletor(df_filtrado, variavel_analise, periodos_selecionados, t)
+                        st.plotly_chart(fig_tempo, use_container_width=True)
+                    else:
+                        st.warning("Nenhum período selecionado")
+                else:
+                    if len(periodos_selecionados) > 1:
+                        fig_multipla = criar_timeline_multipla(df_filtrado, variavel_analise, periodos_selecionados, t)
+                        st.plotly_chart(fig_multipla, use_container_width=True)
+                    elif len(periodos_selecionados) == 1:
+                        st.info("Selecione mais de um período para comparação")
+                        fig_tempo = criar_timeline_unica_com_seletor(df_filtrado, variavel_analise, periodos_selecionados, t)
+                        st.plotly_chart(fig_tempo, use_container_width=True)
+                    else:
+                        st.warning("Nenhum período selecionado")
+            
+            st.markdown("---")
+            st.markdown(f"<h4>{t['descriptive_stats']}</h4>", unsafe_allow_html=True)
+            
+            media = df_filtrado[variavel_analise].mean()
+            desvio = df_filtrado[variavel_analise].std()
+            mediana = df_filtrado[variavel_analise].median()
+            moda = df_filtrado[variavel_analise].mode().iloc[0] if not df_filtrado[variavel_analise].mode().empty else 'N/A'
+            variancia = df_filtrado[variavel_analise].var()
+            cv = calcular_cv(media, desvio)
+            q1 = df_filtrado[variavel_analise].quantile(0.25)
+            q3 = df_filtrado[variavel_analise].quantile(0.75)
+            iqr = q3 - q1
+            amplitude_total = df_filtrado[variavel_analise].max() - df_filtrado[variavel_analise].min()
+            assimetria = df_filtrado[variavel_analise].skew()
+            curtose = df_filtrado[variavel_analise].kurtosis()
+            
+            col_e1, col_e2, col_e3 = st.columns(3)
+            
+            with col_e1:
+                st.markdown(f"""
+                <div class="metric-container">
+                    <h4>{t['mean']}</h4>
+                    <p><strong>{t['mean']}:</strong> {media:.3f}</p>
+                    <p><strong>{t['median']}:</strong> {mediana:.3f}</p>
+                    <p><strong>{t['mode']}:</strong> {moda}</p>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col_e2:
+                st.markdown(f"""
+                <div class="metric-container">
+                    <h4>{t['std']}</h4>
+                    <p><strong>{t['std']}:</strong> {desvio:.3f}</p>
+                    <p><strong>{t['variance']}:</strong> {variancia:.3f}</p>
+                    <p><strong>{t['cv']}:</strong> {cv:.1f}%</p>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col_e3:
+                st.markdown(f"""
+                <div class="metric-container">
+                    <h4>{t['iqr']}</h4>
+                    <p><strong>{t['q1']}:</strong> {q1:.3f}</p>
+                    <p><strong>{t['q3']}:</strong> {q3:.3f}</p>
+                    <p><strong>{t['iqr']}:</strong> {iqr:.3f}</p>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            col_a1, col_a2 = st.columns(2)
+            
+            with col_a1:
+                if abs(assimetria) < 0.5:
+                    interp_ass = t['symmetric']
+                elif abs(assimetria) < 1:
+                    interp_ass = t['moderate_skew']
+                else:
+                    interp_ass = t['high_skew']
+                
+                st.markdown(f"""
+                <div class="metric-container">
+                    <h4>{t['skewness']}</h4>
+                    <p><strong>Valor:</strong> {assimetria:.3f}</p>
+                    <p><strong>{t['skewness']}:</strong> {interp_ass}</p>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col_a2:
+                if curtose > 0:
+                    interp_curt = t['leptokurtic']
+                elif curtose < 0:
+                    interp_curt = t['platykurtic']
+                else:
+                    interp_curt = t['mesokurtic']
+                
+                st.markdown(f"""
+                <div class="metric-container">
+                    <h4>{t['kurtosis']}</h4>
+                    <p><strong>Valor:</strong> {curtose:.3f}</p>
+                    <p><strong>{t['kurtosis']}:</strong> {interp_curt}</p>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            st.markdown("---")
+            st.markdown(f"<h4>{t['confidence_interval']}</h4>", unsafe_allow_html=True)
+            
+            col_ic1, col_ic2 = st.columns([1, 2])
+            
+            with col_ic1:
+                n = len(df_filtrado)
+                erro_padrao = desvio / np.sqrt(n)
+                
+                if n > 30:
+                    z = stats.norm.ppf(0.975)
+                    ic_inf = media - z * erro_padrao
+                    ic_sup = media + z * erro_padrao
+                    dist = "Normal"
+                else:
+                    t_val = stats.t.ppf(0.975, n-1)
+                    ic_inf = media - t_val * erro_padrao
+                    ic_sup = media + t_val * erro_padrao
+                    dist = "t-Student"
+                
+                st.markdown(f"""
+                <div class="metric-container">
+                    <p><strong>{t['mean']}:</strong> {media:.3f}</p>
+                    <p><strong>Erro Padrão:</strong> {erro_padrao:.3f}</p>
+                    <p><strong>IC Inferior:</strong> {ic_inf:.3f}</p>
+                    <p><strong>IC Superior:</strong> {ic_sup:.3f}</p>
+                    <p><small>Distribuição: {dist}</small></p>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col_ic2:
+                fig_ic = go.Figure()
+                
+                fig_ic.add_trace(go.Scatter(
+                    x=['IC 95%'],
+                    y=[media],
+                    mode='markers',
+                    marker=dict(color='#3b82f6', size=20),
+                    error_y=dict(type='constant', value=(ic_sup - media), color='#ef4444', thickness=3, width=15),
+                    name=t['mean']
+                ))
+                
+                fig_ic.update_layout(
+                    title=t['confidence_interval'],
+                    plot_bgcolor='rgba(30, 41, 59, 0.8)',
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    font=dict(color='white', size=11),
+                    title_font=dict(color='#3b82f6', size=14),
+                    showlegend=False,
+                    yaxis_title=variavel_analise
+                )
+                fig_ic.update_xaxes(gridcolor='#334155', tickfont=dict(color='white'))
+                fig_ic.update_yaxes(gridcolor='#334155', tickfont=dict(color='white'))
+                
+                st.plotly_chart(fig_ic, use_container_width=True)
+            
+            st.markdown("---")
+            st.markdown(f"<h4>{t['normality_test']}</h4>", unsafe_allow_html=True)
+            
+            dados_teste = df_filtrado[variavel_analise].dropna()
+            n_teste = len(dados_teste)
+            
+            if n_teste < 3:
+                st.error("❌ " + ("Amostra muito pequena (n < 3)" if st.session_state.idioma == 'pt' else 
+                                "Sample too small (n < 3)" if st.session_state.idioma == 'en' else
+                                "Muestra muy pequeña (n < 3)"))
+            elif n_teste > 5000:
+                st.info("ℹ️ " + ("Amostra grande demais. Usando D'Agostino-Pearson." if st.session_state.idioma == 'pt' else
+                                "Sample too large. Using D'Agostino-Pearson." if st.session_state.idioma == 'en' else
+                                "Muestra demasiado grande. Usando D'Agostino-Pearson."))
+                try:
+                    k2, p = stats.normaltest(dados_teste)
+                    interpretar_teste(p, "D'Agostino-Pearson", t)
+                except:
+                    st.warning("⚠️ " + ("Teste alternativo não disponível" if st.session_state.idioma == 'pt' else
+                                      "Alternative test not available" if st.session_state.idioma == 'en' else
+                                      "Prueba alternativa no disponible"))
             else:
-                # Desktop - 4 colunas
-                cols_exec = st.columns(4)
-                with cols_exec[0]:
-                    executive_card(t['mean'], f"{media_global:.2f}", 5.2, "📊")
-                with cols_exec[1]:
-                    executive_card("Melhor Posição", melhor_posicao, 8.1, "🏆", "#10b981")
-                with cols_exec[2]:
-                    executive_card("Pior Posição", pior_posicao, -3.4, "📉", "#ef4444")
-                with cols_exec[3]:
-                    executive_card(t['observations'], len(df_filtrado), 0, "👥")
+                try:
+                    shapiro = stats.shapiro(dados_teste)
+                    interpretar_teste(shapiro.pvalue, "Shapiro-Wilk", t)
+                except:
+                    st.error("❌ " + ("Erro no teste" if st.session_state.idioma == 'pt' else
+                                    "Test error" if st.session_state.idioma == 'en' else
+                                    "Error en la prueba"))
             
             st.markdown("---")
+            st.markdown(f"<h4>{t['summary_by_group']}</h4>", unsafe_allow_html=True)
             
-            # ====================================================================
-            # SELEÇÃO DE PERÍODO
-            # ====================================================================
-            data_inicio, data_fim = time_range_selector(t)
+            resumo = []
+            for nome in atletas_selecionados:
+                for posicao in posicoes_selecionadas:
+                    for periodo in periodos_selecionados:
+                        dados = df_filtrado[
+                            (df_filtrado['Nome'] == nome) & 
+                            (df_filtrado['Posição'] == posicao) &
+                            (df_filtrado['Período'] == periodo)
+                        ]
+                        if len(dados) > 0:
+                            media_grupo = dados[variavel_analise].mean()
+                            desvio_grupo = dados[variavel_analise].std()
+                            cv_grupo = calcular_cv(media_grupo, desvio_grupo)
+                            valor_max_grupo = dados[variavel_analise].max()
+                            valor_min_grupo = dados[variavel_analise].min()
+                            minuto_max_grupo = extrair_minuto_do_extremo(dados, variavel_analise, 'Minuto', 'max')
+                            minuto_min_grupo = extrair_minuto_do_extremo(dados, variavel_analise, 'Minuto', 'min')
+                            
+                            resumo.append({
+                                'Atleta': nome,
+                                'Posição': posicao,
+                                'Período': periodo,
+                                f'Máx {variavel_analise}': valor_max_grupo,
+                                'Minuto do Máx': minuto_max_grupo,
+                                f'Mín {variavel_analise}': valor_min_grupo,
+                                'Minuto do Mín': minuto_min_grupo,
+                                'Amplitude': valor_max_grupo - valor_min_grupo,
+                                'Média': media_grupo,
+                                'CV (%)': cv_grupo,
+                                'Nº Amostras': len(dados)
+                            })
             
-            st.markdown("---")
-            
-            # ====================================================================
-            # ABAS PRINCIPAIS
-            # ====================================================================
-            tab_titles = [
-                t['tab_distribution'], 
-                t['tab_temporal'], 
-                t['tab_boxplots'], 
-                t['tab_correlation'],
-                t['tab_kmeans'],
-                t['tab_executive']
-            ]
-            
-            tabs = st.tabs(tab_titles)
-            
-            # ABA 1: DISTRIBUIÇÃO
-            with tabs[0]:
-                st.markdown(f"<h3>{t['tab_distribution']}</h3>", unsafe_allow_html=True)
+            if resumo:
+                df_resumo = pd.DataFrame(resumo)
                 
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    dados_hist = df_filtrado[variavel_analise].dropna()
-                    
-                    fig_hist = go.Figure()
-                    fig_hist.add_trace(go.Histogram(
-                        x=dados_hist,
-                        nbinsx=n_classes,
-                        name='Frequência',
-                        marker_color='#3b82f6',
-                        opacity=0.8
-                    ))
-                    
-                    media_hist = dados_hist.mean()
-                    fig_hist.add_vline(
-                        x=media_hist,
-                        line_dash="dash",
-                        line_color="#ef4444",
-                        line_width=2,
-                        annotation_text=f"{t['mean']}: {media_hist:.2f}",
-                        annotation_position="top",
-                        annotation_font_color="white"
-                    )
-                    
-                    mediana_hist = dados_hist.median()
-                    fig_hist.add_vline(
-                        x=mediana_hist,
-                        line_dash="dot",
-                        line_color="#f59e0b",
-                        line_width=2,
-                        annotation_text=f"{t['median']}: {mediana_hist:.2f}",
-                        annotation_position="bottom",
-                        annotation_font_color="white"
-                    )
-                    
-                    fig_hist.update_layout(
-                        title=f"Histograma - {variavel_analise} ({n_classes} classes)",
-                        plot_bgcolor='rgba(30, 41, 59, 0.8)',
-                        paper_bgcolor='rgba(0,0,0,0)',
-                        font=dict(color='white', size=11),
-                        title_font=dict(color='#3b82f6', size=16),
-                        xaxis_title=variavel_analise,
-                        yaxis_title="Frequência",
-                        showlegend=False,
-                        bargap=0.1
-                    )
-                    fig_hist.update_xaxes(gridcolor='#334155', tickfont=dict(color='white'))
-                    fig_hist.update_yaxes(gridcolor='#334155', tickfont=dict(color='white'))
-                    
-                    st.plotly_chart(fig_hist, use_container_width=True)
-                
-                with col2:
-                    dados_qq = df_filtrado[variavel_analise].dropna()
-                    quantis_teoricos = stats.norm.ppf(np.linspace(0.01, 0.99, len(dados_qq)))
-                    quantis_observados = np.sort(dados_qq)
-                    
-                    z = np.polyfit(quantis_teoricos, quantis_observados, 1)
-                    linha_ref = np.poly1d(z)
-                    residuos = quantis_observados - linha_ref(quantis_teoricos)
-                    ss_res = np.sum(residuos**2)
-                    ss_tot = np.sum((quantis_observados - np.mean(quantis_observados))**2)
-                    r2 = 1 - (ss_res / ss_tot) if ss_tot != 0 else 0
-                    
-                    fig_qq = go.Figure()
-                    
-                    fig_qq.add_trace(go.Scatter(
-                        x=quantis_teoricos,
-                        y=quantis_observados,
-                        mode='markers',
-                        name='Dados',
-                        marker=dict(color='#3b82f6', size=8, opacity=0.7)
-                    ))
-                    
-                    fig_qq.add_trace(go.Scatter(
-                        x=quantis_teoricos,
-                        y=linha_ref(quantis_teoricos),
-                        mode='lines',
-                        name=f'Referência (R² = {r2:.3f})',
-                        line=dict(color='#ef4444', width=2)
-                    ))
-                    
-                    fig_qq.update_layout(
-                        title=f"QQ Plot - {variavel_analise}",
-                        plot_bgcolor='rgba(30, 41, 59, 0.8)',
-                        paper_bgcolor='rgba(0,0,0,0)',
-                        font=dict(color='white', size=11),
-                        title_font=dict(color='#3b82f6', size=16),
-                        xaxis_title="Quantis Teóricos",
-                        yaxis_title="Quantis Observados"
-                    )
-                    fig_qq.update_xaxes(gridcolor='#334155', tickfont=dict(color='white'))
-                    fig_qq.update_yaxes(gridcolor='#334155', tickfont=dict(color='white'))
-                    
-                    st.plotly_chart(fig_qq, use_container_width=True)
-                
-                st.markdown("---")
-                st.markdown(f"<h4>📋 {t['tab_distribution'].replace('📊 ', '')} ({n_classes} classes)</h4>", unsafe_allow_html=True)
-                
-                minimo = df_filtrado[variavel_analise].min()
-                maximo = df_filtrado[variavel_analise].max()
-                amplitude = maximo - minimo
-                largura_classe = amplitude / n_classes if amplitude > 0 else 1
-                
-                limites = [minimo + i * largura_classe for i in range(n_classes + 1)]
-                rotulos = [f"[{limites[i]:.2f} - {limites[i+1]:.2f})" for i in range(n_classes)]
-                
-                categorias = pd.cut(df_filtrado[variavel_analise], bins=limites, labels=rotulos, include_lowest=True, right=False)
-                contagens = categorias.value_counts()
-                
-                freq_table = pd.DataFrame({
-                    'Faixa de Valores': rotulos,
-                    'Frequência': [int(contagens.get(r, 0)) for r in rotulos],
-                    'Percentual (%)': [contagens.get(r, 0) / len(df_filtrado) * 100 for r in rotulos]
-                })
-                freq_table['Frequência Acumulada'] = freq_table['Frequência'].cumsum()
-                freq_table['Percentual Acumulado (%)'] = freq_table['Percentual (%)'].cumsum()
+                styled_df = criar_tabela_destaque(df_resumo, ['Média', f'Máx {variavel_analise}', f'Mín {variavel_analise}'])
                 
                 st.dataframe(
-                    freq_table.style.format({
-                        'Frequência': '{:.0f}',
-                        'Percentual (%)': '{:.2f}',
-                        'Frequência Acumulada': '{:.0f}',
-                        'Percentual Acumulado (%)': '{:.2f}'
+                    styled_df.format({
+                        f'Máx {variavel_analise}': '{:.2f}',
+                        f'Mín {variavel_analise}': '{:.2f}',
+                        'Amplitude': '{:.2f}',
+                        'Média': '{:.2f}',
+                        'CV (%)': '{:.1f}',
+                        'Nº Amostras': '{:.0f}'
                     }),
                     use_container_width=True,
                     hide_index=True
                 )
+                
+                st.caption(f"📌 {t['iqr_title']}: {t['iqr_explanation']}")
+        
+        with tabs[2]:
+            st.markdown(f"<h3>{t['tab_boxplots']}</h3>", unsafe_allow_html=True)
             
-            # ABA 2: ESTATÍSTICAS & TEMPORAL (CORRIGIDA)
-            with tabs[1]:
-                st.markdown(f"<h3>{t['tab_temporal']}</h3>", unsafe_allow_html=True)
-                
-                df_tempo = df_filtrado.sort_values('Minuto').reset_index(drop=True)
-                
-                # Cards de métricas temporais
-                valor_maximo = df_tempo[variavel_analise].max()
-                valor_minimo = df_tempo[variavel_analise].min()
-                minuto_maximo = extrair_minuto_do_extremo(df_tempo, variavel_analise, 'Minuto', 'max')
-                minuto_minimo = extrair_minuto_do_extremo(df_tempo, variavel_analise, 'Minuto', 'min')
-                media_tempo = df_tempo[variavel_analise].mean()
-                limiar_80 = valor_maximo * 0.8
-                
-                eventos_acima_80 = (df_tempo[variavel_analise] > limiar_80).sum()
-                percentual_acima_80 = (eventos_acima_80 / len(df_tempo)) * 100 if len(df_tempo) > 0 else 0
-                
-                cols_t = st.columns(5)
-                with cols_t[0]:
-                    time_metric_card(t['max_value'], f"{valor_maximo:.2f}", f"{t['minute_of_max']}: {minuto_maximo}", "#ef4444")
-                with cols_t[1]:
-                    time_metric_card(t['min_value'], f"{valor_minimo:.2f}", f"{t['minute_of_min']}: {minuto_minimo}", "#10b981")
-                with cols_t[2]:
-                    time_metric_card(t['mean'], f"{media_tempo:.2f}", t['mean'], "#3b82f6")
-                with cols_t[3]:
-                    time_metric_card(t['threshold_80'], f"{limiar_80:.2f}", f"80% do máx ({valor_maximo:.2f})", "#f59e0b")
-                with cols_t[4]:
-                    warning_card(t['critical_events'], f"{eventos_acima_80}", f"{percentual_acima_80:.1f}% {t['above_threshold']}", "⚠️")
-                
-                st.markdown("---")
-                st.markdown(f"<h4>{t['intensity_zones']}</h4>", unsafe_allow_html=True)
-                
-                # Zonas de intensidade
-                opcoes = [t['percentiles'], t['based_on_max']]
-                idx_atual = 0 if st.session_state.metodo_zona == 'percentis' else 1
-                
-                metodo_zona = st.radio(
-                    t['zone_method'],
-                    opcoes,
-                    index=idx_atual,
-                    key="metodo_zona_radio",
-                    on_change=atualizar_metodo_zona
-                )
-                
-                # Usar o valor do session state (atualizado pelo callback)
-                zonas = criar_zonas_intensidade(df_filtrado, variavel_analise, st.session_state.metodo_zona)
-                
-                if zonas:
-                    cores_zonas = ['#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#10b981']
-                    st.markdown("##### Limiares das Zonas:")
-                    cols_zone = st.columns(5)
-                    for i, (zona, limite) in enumerate(zonas.items()):
-                        with cols_zone[i]:
-                            if i == 0:
-                                count = df_filtrado[variavel_analise] <= limite
-                            else:
-                                limite_anterior = list(zonas.values())[i-1]
-                                count = (df_filtrado[variavel_analise] > limite_anterior) & (df_filtrado[variavel_analise] <= limite)
-                            n_obs = count.sum()
-                            st.markdown(f"""
-                            <div class="zone-card" style="border-left-color: {cores_zonas[i]};" key="zona_{i}_{st.session_state.zona_key}">
-                                <div class="zone-name">{zona}</div>
-                                <div class="zone-value">{limite:.1f}</div>
-                                <div class="zone-count">{n_obs} obs ({n_obs/len(df_filtrado)*100:.0f}%)</div>
-                            </div>
-                            """, unsafe_allow_html=True)
-                
-                st.markdown("---")
-                
-                # ================================================================
-                # TIMELINE CORRIGIDA COM SELEÇÃO DINÂMICA
-                # ================================================================
-                st.markdown(f"<h4>{t['tab_temporal']}</h4>", unsafe_allow_html=True)
-                
-                # Opções de visualização
-                col_op1, col_op2 = st.columns([1, 3])
-                
-                with col_op1:
-                    opcoes_timeline = ["Gráfico único", "Comparar períodos"]
-                    idx_timeline = 0 if st.session_state.modo_timeline == 'unico' else 1
-                    
-                    modo_timeline = st.radio(
-                        "Modo de visualização",
-                        opcoes_timeline,
-                        index=idx_timeline,
-                        key="modo_timeline_radio",
-                        on_change=atualizar_modo_timeline,
-                        label_visibility="collapsed"
-                    )
-                
-                with col_op2:
-                    if st.session_state.modo_timeline == 'unico':
-                        # Gráfico único com seletor de período
-                        if len(periodos_selecionados) > 0:
-                            fig_tempo = criar_timeline_unica_com_seletor(df_filtrado, variavel_analise, periodos_selecionados, t)
-                            st.plotly_chart(fig_tempo, use_container_width=True)
-                        else:
-                            st.warning("Nenhum período selecionado")
-                    else:
-                        # Múltiplos gráficos (um por período)
-                        if len(periodos_selecionados) > 1:
-                            fig_multipla = criar_timeline_multipla(df_filtrado, variavel_analise, periodos_selecionados, t)
-                            st.plotly_chart(fig_multipla, use_container_width=True)
-                        elif len(periodos_selecionados) == 1:
-                            st.info("Selecione mais de um período para comparação")
-                            fig_tempo = criar_timeline_unica_com_seletor(df_filtrado, variavel_analise, periodos_selecionados, t)
-                            st.plotly_chart(fig_tempo, use_container_width=True)
-                        else:
-                            st.warning("Nenhum período selecionado")
-                
-                st.markdown("---")
-                st.markdown(f"<h4>{t['descriptive_stats']}</h4>", unsafe_allow_html=True)
-                
-                media = df_filtrado[variavel_analise].mean()
-                desvio = df_filtrado[variavel_analise].std()
-                mediana = df_filtrado[variavel_analise].median()
-                moda = df_filtrado[variavel_analise].mode().iloc[0] if not df_filtrado[variavel_analise].mode().empty else 'N/A'
-                variancia = df_filtrado[variavel_analise].var()
-                cv = calcular_cv(media, desvio)
-                q1 = df_filtrado[variavel_analise].quantile(0.25)
-                q3 = df_filtrado[variavel_analise].quantile(0.75)
-                iqr = q3 - q1
-                amplitude_total = df_filtrado[variavel_analise].max() - df_filtrado[variavel_analise].min()
-                assimetria = df_filtrado[variavel_analise].skew()
-                curtose = df_filtrado[variavel_analise].kurtosis()
-                
-                col_e1, col_e2, col_e3 = st.columns(3)
-                
-                with col_e1:
-                    st.markdown(f"""
-                    <div class="metric-container">
-                        <h4>{t['mean']}</h4>
-                        <p><strong>{t['mean']}:</strong> {media:.3f}</p>
-                        <p><strong>{t['median']}:</strong> {mediana:.3f}</p>
-                        <p><strong>{t['mode']}:</strong> {moda}</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                
-                with col_e2:
-                    st.markdown(f"""
-                    <div class="metric-container">
-                        <h4>{t['std']}</h4>
-                        <p><strong>{t['std']}:</strong> {desvio:.3f}</p>
-                        <p><strong>{t['variance']}:</strong> {variancia:.3f}</p>
-                        <p><strong>{t['cv']}:</strong> {cv:.1f}%</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                
-                with col_e3:
-                    st.markdown(f"""
-                    <div class="metric-container">
-                        <h4>{t['iqr']}</h4>
-                        <p><strong>{t['q1']}:</strong> {q1:.3f}</p>
-                        <p><strong>{t['q3']}:</strong> {q3:.3f}</p>
-                        <p><strong>{t['iqr']}:</strong> {iqr:.3f}</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                
-                col_a1, col_a2 = st.columns(2)
-                
-                with col_a1:
-                    if abs(assimetria) < 0.5:
-                        interp_ass = t['symmetric']
-                    elif abs(assimetria) < 1:
-                        interp_ass = t['moderate_skew']
-                    else:
-                        interp_ass = t['high_skew']
-                    
-                    st.markdown(f"""
-                    <div class="metric-container">
-                        <h4>{t['skewness']}</h4>
-                        <p><strong>Valor:</strong> {assimetria:.3f}</p>
-                        <p><strong>{t['skewness']}:</strong> {interp_ass}</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                
-                with col_a2:
-                    if curtose > 0:
-                        interp_curt = t['leptokurtic']
-                    elif curtose < 0:
-                        interp_curt = t['platykurtic']
-                    else:
-                        interp_curt = t['mesokurtic']
-                    
-                    st.markdown(f"""
-                    <div class="metric-container">
-                        <h4>{t['kurtosis']}</h4>
-                        <p><strong>Valor:</strong> {curtose:.3f}</p>
-                        <p><strong>{t['kurtosis']}:</strong> {interp_curt}</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                
-                st.markdown("---")
-                st.markdown(f"<h4>{t['confidence_interval']}</h4>", unsafe_allow_html=True)
-                
-                col_ic1, col_ic2 = st.columns([1, 2])
-                
-                with col_ic1:
-                    n = len(df_filtrado)
-                    erro_padrao = desvio / np.sqrt(n)
-                    
-                    if n > 30:
-                        z = stats.norm.ppf(0.975)
-                        ic_inf = media - z * erro_padrao
-                        ic_sup = media + z * erro_padrao
-                        dist = "Normal"
-                    else:
-                        t_val = stats.t.ppf(0.975, n-1)
-                        ic_inf = media - t_val * erro_padrao
-                        ic_sup = media + t_val * erro_padrao
-                        dist = "t-Student"
-                    
-                    st.markdown(f"""
-                    <div class="metric-container">
-                        <p><strong>{t['mean']}:</strong> {media:.3f}</p>
-                        <p><strong>Erro Padrão:</strong> {erro_padrao:.3f}</p>
-                        <p><strong>IC Inferior:</strong> {ic_inf:.3f}</p>
-                        <p><strong>IC Superior:</strong> {ic_sup:.3f}</p>
-                        <p><small>Distribuição: {dist}</small></p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                
-                with col_ic2:
-                    fig_ic = go.Figure()
-                    
-                    fig_ic.add_trace(go.Scatter(
-                        x=['IC 95%'],
-                        y=[media],
-                        mode='markers',
-                        marker=dict(color='#3b82f6', size=20),
-                        error_y=dict(type='constant', value=(ic_sup - media), color='#ef4444', thickness=3, width=15),
-                        name=t['mean']
+            st.markdown(f"<h4>📍 {t['position']}</h4>", unsafe_allow_html=True)
+            
+            fig_box_pos = go.Figure()
+            for posicao in posicoes_selecionadas:
+                dados_pos = df_filtrado[df_filtrado['Posição'] == posicao][variavel_analise]
+                if len(dados_pos) > 0:
+                    fig_box_pos.add_trace(go.Box(
+                        y=dados_pos,
+                        name=posicao,
+                        boxmean='sd',
+                        marker_color='#3b82f6',
+                        line_color='white',
+                        fillcolor='rgba(59, 130, 246, 0.7)',
+                        jitter=0.3,
+                        pointpos=-1.8,
+                        opacity=0.8
                     ))
-                    
-                    fig_ic.update_layout(
-                        title=t['confidence_interval'],
-                        plot_bgcolor='rgba(30, 41, 59, 0.8)',
-                        paper_bgcolor='rgba(0,0,0,0)',
-                        font=dict(color='white', size=11),
-                        title_font=dict(color='#3b82f6', size=14),
-                        showlegend=False,
-                        yaxis_title=variavel_analise
-                    )
-                    fig_ic.update_xaxes(gridcolor='#334155', tickfont=dict(color='white'))
-                    fig_ic.update_yaxes(gridcolor='#334155', tickfont=dict(color='white'))
-                    
-                    st.plotly_chart(fig_ic, use_container_width=True)
+            
+            fig_box_pos.update_layout(
+                title=f"{t['position']} - {variavel_analise}",
+                plot_bgcolor='rgba(30, 41, 59, 0.8)',
+                paper_bgcolor='rgba(0,0,0,0)',
+                font=dict(color='white', size=11),
+                title_font=dict(color='#3b82f6', size=16),
+                yaxis_title=variavel_analise,
+                showlegend=False
+            )
+            fig_box_pos.update_xaxes(gridcolor='#334155', tickfont=dict(color='white'))
+            fig_box_pos.update_yaxes(gridcolor='#334155', tickfont=dict(color='white'))
+            st.plotly_chart(fig_box_pos, use_container_width=True)
+            
+            st.markdown(f"<h4>👥 {t['athlete']}</h4>", unsafe_allow_html=True)
+            
+            fig_box_atl = go.Figure()
+            for atleta in atletas_selecionados:
+                dados_atl = df_filtrado[df_filtrado['Nome'] == atleta][variavel_analise]
+                if len(dados_atl) > 0:
+                    fig_box_atl.add_trace(go.Box(
+                        y=dados_atl,
+                        name=atleta[:20] + "..." if len(atleta) > 20 else atleta,
+                        boxmean='sd',
+                        marker_color='#8b5cf6',
+                        line_color='white',
+                        fillcolor='rgba(139, 92, 246, 0.7)',
+                        jitter=0.3,
+                        pointpos=-1.8,
+                        opacity=0.8
+                    ))
+            
+            altura_boxplot = max(400, len(atletas_selecionados) * 25)
+            
+            fig_box_atl.update_layout(
+                title=f"{t['athlete']} - {variavel_analise}",
+                plot_bgcolor='rgba(30, 41, 59, 0.8)',
+                paper_bgcolor='rgba(0,0,0,0)',
+                font=dict(color='white', size=11),
+                title_font=dict(color='#3b82f6', size=16),
+                yaxis_title=variavel_analise,
+                showlegend=False,
+                height=altura_boxplot
+            )
+            fig_box_atl.update_xaxes(gridcolor='#334155', tickfont=dict(color='white'), tickangle=-45)
+            fig_box_atl.update_yaxes(gridcolor='#334155', tickfont=dict(color='white'))
+            st.plotly_chart(fig_box_atl, use_container_width=True)
+            
+            with st.expander(f"📊 {t['descriptive_stats']} {t['athlete'].lower()}"):
+                st.markdown(f"""
+                <div style="background: rgba(30, 41, 59, 0.8); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+                    <h5 style="color: #3b82f6;">{t['iqr_title']}</h5>
+                    <p style="color: #94a3b8;">{t['iqr_explanation']}</p>
+                </div>
+                """, unsafe_allow_html=True)
                 
-                st.markdown("---")
-                st.markdown(f"<h4>{t['normality_test']}</h4>", unsafe_allow_html=True)
+                stats_atletas = []
+                for atleta in atletas_selecionados:
+                    dados_atl = df_filtrado[df_filtrado['Nome'] == atleta][variavel_analise]
+                    if len(dados_atl) > 0:
+                        q1_atl = dados_atl.quantile(0.25)
+                        q3_atl = dados_atl.quantile(0.75)
+                        iqr_atl = q3_atl - q1_atl
+                        media_atl = dados_atl.mean()
+                        desvio_atl = dados_atl.std()
+                        cv_atl = calcular_cv(media_atl, desvio_atl)
+                        valor_max_atl = dados_atl.max()
+                        valor_min_atl = dados_atl.min()
+                        minuto_max_atl = extrair_minuto_do_extremo(dados_atl, variavel_analise, 'Minuto', 'max')
+                        minuto_min_atl = extrair_minuto_do_extremo(dados_atl, variavel_analise, 'Minuto', 'min')
+                        
+                        stats_atletas.append({
+                            'Atleta': atleta,
+                            'Média': media_atl,
+                            'Mediana': dados_atl.median(),
+                            'DP': desvio_atl,
+                            'CV (%)': cv_atl,
+                            'Mín': valor_min_atl,
+                            'Minuto Mín': minuto_min_atl,
+                            'Q1': q1_atl,
+                            'Q3': q3_atl,
+                            'Máx': valor_max_atl,
+                            'Minuto Máx': minuto_max_atl,
+                            'IQR': iqr_atl,
+                            'Outliers': len(dados_atl[(dados_atl < q1_atl - 1.5*iqr_atl) | (dados_atl > q3_atl + 1.5*iqr_atl)]),
+                            'N': len(dados_atl)
+                        })
                 
-                dados_teste = df_filtrado[variavel_analise].dropna()
-                n_teste = len(dados_teste)
-                
-                if n_teste < 3:
-                    st.error("❌ " + ("Amostra muito pequena (n < 3)" if st.session_state.idioma == 'pt' else 
-                                    "Sample too small (n < 3)" if st.session_state.idioma == 'en' else
-                                    "Muestra muy pequeña (n < 3)"))
-                elif n_teste > 5000:
-                    st.info("ℹ️ " + ("Amostra grande demais. Usando D'Agostino-Pearson." if st.session_state.idioma == 'pt' else
-                                    "Sample too large. Using D'Agostino-Pearson." if st.session_state.idioma == 'en' else
-                                    "Muestra demasiado grande. Usando D'Agostino-Pearson."))
-                    try:
-                        k2, p = stats.normaltest(dados_teste)
-                        interpretar_teste(p, "D'Agostino-Pearson", t)
-                    except:
-                        st.warning("⚠️ " + ("Teste alternativo não disponível" if st.session_state.idioma == 'pt' else
-                                          "Alternative test not available" if st.session_state.idioma == 'en' else
-                                          "Prueba alternativa no disponible"))
-                else:
-                    try:
-                        shapiro = stats.shapiro(dados_teste)
-                        interpretar_teste(shapiro.pvalue, "Shapiro-Wilk", t)
-                    except:
-                        st.error("❌ " + ("Erro no teste" if st.session_state.idioma == 'pt' else
-                                        "Test error" if st.session_state.idioma == 'en' else
-                                        "Error en la prueba"))
-                
-                st.markdown("---")
-                st.markdown(f"<h4>{t['summary_by_group']}</h4>", unsafe_allow_html=True)
-                
-                resumo = []
-                for nome in atletas_selecionados:
-                    for posicao in posicoes_selecionadas:
-                        for periodo in periodos_selecionados:
-                            dados = df_filtrado[
-                                (df_filtrado['Nome'] == nome) & 
-                                (df_filtrado['Posição'] == posicao) &
-                                (df_filtrado['Período'] == periodo)
-                            ]
-                            if len(dados) > 0:
-                                media_grupo = dados[variavel_analise].mean()
-                                desvio_grupo = dados[variavel_analise].std()
-                                cv_grupo = calcular_cv(media_grupo, desvio_grupo)
-                                valor_max_grupo = dados[variavel_analise].max()
-                                valor_min_grupo = dados[variavel_analise].min()
-                                minuto_max_grupo = extrair_minuto_do_extremo(dados, variavel_analise, 'Minuto', 'max')
-                                minuto_min_grupo = extrair_minuto_do_extremo(dados, variavel_analise, 'Minuto', 'min')
-                                
-                                resumo.append({
-                                    'Atleta': nome,
-                                    'Posição': posicao,
-                                    'Período': periodo,
-                                    f'Máx {variavel_analise}': valor_max_grupo,
-                                    'Minuto do Máx': minuto_max_grupo,
-                                    f'Mín {variavel_analise}': valor_min_grupo,
-                                    'Minuto do Mín': minuto_min_grupo,
-                                    'Amplitude': valor_max_grupo - valor_min_grupo,
-                                    'Média': media_grupo,
-                                    'CV (%)': cv_grupo,
-                                    'Nº Amostras': len(dados)
-                                })
-                
-                if resumo:
-                    df_resumo = pd.DataFrame(resumo)
-                    
-                    # Aplicar estilo destacado
-                    styled_df = criar_tabela_destaque(df_resumo, ['Média', f'Máx {variavel_analise}', f'Mín {variavel_analise}'])
-                    
+                if stats_atletas:
+                    df_stats = pd.DataFrame(stats_atletas)
                     st.dataframe(
-                        styled_df.format({
-                            f'Máx {variavel_analise}': '{:.2f}',
-                            f'Mín {variavel_analise}': '{:.2f}',
-                            'Amplitude': '{:.2f}',
+                        df_stats.style.format({
                             'Média': '{:.2f}',
+                            'Mediana': '{:.2f}',
+                            'DP': '{:.2f}',
                             'CV (%)': '{:.1f}',
-                            'Nº Amostras': '{:.0f}'
+                            'Mín': '{:.2f}',
+                            'Q1': '{:.2f}',
+                            'Q3': '{:.2f}',
+                            'Máx': '{:.2f}',
+                            'IQR': '{:.2f}',
+                            'Outliers': '{:.0f}',
+                            'N': '{:.0f}'
                         }),
                         use_container_width=True,
                         hide_index=True
                     )
-                    
-                    # Adicionar explicação do IQR ao final da tabela
-                    st.caption(f"📌 {t['iqr_title']}: {t['iqr_explanation']}")
+                
+                st.caption(f"📌 {t['iqr_title']}: {t['iqr_explanation']}")
+        
+        with tabs[3]:
+            st.markdown(f"<h3>{t['tab_correlation']}</h3>", unsafe_allow_html=True)
             
-            # ABA 3: BOXPLOTS
-            with tabs[2]:
-                st.markdown(f"<h3>{t['tab_boxplots']}</h3>", unsafe_allow_html=True)
-                
-                st.markdown(f"<h4>📍 {t['position']}</h4>", unsafe_allow_html=True)
-                
-                fig_box_pos = go.Figure()
-                for posicao in posicoes_selecionadas:
-                    dados_pos = df_filtrado[df_filtrado['Posição'] == posicao][variavel_analise]
-                    if len(dados_pos) > 0:
-                        fig_box_pos.add_trace(go.Box(
-                            y=dados_pos,
-                            name=posicao,
-                            boxmean='sd',
-                            marker_color='#3b82f6',
-                            line_color='white',
-                            fillcolor='rgba(59, 130, 246, 0.7)',
-                            jitter=0.3,
-                            pointpos=-1.8,
-                            opacity=0.8
-                        ))
-                
-                fig_box_pos.update_layout(
-                    title=f"{t['position']} - {variavel_analise}",
-                    plot_bgcolor='rgba(30, 41, 59, 0.8)',
-                    paper_bgcolor='rgba(0,0,0,0)',
-                    font=dict(color='white', size=11),
-                    title_font=dict(color='#3b82f6', size=16),
-                    yaxis_title=variavel_analise,
-                    showlegend=False
+            if len(st.session_state.variaveis_quantitativas) > 1:
+                vars_corr = st.multiselect(
+                    t['tab_correlation'].replace('🔥', '').strip(),
+                    options=st.session_state.variaveis_quantitativas,
+                    default=st.session_state.variaveis_quantitativas[:min(5, len(st.session_state.variaveis_quantitativas))],
+                    key="vars_corr_multiselect"
                 )
-                fig_box_pos.update_xaxes(gridcolor='#334155', tickfont=dict(color='white'))
-                fig_box_pos.update_yaxes(gridcolor='#334155', tickfont=dict(color='white'))
-                st.plotly_chart(fig_box_pos, use_container_width=True)
                 
-                st.markdown(f"<h4>👥 {t['athlete']}</h4>", unsafe_allow_html=True)
-                
-                # Mostrar todos os atletas, com altura dinâmica
-                fig_box_atl = go.Figure()
-                for atleta in atletas_selecionados:
-                    dados_atl = df_filtrado[df_filtrado['Nome'] == atleta][variavel_analise]
-                    if len(dados_atl) > 0:
-                        fig_box_atl.add_trace(go.Box(
-                            y=dados_atl,
-                            name=atleta[:20] + "..." if len(atleta) > 20 else atleta,
-                            boxmean='sd',
-                            marker_color='#8b5cf6',
-                            line_color='white',
-                            fillcolor='rgba(139, 92, 246, 0.7)',
-                            jitter=0.3,
-                            pointpos=-1.8,
-                            opacity=0.8
-                        ))
-                
-                altura_boxplot = max(400, len(atletas_selecionados) * 25)
-                
-                fig_box_atl.update_layout(
-                    title=f"{t['athlete']} - {variavel_analise}",
-                    plot_bgcolor='rgba(30, 41, 59, 0.8)',
-                    paper_bgcolor='rgba(0,0,0,0)',
-                    font=dict(color='white', size=11),
-                    title_font=dict(color='#3b82f6', size=16),
-                    yaxis_title=variavel_analise,
-                    showlegend=False,
-                    height=altura_boxplot
-                )
-                fig_box_atl.update_xaxes(gridcolor='#334155', tickfont=dict(color='white'), tickangle=-45)
-                fig_box_atl.update_yaxes(gridcolor='#334155', tickfont=dict(color='white'))
-                st.plotly_chart(fig_box_atl, use_container_width=True)
-                
-                with st.expander(f"📊 {t['descriptive_stats']} {t['athlete'].lower()}"):
-                    st.markdown(f"""
-                    <div style="background: rgba(30, 41, 59, 0.8); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
-                        <h5 style="color: #3b82f6;">{t['iqr_title']}</h5>
-                        <p style="color: #94a3b8;">{t['iqr_explanation']}</p>
-                    </div>
-                    """, unsafe_allow_html=True)
+                if len(vars_corr) >= 2:
+                    df_corr = df_filtrado[vars_corr].corr()
                     
-                    stats_atletas = []
-                    for atleta in atletas_selecionados:
-                        dados_atl = df_filtrado[df_filtrado['Nome'] == atleta][variavel_analise]
-                        if len(dados_atl) > 0:
-                            q1_atl = dados_atl.quantile(0.25)
-                            q3_atl = dados_atl.quantile(0.75)
-                            iqr_atl = q3_atl - q1_atl
-                            media_atl = dados_atl.mean()
-                            desvio_atl = dados_atl.std()
-                            cv_atl = calcular_cv(media_atl, desvio_atl)
-                            valor_max_atl = dados_atl.max()
-                            valor_min_atl = dados_atl.min()
-                            minuto_max_atl = extrair_minuto_do_extremo(dados_atl, variavel_analise, 'Minuto', 'max')
-                            minuto_min_atl = extrair_minuto_do_extremo(dados_atl, variavel_analise, 'Minuto', 'min')
-                            
-                            stats_atletas.append({
-                                'Atleta': atleta,
-                                'Média': media_atl,
-                                'Mediana': dados_atl.median(),
-                                'DP': desvio_atl,
-                                'CV (%)': cv_atl,
-                                'Mín': valor_min_atl,
-                                'Minuto Mín': minuto_min_atl,
-                                'Q1': q1_atl,
-                                'Q3': q3_atl,
-                                'Máx': valor_max_atl,
-                                'Minuto Máx': minuto_max_atl,
-                                'IQR': iqr_atl,
-                                'Outliers': len(dados_atl[(dados_atl < q1_atl - 1.5*iqr_atl) | (dados_atl > q3_atl + 1.5*iqr_atl)]),
-                                'N': len(dados_atl)
-                            })
+                    colorscale = [
+                        [0, 'rgba(0, 0, 139, 0.7)'],
+                        [0.25, 'rgba(65, 105, 225, 0.7)'],
+                        [0.45, 'rgba(220, 220, 220, 0.5)'],
+                        [0.5, 'rgba(211, 211, 211, 0.3)'],
+                        [0.55, 'rgba(220, 220, 220, 0.5)'],
+                        [0.75, 'rgba(255, 99, 71, 0.7)'],
+                        [1, 'rgba(139, 0, 0, 0.7)']
+                    ]
                     
-                    if stats_atletas:
-                        df_stats = pd.DataFrame(stats_atletas)
-                        st.dataframe(
-                            df_stats.style.format({
-                                'Média': '{:.2f}',
-                                'Mediana': '{:.2f}',
-                                'DP': '{:.2f}',
-                                'CV (%)': '{:.1f}',
-                                'Mín': '{:.2f}',
-                                'Q1': '{:.2f}',
-                                'Q3': '{:.2f}',
-                                'Máx': '{:.2f}',
-                                'IQR': '{:.2f}',
-                                'Outliers': '{:.0f}',
-                                'N': '{:.0f}'
-                            }),
-                            use_container_width=True,
-                            hide_index=True
-                        )
+                    df_corr_display = df_corr.copy()
                     
-                    # Adicionar explicação do IQR ao final
-                    st.caption(f"📌 {t['iqr_title']}: {t['iqr_explanation']}")
-            
-            # ABA 4: CORRELAÇÕES
-            with tabs[3]:
-                st.markdown(f"<h3>{t['tab_correlation']}</h3>", unsafe_allow_html=True)
-                
-                if len(st.session_state.variaveis_quantitativas) > 1:
-                    vars_corr = st.multiselect(
-                        t['tab_correlation'].replace('🔥', '').strip(),
-                        options=st.session_state.variaveis_quantitativas,
-                        default=st.session_state.variaveis_quantitativas[:min(5, len(st.session_state.variaveis_quantitativas))],
-                        key="vars_corr_multiselect"
+                    fig_corr = px.imshow(
+                        df_corr_display,
+                        text_auto='.2f',
+                        aspect="auto",
+                        color_continuous_scale=colorscale,
+                        title=f"{t['tab_correlation']}",
+                        zmin=-1, zmax=1
                     )
                     
-                    if len(vars_corr) >= 2:
-                        df_corr = df_filtrado[vars_corr].corr()
-                        
-                        # Heatmap com cores suaves
-                        colorscale = [
-                            [0, 'rgba(0, 0, 139, 0.7)'],      # Azul escuro translúcido para -1
-                            [0.25, 'rgba(65, 105, 225, 0.7)'], # Azul médio translúcido para -0.5
-                            [0.45, 'rgba(220, 220, 220, 0.5)'], # Cinza claro translúcido para valores próximos de 0
-                            [0.5, 'rgba(211, 211, 211, 0.3)'],  # Cinza mais claro para a diagonal
-                            [0.55, 'rgba(220, 220, 220, 0.5)'], # Cinza claro translúcido
-                            [0.75, 'rgba(255, 99, 71, 0.7)'],   # Vermelho médio translúcido para 0.5
-                            [1, 'rgba(139, 0, 0, 0.7)']         # Vermelho escuro translúcido para 1
-                        ]
-                        
-                        df_corr_display = df_corr.copy()
-                        
-                        fig_corr = px.imshow(
-                            df_corr_display,
-                            text_auto='.2f',
-                            aspect="auto",
-                            color_continuous_scale=colorscale,
-                            title=f"{t['tab_correlation']}",
-                            zmin=-1, zmax=1
+                    for i in range(len(df_corr)):
+                        fig_corr.add_annotation(
+                            x=i,
+                            y=i,
+                            text=f"{df_corr.iloc[i, i]:.2f}",
+                            showarrow=False,
+                            font=dict(color='white', size=12, weight='bold'),
+                            bgcolor='#4a5568',
+                            bordercolor='#718096',
+                            borderwidth=1,
+                            opacity=0.9
                         )
                         
-                        # Destacar a diagonal principal em cinza
-                        for i in range(len(df_corr)):
-                            fig_corr.add_annotation(
-                                x=i,
-                                y=i,
-                                text=f"{df_corr.iloc[i, i]:.2f}",
-                                showarrow=False,
-                                font=dict(color='white', size=12, weight='bold'),
-                                bgcolor='#4a5568',
-                                bordercolor='#718096',
-                                borderwidth=1,
-                                opacity=0.9
-                            )
-                            
-                            # Adicionar um retângulo cinza no fundo
-                            fig_corr.add_shape(
-                                type="rect",
-                                x0=i - 0.5,
-                                y0=i - 0.5,
-                                x1=i + 0.5,
-                                y1=i + 0.5,
-                                line=dict(width=0),
-                                fillcolor='rgba(74, 85, 104, 0.5)',
-                                layer="below"
-                            )
+                        fig_corr.add_shape(
+                            type="rect",
+                            x0=i - 0.5,
+                            y0=i - 0.5,
+                            x1=i + 0.5,
+                            y1=i + 0.5,
+                            line=dict(width=0),
+                            fillcolor='rgba(74, 85, 104, 0.5)',
+                            layer="below"
+                        )
+                    
+                    fig_corr.update_layout(
+                        plot_bgcolor='rgba(30, 41, 59, 0.8)',
+                        paper_bgcolor='rgba(0,0,0,0)',
+                        font=dict(color='white', size=11),
+                        title_font=dict(color='#3b82f6', size=16),
+                        height=500
+                    )
+                    fig_corr.update_xaxes(gridcolor='#334155', tickfont=dict(color='white'))
+                    fig_corr.update_yaxes(gridcolor='#334155', tickfont=dict(color='white'))
+                    st.plotly_chart(fig_corr, use_container_width=True)
+                    
+                    st.markdown(f"<h4>📊 {t['tab_correlation']}</h4>", unsafe_allow_html=True)
+                    
+                    def style_correlation(val):
+                        if pd.isna(val):
+                            return 'color: #94a3b8;'
+                        if val == 1.0:
+                            return 'color: #2d3748; font-weight: bold; background-color: #d3d3d3;'
+                        color = '#ef4444' if abs(val) > 0.7 else '#f59e0b' if abs(val) > 0.5 else '#3b82f6'
+                        return f'color: {color}; font-weight: bold;'
+                    
+                    st.dataframe(
+                        df_corr.style.format('{:.3f}').applymap(style_correlation),
+                        use_container_width=True
+                    )
+                    
+                    if len(vars_corr) == 2:
+                        st.markdown(f"<h4>📈 {t['tab_correlation']}</h4>", unsafe_allow_html=True)
                         
-                        fig_corr.update_layout(
+                        fig_scatter = px.scatter(
+                            df_filtrado,
+                            x=vars_corr[0],
+                            y=vars_corr[1],
+                            color='Posição',
+                            title=f"{vars_corr[0]} vs {vars_corr[1]}",
+                            opacity=0.7,
+                            trendline="ols",
+                            color_discrete_sequence=px.colors.qualitative.Set2
+                        )
+                        fig_scatter.update_layout(
                             plot_bgcolor='rgba(30, 41, 59, 0.8)',
                             paper_bgcolor='rgba(0,0,0,0)',
                             font=dict(color='white', size=11),
                             title_font=dict(color='#3b82f6', size=16),
                             height=500
                         )
-                        fig_corr.update_xaxes(gridcolor='#334155', tickfont=dict(color='white'))
-                        fig_corr.update_yaxes(gridcolor='#334155', tickfont=dict(color='white'))
-                        st.plotly_chart(fig_corr, use_container_width=True)
+                        fig_scatter.update_xaxes(gridcolor='#334155', tickfont=dict(color='white'))
+                        fig_scatter.update_yaxes(gridcolor='#334155', tickfont=dict(color='white'))
+                        st.plotly_chart(fig_scatter, use_container_width=True)
                         
-                        st.markdown(f"<h4>📊 {t['tab_correlation']}</h4>", unsafe_allow_html=True)
+                        corr_valor = df_corr.iloc[0, 1]
+                        if corr_valor > 0.7:
+                            interp_corr = t['strong_positive']
+                        elif corr_valor > 0.5:
+                            interp_corr = t['moderate_positive']
+                        elif corr_valor > 0.3:
+                            interp_corr = t['weak_positive']
+                        elif corr_valor > 0:
+                            interp_corr = t['very_weak_positive']
+                        elif corr_valor > -0.3:
+                            interp_corr = t['very_weak_negative']
+                        elif corr_valor > -0.5:
+                            interp_corr = t['weak_negative']
+                        elif corr_valor > -0.7:
+                            interp_corr = t['moderate_negative']
+                        else:
+                            interp_corr = t['strong_negative']
                         
-                        def style_correlation(val):
-                            if pd.isna(val):
-                                return 'color: #94a3b8;'
-                            if val == 1.0:
-                                return 'color: #2d3748; font-weight: bold; background-color: #d3d3d3;'
-                            color = '#ef4444' if abs(val) > 0.7 else '#f59e0b' if abs(val) > 0.5 else '#3b82f6'
-                            return f'color: {color}; font-weight: bold;'
-                        
-                        st.dataframe(
-                            df_corr.style.format('{:.3f}').applymap(style_correlation),
-                            use_container_width=True
-                        )
-                        
-                        if len(vars_corr) == 2:
-                            st.markdown(f"<h4>📈 {t['tab_correlation']}</h4>", unsafe_allow_html=True)
-                            
-                            fig_scatter = px.scatter(
-                                df_filtrado,
-                                x=vars_corr[0],
-                                y=vars_corr[1],
-                                color='Posição',
-                                title=f"{vars_corr[0]} vs {vars_corr[1]}",
-                                opacity=0.7,
-                                trendline="ols",
-                                color_discrete_sequence=px.colors.qualitative.Set2
-                            )
-                            fig_scatter.update_layout(
-                                plot_bgcolor='rgba(30, 41, 59, 0.8)',
-                                paper_bgcolor='rgba(0,0,0,0)',
-                                font=dict(color='white', size=11),
-                                title_font=dict(color='#3b82f6', size=16),
-                                height=500
-                            )
-                            fig_scatter.update_xaxes(gridcolor='#334155', tickfont=dict(color='white'))
-                            fig_scatter.update_yaxes(gridcolor='#334155', tickfont=dict(color='white'))
-                            st.plotly_chart(fig_scatter, use_container_width=True)
-                            
-                            corr_valor = df_corr.iloc[0, 1]
-                            if corr_valor > 0.7:
-                                interp_corr = t['strong_positive']
-                            elif corr_valor > 0.5:
-                                interp_corr = t['moderate_positive']
-                            elif corr_valor > 0.3:
-                                interp_corr = t['weak_positive']
-                            elif corr_valor > 0:
-                                interp_corr = t['very_weak_positive']
-                            elif corr_valor > -0.3:
-                                interp_corr = t['very_weak_negative']
-                            elif corr_valor > -0.5:
-                                interp_corr = t['weak_negative']
-                            elif corr_valor > -0.7:
-                                interp_corr = t['moderate_negative']
-                            else:
-                                interp_corr = t['strong_negative']
-                            
-                            st.markdown(f"""
-                            <div class="metric-container">
-                                <h4>📊 {t['tab_correlation']}</h4>
-                                <hr style="border-color: #334155;">
-                                <p><strong>Pearson:</strong> {corr_valor:.3f}</p>
-                                <p><strong>{t['tab_correlation']}:</strong> {interp_corr}</p>
-                            </div>
-                            """, unsafe_allow_html=True)
-                    else:
-                        st.info("ℹ️ " + ("Selecione pelo menos 2 variáveis" if st.session_state.idioma == 'pt' else 
-                                       "Select at least 2 variables" if st.session_state.idioma == 'en' else
-                                       "Seleccione al menos 2 variables"))
+                        st.markdown(f"""
+                        <div class="metric-container">
+                            <h4>📊 {t['tab_correlation']}</h4>
+                            <hr style="border-color: #334155;">
+                            <p><strong>Pearson:</strong> {corr_valor:.3f}</p>
+                            <p><strong>{t['tab_correlation']}:</strong> {interp_corr}</p>
+                        </div>
+                        """, unsafe_allow_html=True)
                 else:
-                    st.info("ℹ️ " + ("São necessárias pelo menos 2 variáveis" if st.session_state.idioma == 'pt' else 
-                                   "At least 2 variables are needed" if st.session_state.idioma == 'en' else
-                                   "Se necesitan al menos 2 variables"))
-                    
-                        # ABA 5: K-MEANS CLUSTERS
-            with tabs[4]:
-                st.markdown(f"<h3>{t['tab_kmeans']}</h3>", unsafe_allow_html=True)
+                    st.info("ℹ️ " + ("Selecione pelo menos 2 variáveis" if st.session_state.idioma == 'pt' else 
+                                   "Select at least 2 variables" if st.session_state.idioma == 'en' else
+                                   "Seleccione al menos 2 variables"))
+            else:
+                st.info("ℹ️ " + ("São necessárias pelo menos 2 variáveis" if st.session_state.idioma == 'pt' else 
+                               "At least 2 variables are needed" if st.session_state.idioma == 'en' else
+                               "Se necesitan al menos 2 variables"))
+        
+        with tabs[4]:
+            st.markdown(f"<h3>{t['tab_kmeans']}</h3>", unsafe_allow_html=True)
+            
+            st.session_state.kmeans_ativo = True
+            
+            st.markdown("""
+            <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); 
+                        padding: 15px; border-radius: 12px; margin-bottom: 20px;
+                        border-left: 4px solid #8b5cf6;">
+                <p style="color: #94a3b8; margin: 0;">
+                    <span style="color: #8b5cf6;">🎯 Segmentação de Atletas:</span> 
+                    Selecione as variáveis e clique em PROCESSAR para gerar os clusters.
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            if len(st.session_state.variaveis_quantitativas) >= 2:
                 
-                # Marcar que estamos na aba K-means
-                st.session_state.kmeans_ativo = True
+                if st.session_state.kmeans_var_x is None or st.session_state.kmeans_var_x not in st.session_state.variaveis_quantitativas:
+                    st.session_state.kmeans_var_x = st.session_state.variaveis_quantitativas[0]
                 
-                st.markdown("""
-                <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); 
-                            padding: 15px; border-radius: 12px; margin-bottom: 20px;
-                            border-left: 4px solid #8b5cf6;">
-                    <p style="color: #94a3b8; margin: 0;">
-                        <span style="color: #8b5cf6;">🎯 Segmentação de Atletas:</span> 
-                        Selecione as variáveis e clique em PROCESSAR para gerar os clusters.
-                    </p>
-                </div>
-                """, unsafe_allow_html=True)
+                vars_disponiveis = [v for v in st.session_state.variaveis_quantitativas 
+                                   if v != st.session_state.kmeans_var_x]
+                if st.session_state.kmeans_var_y is None or st.session_state.kmeans_var_y not in vars_disponiveis:
+                    st.session_state.kmeans_var_y = vars_disponiveis[0] if vars_disponiveis else None
                 
-                if len(st.session_state.variaveis_quantitativas) >= 2:
+                col_k1, col_k2, col_k3, col_k4 = st.columns([2, 2, 1, 1])
+                
+                with col_k1:
+                    var_x = st.selectbox(
+                        "Variável do eixo X",
+                        options=st.session_state.variaveis_quantitativas,
+                        index=st.session_state.variaveis_quantitativas.index(st.session_state.kmeans_var_x),
+                        key="kmeans_var_x_select"
+                    )
+                    if var_x != st.session_state.kmeans_var_x:
+                        st.session_state.kmeans_var_x = var_x
+                        st.session_state.kmeans_resultados = None
+                        if st.session_state.kmeans_var_y == var_x:
+                            novas_opcoes = [v for v in st.session_state.variaveis_quantitativas if v != var_x]
+                            st.session_state.kmeans_var_y = novas_opcoes[0] if novas_opcoes else None
+                
+                with col_k2:
+                    opcoes_y = [v for v in st.session_state.variaveis_quantitativas if v != var_x]
                     
-                    # ============================================================
-                    # INICIALIZAÇÃO DO SESSION STATE PARA K-MEANS
-                    # ============================================================
-                    if st.session_state.kmeans_var_x is None or st.session_state.kmeans_var_x not in st.session_state.variaveis_quantitativas:
-                        st.session_state.kmeans_var_x = st.session_state.variaveis_quantitativas[0]
+                    current_y = st.session_state.kmeans_var_y
+                    if current_y not in opcoes_y and opcoes_y:
+                        current_y = opcoes_y[0]
+                        st.session_state.kmeans_var_y = current_y
                     
-                    # Escolher segunda variável diferente da primeira
-                    vars_disponiveis = [v for v in st.session_state.variaveis_quantitativas 
-                                       if v != st.session_state.kmeans_var_x]
-                    if st.session_state.kmeans_var_y is None or st.session_state.kmeans_var_y not in vars_disponiveis:
-                        st.session_state.kmeans_var_y = vars_disponiveis[0] if vars_disponiveis else None
+                    var_y = st.selectbox(
+                        "Variável do eixo Y",
+                        options=opcoes_y,
+                        index=opcoes_y.index(current_y) if current_y in opcoes_y else 0,
+                        key="kmeans_var_y_select"
+                    )
                     
-                    # ============================================================
-                    # WIDGETS DE SELEÇÃO
-                    # ============================================================
-                    col_k1, col_k2, col_k3, col_k4 = st.columns([2, 2, 1, 1])
+                    if var_y != st.session_state.kmeans_var_y:
+                        st.session_state.kmeans_var_y = var_y
+                        st.session_state.kmeans_resultados = None
+                
+                with col_k3:
+                    n_clusters = st.number_input(
+                        "Nº Clusters",
+                        min_value=2,
+                        max_value=6,
+                        value=st.session_state.kmeans_n_clusters,
+                        step=1,
+                        key="kmeans_n_clusters_input"
+                    )
+                    if n_clusters != st.session_state.kmeans_n_clusters:
+                        st.session_state.kmeans_n_clusters = n_clusters
+                        st.session_state.kmeans_resultados = None
+                
+                with col_k4:
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    processar_click = st.button(
+                        "🚀 PROCESSAR", 
+                        type="primary", 
+                        use_container_width=True,
+                        key="kmeans_processar_btn"
+                    )
                     
-                    with col_k1:
-                        var_x = st.selectbox(
-                            "Variável do eixo X",
-                            options=st.session_state.variaveis_quantitativas,
-                            index=st.session_state.variaveis_quantitativas.index(st.session_state.kmeans_var_x),
-                            key="kmeans_var_x_select"
-                        )
-                        # Atualizar session state
-                        if var_x != st.session_state.kmeans_var_x:
-                            st.session_state.kmeans_var_x = var_x
-                            st.session_state.kmeans_resultados = None  # Limpar resultados
-                            # Garantir que Y seja diferente de X
-                            if st.session_state.kmeans_var_y == var_x:
-                                novas_opcoes = [v for v in st.session_state.variaveis_quantitativas if v != var_x]
-                                st.session_state.kmeans_var_y = novas_opcoes[0] if novas_opcoes else None
-                    
-                    with col_k2:
-                        # Filtrar opções para Y (excluir X)
-                        opcoes_y = [v for v in st.session_state.variaveis_quantitativas if v != var_x]
-                        
-                        # Garantir que a seleção atual é válida
-                        current_y = st.session_state.kmeans_var_y
-                        if current_y not in opcoes_y and opcoes_y:
-                            current_y = opcoes_y[0]
-                            st.session_state.kmeans_var_y = current_y
-                        
-                        var_y = st.selectbox(
-                            "Variável do eixo Y",
-                            options=opcoes_y,
-                            index=opcoes_y.index(current_y) if current_y in opcoes_y else 0,
-                            key="kmeans_var_y_select"
-                        )
-                        
-                        if var_y != st.session_state.kmeans_var_y:
-                            st.session_state.kmeans_var_y = var_y
-                            st.session_state.kmeans_resultados = None  # Limpar resultados
-                    
-                    with col_k3:
-                        n_clusters = st.number_input(
-                            "Nº Clusters",
-                            min_value=2,
-                            max_value=6,
-                            value=st.session_state.kmeans_n_clusters,
-                            step=1,
-                            key="kmeans_n_clusters_input"
-                        )
-                        if n_clusters != st.session_state.kmeans_n_clusters:
-                            st.session_state.kmeans_n_clusters = n_clusters
-                            st.session_state.kmeans_resultados = None  # Limpar resultados
-                    
-                    with col_k4:
-                        st.markdown("<br>", unsafe_allow_html=True)
-                        processar_click = st.button(
-                            "🚀 PROCESSAR", 
-                            type="primary", 
-                            use_container_width=True,
-                            key="kmeans_processar_btn"
-                        )
-                        
-                        if processar_click:
-                            with st.spinner('🔄 Calculando clusters...'):
-                                try:
-                                    # Preparar dados
-                                    dados_cluster = df_filtrado[[var_x, var_y]].dropna()
+                    if processar_click:
+                        with st.spinner('🔄 Calculando clusters...'):
+                            try:
+                                dados_cluster = df_filtrado[[var_x, var_y]].dropna()
+                                
+                                if len(dados_cluster) < n_clusters * 2:
+                                    st.warning(f"⚠️ Dados insuficientes. Necessário pelo menos {n_clusters*2} observações.")
+                                else:
+                                    scaler = StandardScaler()
+                                    dados_padronizados = scaler.fit_transform(dados_cluster)
                                     
-                                    if len(dados_cluster) < n_clusters * 2:
-                                        st.warning(f"⚠️ Dados insuficientes. Necessário pelo menos {n_clusters*2} observações.")
-                                    else:
-                                        # Padronizar dados
-                                        scaler = StandardScaler()
-                                        dados_padronizados = scaler.fit_transform(dados_cluster)
-                                        
-                                        # Aplicar K-means
-                                        kmeans = KMeans(
-                                            n_clusters=n_clusters, 
-                                            random_state=42, 
-                                            n_init=10
-                                        )
-                                        clusters = kmeans.fit_predict(dados_padronizados)
-                                        
-                                        # Preparar dataframe com clusters
-                                        df_cluster = dados_cluster.copy()
-                                        df_cluster['Cluster'] = clusters
-                                        df_cluster['Atleta'] = df_filtrado.loc[dados_cluster.index, 'Nome'].values
-                                        df_cluster['Posição'] = df_filtrado.loc[dados_cluster.index, 'Posição'].values
-                                        
-                                        # Centroides
-                                        centroides = scaler.inverse_transform(kmeans.cluster_centers_)
-                                        
-                                        # Salvar resultados no session_state
-                                        st.session_state.kmeans_resultados = {
-                                            'df_cluster': df_cluster,
-                                            'centroides': centroides,
-                                            'var_x': var_x,
-                                            'var_y': var_y,
-                                            'n_clusters': n_clusters
-                                        }
-                                        
-                                except Exception as e:
-                                    st.error(f"Erro na análise: {str(e)}")
+                                    kmeans = KMeans(
+                                        n_clusters=n_clusters, 
+                                        random_state=42, 
+                                        n_init=10
+                                    )
+                                    clusters = kmeans.fit_predict(dados_padronizados)
+                                    
+                                    df_cluster = dados_cluster.copy()
+                                    df_cluster['Cluster'] = clusters
+                                    df_cluster['Atleta'] = df_filtrado.loc[dados_cluster.index, 'Nome'].values
+                                    df_cluster['Posição'] = df_filtrado.loc[dados_cluster.index, 'Posição'].values
+                                    
+                                    centroides = scaler.inverse_transform(kmeans.cluster_centers_)
+                                    
+                                    st.session_state.kmeans_resultados = {
+                                        'df_cluster': df_cluster,
+                                        'centroides': centroides,
+                                        'var_x': var_x,
+                                        'var_y': var_y,
+                                        'n_clusters': n_clusters
+                                    }
+                                    
+                            except Exception as e:
+                                st.error(f"Erro na análise: {str(e)}")
+                
+                if st.session_state.kmeans_resultados is not None:
+                    resultados = st.session_state.kmeans_resultados
+                    df_cluster = resultados['df_cluster']
+                    centroides = resultados['centroides']
+                    var_x = resultados['var_x']
+                    var_y = resultados['var_y']
+                    n_clusters = resultados['n_clusters']
                     
-                    # ============================================================
-                    # EXIBIR RESULTADOS (se existirem)
-                    # ============================================================
-                    if st.session_state.kmeans_resultados is not None:
-                        resultados = st.session_state.kmeans_resultados
-                        df_cluster = resultados['df_cluster']
-                        centroides = resultados['centroides']
-                        var_x = resultados['var_x']
-                        var_y = resultados['var_y']
-                        n_clusters = resultados['n_clusters']
+                    fig_kmeans = go.Figure()
+                    cores = px.colors.qualitative.Set1
+                    
+                    for i in range(n_clusters):
+                        dados_i = df_cluster[df_cluster['Cluster'] == i]
                         
-                        # GRÁFICO DE CLUSTERS
-                        fig_kmeans = go.Figure()
-                        cores = px.colors.qualitative.Set1
-                        
-                        for i in range(n_clusters):
-                            dados_i = df_cluster[df_cluster['Cluster'] == i]
-                            
-                            fig_kmeans.add_trace(go.Scatter(
-                                x=dados_i[var_x],
-                                y=dados_i[var_y],
-                                mode='markers',
-                                name=f'Cluster {i+1}',
-                                marker=dict(
-                                    size=12,
-                                    color=cores[i % len(cores)],
-                                    opacity=0.7,
-                                    line=dict(color='white', width=1)
-                                ),
-                                text=dados_i['Atleta'],
-                                hovertemplate='<b>%{text}</b><br>' +
-                                              f'{var_x}: %{{x:.2f}}<br>' +
-                                              f'{var_y}: %{{y:.2f}}<br>' +
-                                              f'Posição: %{{customdata}}<br>' +
-                                              '<extra></extra>',
-                                customdata=dados_i['Posição']
-                            ))
-                        
-                        # Adicionar centroides
                         fig_kmeans.add_trace(go.Scatter(
-                            x=centroides[:, 0],
-                            y=centroides[:, 1],
+                            x=dados_i[var_x],
+                            y=dados_i[var_y],
                             mode='markers',
-                            name='Centroides',
+                            name=f'Cluster {i+1}',
                             marker=dict(
-                                size=20,
-                                color='black',
-                                symbol='x',
-                                line=dict(color='white', width=3)
-                            )
+                                size=12,
+                                color=cores[i % len(cores)],
+                                opacity=0.7,
+                                line=dict(color='white', width=1)
+                            ),
+                            text=dados_i['Atleta'],
+                            hovertemplate='<b>%{text}</b><br>' +
+                                          f'{var_x}: %{{x:.2f}}<br>' +
+                                          f'{var_y}: %{{y:.2f}}<br>' +
+                                          f'Posição: %{{customdata}}<br>' +
+                                          '<extra></extra>',
+                            customdata=dados_i['Posição']
                         ))
-                        
-                        fig_kmeans.update_layout(
-                            title=f'<b>Clusters: {var_x} vs {var_y}</b>',
-                            xaxis_title=var_x,
-                            yaxis_title=var_y,
-                            plot_bgcolor='rgba(30,41,59,0.8)',
-                            paper_bgcolor='rgba(0,0,0,0)',
-                            font=dict(color='white', size=12),
-                            title_font=dict(color='#8b5cf6', size=20),
-                            height=600,
-                            hovermode='closest',
-                            legend=dict(
-                                font=dict(color='white'),
-                                bgcolor='rgba(30,41,59,0.8)',
-                                bordercolor='#334155',
-                                borderwidth=1
-                            )
+                    
+                    fig_kmeans.add_trace(go.Scatter(
+                        x=centroides[:, 0],
+                        y=centroides[:, 1],
+                        mode='markers',
+                        name='Centroides',
+                        marker=dict(
+                            size=20,
+                            color='black',
+                            symbol='x',
+                            line=dict(color='white', width=3)
                         )
-                        
-                        fig_kmeans.update_xaxes(
-                            gridcolor='#334155', 
-                            tickfont=dict(color='white'),
-                            title_font=dict(color='#94a3b8')
+                    ))
+                    
+                    fig_kmeans.update_layout(
+                        title=f'<b>Clusters: {var_x} vs {var_y}</b>',
+                        xaxis_title=var_x,
+                        yaxis_title=var_y,
+                        plot_bgcolor='rgba(30,41,59,0.8)',
+                        paper_bgcolor='rgba(0,0,0,0)',
+                        font=dict(color='white', size=12),
+                        title_font=dict(color='#8b5cf6', size=20),
+                        height=600,
+                        hovermode='closest',
+                        legend=dict(
+                            font=dict(color='white'),
+                            bgcolor='rgba(30,41,59,0.8)',
+                            bordercolor='#334155',
+                            borderwidth=1
                         )
-                        fig_kmeans.update_yaxes(
-                            gridcolor='#334155', 
-                            tickfont=dict(color='white'),
-                            title_font=dict(color='#94a3b8')
-                        )
+                    )
+                    
+                    fig_kmeans.update_xaxes(
+                        gridcolor='#334155', 
+                        tickfont=dict(color='white'),
+                        title_font=dict(color='#94a3b8')
+                    )
+                    fig_kmeans.update_yaxes(
+                        gridcolor='#334155', 
+                        tickfont=dict(color='white'),
+                        title_font=dict(color='#94a3b8')
+                    )
+                    
+                    st.plotly_chart(fig_kmeans, use_container_width=True)
+                    
+                    st.markdown("### 📊 Perfil dos Clusters")
+                    
+                    stats_data = []
+                    for i in range(n_clusters):
+                        dados_i = df_cluster[df_cluster['Cluster'] == i]
                         
-                        st.plotly_chart(fig_kmeans, use_container_width=True)
-                        
-                        # ESTATÍSTICAS DOS CLUSTERS
-                        st.markdown("### 📊 Perfil dos Clusters")
-                        
-                        stats_data = []
+                        stats_data.append({
+                            'Cluster': f'Cluster {i+1}',
+                            '🎯 Atletas': len(dados_i['Atleta'].unique()),
+                            '📊 Obs': len(dados_i),
+                            f'📈 Média {var_x}': f'{dados_i[var_x].mean():.2f}',
+                            f'📉 Média {var_y}': f'{dados_i[var_y].mean():.2f}',
+                            '📍 Posições': ', '.join(dados_i['Posição'].unique()[:3]) + ('...' if len(dados_i['Posição'].unique()) > 3 else '')
+                        })
+                    
+                    df_stats = pd.DataFrame(stats_data)
+                    st.dataframe(df_stats, use_container_width=True, hide_index=True)
+                    
+                    with st.expander("📋 Ver detalhamento dos atletas por cluster"):
                         for i in range(n_clusters):
                             dados_i = df_cluster[df_cluster['Cluster'] == i]
+                            st.markdown(f"**Cluster {i+1}** ({len(dados_i)} observações)")
                             
-                            stats_data.append({
-                                'Cluster': f'Cluster {i+1}',
-                                '🎯 Atletas': len(dados_i['Atleta'].unique()),
-                                '📊 Obs': len(dados_i),
-                                f'📈 Média {var_x}': f'{dados_i[var_x].mean():.2f}',
-                                f'📉 Média {var_y}': f'{dados_i[var_y].mean():.2f}',
-                                '📍 Posições': ', '.join(dados_i['Posição'].unique()[:3]) + ('...' if len(dados_i['Posição'].unique()) > 3 else '')
-                            })
-                        
-                        df_stats = pd.DataFrame(stats_data)
-                        st.dataframe(df_stats, use_container_width=True, hide_index=True)
-                        
-                        # DETALHAMENTO DOS ATLETAS
-                        with st.expander("📋 Ver detalhamento dos atletas por cluster"):
-                            for i in range(n_clusters):
-                                dados_i = df_cluster[df_cluster['Cluster'] == i]
-                                st.markdown(f"**Cluster {i+1}** ({len(dados_i)} observações)")
-                                
-                                # Agrupar por atleta
-                                atletas_cluster = dados_i.groupby('Atleta').agg({
-                                    var_x: 'mean',
-                                    var_y: 'mean',
-                                    'Posição': 'first'
-                                }).reset_index()
-                                
-                                atletas_cluster.columns = ['Atleta', f'Média {var_x}', f'Média {var_y}', 'Posição']
-                                st.dataframe(
-                                    atletas_cluster.sort_values(f'Média {var_x}', ascending=False),
-                                    use_container_width=True,
-                                    hide_index=True
-                                )
-                    
-                    elif var_x and var_y:
-                        st.info("👆 Clique em **PROCESSAR** para gerar a análise de clusters")
+                            atletas_cluster = dados_i.groupby('Atleta').agg({
+                                var_x: 'mean',
+                                var_y: 'mean',
+                                'Posição': 'first'
+                            }).reset_index()
+                            
+                            atletas_cluster.columns = ['Atleta', f'Média {var_x}', f'Média {var_y}', 'Posição']
+                            st.dataframe(
+                                atletas_cluster.sort_values(f'Média {var_x}', ascending=False),
+                                use_container_width=True,
+                                hide_index=True
+                            )
                 
-                else:
-                    st.info("ℹ️ São necessárias pelo menos 2 variáveis para análise de clusters")
+                elif var_x and var_y:
+                    st.info("👆 Clique em **PROCESSAR** para gerar a análise de clusters")
             
-            # ABA 6: EXECUTIVO
-            with tabs[5]:
-                st.markdown(f"<h3>{t['tab_executive']}</h3>", unsafe_allow_html=True)
-                
-                # Comparação de atletas
-                st.markdown("### 🆚 Comparação de Atletas")
-                if len(atletas_selecionados) >= 2:
-                    col_atl1, col_atl2 = st.columns(2)
-                    with col_atl1:
-                        atleta1_comp = st.selectbox(
-                            "Atleta 1", 
-                            atletas_selecionados, 
-                            index=0, 
-                            key="atleta1_comp"
-                        )
-                    with col_atl2:
-                        atleta2_comp = st.selectbox(
-                            "Atleta 2", 
-                            atletas_selecionados, 
-                            index=min(1, len(atletas_selecionados)-1), 
-                            key="atleta2_comp"
-                        )
-                    
-                    if atleta1_comp != atleta2_comp:
-                        vars_comp = st.multiselect(
-                            "Variáveis para comparar",
-                            st.session_state.variaveis_quantitativas,
-                            default=st.session_state.variaveis_quantitativas[:3],
-                            key="vars_comp"
-                        )
-                        
-                        if len(vars_comp) >= 1:
-                            comparar_atletas(df_filtrado, atleta1_comp, atleta2_comp, vars_comp, t)
-                    else:
-                        st.info("Selecione atletas diferentes para comparação")
-                else:
-                    st.info("Selecione pelo menos 2 atletas para comparação")
-                
-                st.markdown("---")
-                
-                # Sistema de anotações
-                sistema_anotacoes(t)
+            else:
+                st.info("ℹ️ São necessárias pelo menos 2 variáveis para análise de clusters")
+        
+        with tabs[5]:
+            st.markdown(f"<h3>{t['tab_executive']}</h3>", unsafe_allow_html=True)
             
-            # Dados brutos
-            with st.expander("📋 " + ("Visualizar dados brutos filtrados" if st.session_state.idioma == 'pt' else 
-                                     "View filtered raw data" if st.session_state.idioma == 'en' else
-                                     "Ver datos brutos filtrados")):
-                st.dataframe(df_filtrado, use_container_width=True)
+            st.markdown("### 🆚 Comparação de Atletas")
+            if len(atletas_selecionados) >= 2:
+                col_atl1, col_atl2 = st.columns(2)
+                with col_atl1:
+                    atleta1_comp = st.selectbox(
+                        "Atleta 1", 
+                        atletas_selecionados, 
+                        index=0, 
+                        key="atleta1_comp"
+                    )
+                with col_atl2:
+                    atleta2_comp = st.selectbox(
+                        "Atleta 2", 
+                        atletas_selecionados, 
+                        index=min(1, len(atletas_selecionados)-1), 
+                        key="atleta2_comp"
+                    )
+                
+                if atleta1_comp != atleta2_comp:
+                    vars_comp = st.multiselect(
+                        "Variáveis para comparar",
+                        st.session_state.variaveis_quantitativas,
+                        default=st.session_state.variaveis_quantitativas[:3],
+                        key="vars_comp"
+                    )
+                    
+                    if len(vars_comp) >= 1:
+                        comparar_atletas(df_filtrado, atleta1_comp, atleta2_comp, vars_comp, t)
+                else:
+                    st.info("Selecione atletas diferentes para comparação")
+            else:
+                st.info("Selecione pelo menos 2 atletas para comparação")
+            
+            st.markdown("---")
+            
+            sistema_anotacoes(t)
+        
+        with st.expander("📋 " + ("Visualizar dados brutos filtrados" if st.session_state.idioma == 'pt' else 
+                                 "View filtered raw data" if st.session_state.idioma == 'en' else
+                                 "Ver datos brutos filtrados")):
+            st.dataframe(df_filtrado, use_container_width=True)
     
-    # Reset do botão após processamento
-    st.session_state.processar_click = False
+    else:
+        t = translations[st.session_state.idioma]
+        st.info("👈 Selecione os filtros e clique em **Processar Análise** na barra lateral")
 
 elif st.session_state.df_completo is None:
     t = translations[st.session_state.idioma]
@@ -3020,7 +2896,7 @@ elif st.session_state.df_completo is None:
     
     with st.expander(t['multi_file_ex']):
         st.markdown(t['multi_file_text'])
-        
+
 elif st.session_state.dados_processados:
     t = translations[st.session_state.idioma]
     st.info(t['step2'])
@@ -3045,8 +2921,4 @@ elif st.session_state.dados_processados:
 # ============================================================================
 if st.session_state.dados_processados and not st.session_state.processar_click:
     # Manter na mesma aba - apenas para garantir que o estado persista
-    if 'kmeans_ativo' in st.session_state and st.session_state.kmeans_ativo:
-        # Está na aba K-means, manter lá
-        pass
-    # Não faz nada, apenas impede o retorno à página inicial
     pass
