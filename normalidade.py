@@ -823,6 +823,16 @@ def init_session_state():
         st.session_state.modo_timeline = 'unico'  # 'unico' ou 'multiplo'
     if 'periodo_timeline' not in st.session_state:
         st.session_state.periodo_timeline = None
+    if 'kmeans_ativo' not in st.session_state:
+        st.session_state.kmeans_ativo = False
+    if 'kmeans_var_x' not in st.session_state:
+        st.session_state.kmeans_var_x = None
+    if 'kmeans_var_y' not in st.session_state:
+        st.session_state.kmeans_var_y = None
+    if 'kmeans_n_clusters' not in st.session_state:
+        st.session_state.kmeans_n_clusters = 3
+    if 'kmeans_resultados' not in st.session_state:
+        st.session_state.kmeans_resultados = None
 
 init_session_state()
 
@@ -1799,18 +1809,26 @@ with st.sidebar:
         
         if st.button(t['process'], use_container_width=True, disabled=not pode_processar, key="process_button"):
             st.session_state.processar_click = True
+            st.session_state.kmeans_ativo = False  # Reset K-means ao processar novos dados
             st.rerun()
 
 # ============================================================================
 # ÁREA PRINCIPAL
 # ============================================================================
 
-if st.session_state.processar_click and st.session_state.df_completo is not None:
+# Verificar se deve processar ou se já tem dados processados
+if (st.session_state.processar_click or st.session_state.dados_processados) and st.session_state.df_completo is not None:
     
-    with st.spinner('🔄 ' + ("Gerando análises..." if st.session_state.idioma == 'pt' else 
-                             "Generating analysis..." if st.session_state.idioma == 'en' else
-                             "Generando análisis...")):
-        time.sleep(0.5)
+    # Se for um novo processamento
+    if st.session_state.processar_click:
+        with st.spinner('🔄 ' + ("Gerando análises..." if st.session_state.idioma == 'pt' else 
+                                 "Generating analysis..." if st.session_state.idioma == 'en' else
+                                 "Generando análisis...")):
+            time.sleep(0.5)
+            st.session_state.processar_click = False
+    else:
+        # Já tem dados processados, apenas continuar
+        pass
         
         df_completo = st.session_state.df_completo
         atletas_selecionados = st.session_state.atletas_selecionados
@@ -2637,9 +2655,12 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                                    "At least 2 variables are needed" if st.session_state.idioma == 'en' else
                                    "Se necesitan al menos 2 variables"))
                     
-            # ABA 5: K-MEANS CLUSTERS
+                        # ABA 5: K-MEANS CLUSTERS
             with tabs[4]:
                 st.markdown(f"<h3>{t['tab_kmeans']}</h3>", unsafe_allow_html=True)
+                
+                # Marcar que estamos na aba K-means
+                st.session_state.kmeans_ativo = True
                 
                 st.markdown("""
                 <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); 
@@ -2657,39 +2678,35 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     # ============================================================
                     # INICIALIZAÇÃO DO SESSION STATE PARA K-MEANS
                     # ============================================================
-                    if 'kmeans_var_x' not in st.session_state:
+                    if st.session_state.kmeans_var_x is None or st.session_state.kmeans_var_x not in st.session_state.variaveis_quantitativas:
                         st.session_state.kmeans_var_x = st.session_state.variaveis_quantitativas[0]
                     
                     # Escolher segunda variável diferente da primeira
                     vars_disponiveis = [v for v in st.session_state.variaveis_quantitativas 
                                        if v != st.session_state.kmeans_var_x]
-                    if 'kmeans_var_y' not in st.session_state or st.session_state.kmeans_var_y not in vars_disponiveis:
+                    if st.session_state.kmeans_var_y is None or st.session_state.kmeans_var_y not in vars_disponiveis:
                         st.session_state.kmeans_var_y = vars_disponiveis[0] if vars_disponiveis else None
                     
-                    if 'kmeans_n_clusters' not in st.session_state:
-                        st.session_state.kmeans_n_clusters = 3
-                    
-                    if 'kmeans_processar' not in st.session_state:
-                        st.session_state.kmeans_processar = False
-                    
                     # ============================================================
-                    # WIDGETS DE SELEÇÃO (SEM RERUN)
+                    # WIDGETS DE SELEÇÃO
                     # ============================================================
                     col_k1, col_k2, col_k3, col_k4 = st.columns([2, 2, 1, 1])
                     
                     with col_k1:
-                        # Selectbox para variável X - NÃO causa rerun automático
                         var_x = st.selectbox(
                             "Variável do eixo X",
                             options=st.session_state.variaveis_quantitativas,
                             index=st.session_state.variaveis_quantitativas.index(st.session_state.kmeans_var_x),
                             key="kmeans_var_x_select"
                         )
-                        # Atualizar session state sem rerun
+                        # Atualizar session state
                         if var_x != st.session_state.kmeans_var_x:
                             st.session_state.kmeans_var_x = var_x
-                            # Resetar processamento
-                            st.session_state.kmeans_processar = False
+                            st.session_state.kmeans_resultados = None  # Limpar resultados
+                            # Garantir que Y seja diferente de X
+                            if st.session_state.kmeans_var_y == var_x:
+                                novas_opcoes = [v for v in st.session_state.variaveis_quantitativas if v != var_x]
+                                st.session_state.kmeans_var_y = novas_opcoes[0] if novas_opcoes else None
                     
                     with col_k2:
                         # Filtrar opções para Y (excluir X)
@@ -2710,7 +2727,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                         
                         if var_y != st.session_state.kmeans_var_y:
                             st.session_state.kmeans_var_y = var_y
-                            st.session_state.kmeans_processar = False
+                            st.session_state.kmeans_resultados = None  # Limpar resultados
                     
                     with col_k3:
                         n_clusters = st.number_input(
@@ -2723,10 +2740,10 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                         )
                         if n_clusters != st.session_state.kmeans_n_clusters:
                             st.session_state.kmeans_n_clusters = n_clusters
-                            st.session_state.kmeans_processar = False
+                            st.session_state.kmeans_resultados = None  # Limpar resultados
                     
                     with col_k4:
-                        st.markdown("<br>", unsafe_allow_html=True)  # Espaçamento
+                        st.markdown("<br>", unsafe_allow_html=True)
                         processar_click = st.button(
                             "🚀 PROCESSAR", 
                             type="primary", 
@@ -2735,223 +2752,174 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                         )
                         
                         if processar_click:
-                            st.session_state.kmeans_processar = True
+                            with st.spinner('🔄 Calculando clusters...'):
+                                try:
+                                    # Preparar dados
+                                    dados_cluster = df_filtrado[[var_x, var_y]].dropna()
+                                    
+                                    if len(dados_cluster) < n_clusters * 2:
+                                        st.warning(f"⚠️ Dados insuficientes. Necessário pelo menos {n_clusters*2} observações.")
+                                    else:
+                                        # Padronizar dados
+                                        scaler = StandardScaler()
+                                        dados_padronizados = scaler.fit_transform(dados_cluster)
+                                        
+                                        # Aplicar K-means
+                                        kmeans = KMeans(
+                                            n_clusters=n_clusters, 
+                                            random_state=42, 
+                                            n_init=10
+                                        )
+                                        clusters = kmeans.fit_predict(dados_padronizados)
+                                        
+                                        # Preparar dataframe com clusters
+                                        df_cluster = dados_cluster.copy()
+                                        df_cluster['Cluster'] = clusters
+                                        df_cluster['Atleta'] = df_filtrado.loc[dados_cluster.index, 'Nome'].values
+                                        df_cluster['Posição'] = df_filtrado.loc[dados_cluster.index, 'Posição'].values
+                                        
+                                        # Centroides
+                                        centroides = scaler.inverse_transform(kmeans.cluster_centers_)
+                                        
+                                        # Salvar resultados no session_state
+                                        st.session_state.kmeans_resultados = {
+                                            'df_cluster': df_cluster,
+                                            'centroides': centroides,
+                                            'var_x': var_x,
+                                            'var_y': var_y,
+                                            'n_clusters': n_clusters
+                                        }
+                                        
+                                except Exception as e:
+                                    st.error(f"Erro na análise: {str(e)}")
                     
                     # ============================================================
-                    # PROCESSAMENTO (SÓ EXECUTA QUANDO O BOTÃO É CLICADO)
+                    # EXIBIR RESULTADOS (se existirem)
                     # ============================================================
-                    if st.session_state.kmeans_processar and var_x and var_y:
+                    if st.session_state.kmeans_resultados is not None:
+                        resultados = st.session_state.kmeans_resultados
+                        df_cluster = resultados['df_cluster']
+                        centroides = resultados['centroides']
+                        var_x = resultados['var_x']
+                        var_y = resultados['var_y']
+                        n_clusters = resultados['n_clusters']
                         
-                        with st.spinner('🔄 Calculando clusters...'):
-                            try:
-                                # Preparar dados
-                                dados_cluster = df_filtrado[[var_x, var_y]].dropna()
+                        # GRÁFICO DE CLUSTERS
+                        fig_kmeans = go.Figure()
+                        cores = px.colors.qualitative.Set1
+                        
+                        for i in range(n_clusters):
+                            dados_i = df_cluster[df_cluster['Cluster'] == i]
+                            
+                            fig_kmeans.add_trace(go.Scatter(
+                                x=dados_i[var_x],
+                                y=dados_i[var_y],
+                                mode='markers',
+                                name=f'Cluster {i+1}',
+                                marker=dict(
+                                    size=12,
+                                    color=cores[i % len(cores)],
+                                    opacity=0.7,
+                                    line=dict(color='white', width=1)
+                                ),
+                                text=dados_i['Atleta'],
+                                hovertemplate='<b>%{text}</b><br>' +
+                                              f'{var_x}: %{{x:.2f}}<br>' +
+                                              f'{var_y}: %{{y:.2f}}<br>' +
+                                              f'Posição: %{{customdata}}<br>' +
+                                              '<extra></extra>',
+                                customdata=dados_i['Posição']
+                            ))
+                        
+                        # Adicionar centroides
+                        fig_kmeans.add_trace(go.Scatter(
+                            x=centroides[:, 0],
+                            y=centroides[:, 1],
+                            mode='markers',
+                            name='Centroides',
+                            marker=dict(
+                                size=20,
+                                color='black',
+                                symbol='x',
+                                line=dict(color='white', width=3)
+                            )
+                        ))
+                        
+                        fig_kmeans.update_layout(
+                            title=f'<b>Clusters: {var_x} vs {var_y}</b>',
+                            xaxis_title=var_x,
+                            yaxis_title=var_y,
+                            plot_bgcolor='rgba(30,41,59,0.8)',
+                            paper_bgcolor='rgba(0,0,0,0)',
+                            font=dict(color='white', size=12),
+                            title_font=dict(color='#8b5cf6', size=20),
+                            height=600,
+                            hovermode='closest',
+                            legend=dict(
+                                font=dict(color='white'),
+                                bgcolor='rgba(30,41,59,0.8)',
+                                bordercolor='#334155',
+                                borderwidth=1
+                            )
+                        )
+                        
+                        fig_kmeans.update_xaxes(
+                            gridcolor='#334155', 
+                            tickfont=dict(color='white'),
+                            title_font=dict(color='#94a3b8')
+                        )
+                        fig_kmeans.update_yaxes(
+                            gridcolor='#334155', 
+                            tickfont=dict(color='white'),
+                            title_font=dict(color='#94a3b8')
+                        )
+                        
+                        st.plotly_chart(fig_kmeans, use_container_width=True)
+                        
+                        # ESTATÍSTICAS DOS CLUSTERS
+                        st.markdown("### 📊 Perfil dos Clusters")
+                        
+                        stats_data = []
+                        for i in range(n_clusters):
+                            dados_i = df_cluster[df_cluster['Cluster'] == i]
+                            
+                            stats_data.append({
+                                'Cluster': f'Cluster {i+1}',
+                                '🎯 Atletas': len(dados_i['Atleta'].unique()),
+                                '📊 Obs': len(dados_i),
+                                f'📈 Média {var_x}': f'{dados_i[var_x].mean():.2f}',
+                                f'📉 Média {var_y}': f'{dados_i[var_y].mean():.2f}',
+                                '📍 Posições': ', '.join(dados_i['Posição'].unique()[:3]) + ('...' if len(dados_i['Posição'].unique()) > 3 else '')
+                            })
+                        
+                        df_stats = pd.DataFrame(stats_data)
+                        st.dataframe(df_stats, use_container_width=True, hide_index=True)
+                        
+                        # DETALHAMENTO DOS ATLETAS
+                        with st.expander("📋 Ver detalhamento dos atletas por cluster"):
+                            for i in range(n_clusters):
+                                dados_i = df_cluster[df_cluster['Cluster'] == i]
+                                st.markdown(f"**Cluster {i+1}** ({len(dados_i)} observações)")
                                 
-                                if len(dados_cluster) < st.session_state.kmeans_n_clusters * 2:
-                                    st.warning(f"⚠️ Dados insuficientes. Necessário pelo menos {st.session_state.kmeans_n_clusters*2} observações.")
-                                    st.session_state.kmeans_processar = False
-                                    
-                                else:
-                                    # Padronizar dados
-                                    scaler = StandardScaler()
-                                    dados_padronizados = scaler.fit_transform(dados_cluster)
-                                    
-                                    # Aplicar K-means
-                                    kmeans = KMeans(
-                                        n_clusters=st.session_state.kmeans_n_clusters, 
-                                        random_state=42, 
-                                        n_init=10
-                                    )
-                                    clusters = kmeans.fit_predict(dados_padronizados)
-                                    
-                                    # Preparar dataframe com clusters
-                                    df_cluster = dados_cluster.copy()
-                                    df_cluster['Cluster'] = clusters
-                                    df_cluster['Atleta'] = df_filtrado.loc[dados_cluster.index, 'Nome'].values
-                                    df_cluster['Posição'] = df_filtrado.loc[dados_cluster.index, 'Posição'].values
-                                    
-                                    # Centroides (despadronizados)
-                                    centroides = scaler.inverse_transform(kmeans.cluster_centers_)
-                                    
-                                    # ============================================================
-                                    # GRÁFICO DE CLUSTERS
-                                    # ============================================================
-                                    fig_kmeans = go.Figure()
-                                    cores = px.colors.qualitative.Set1
-                                    
-                                    for i in range(st.session_state.kmeans_n_clusters):
-                                        dados_i = df_cluster[df_cluster['Cluster'] == i]
-                                        
-                                        fig_kmeans.add_trace(go.Scatter(
-                                            x=dados_i[var_x],
-                                            y=dados_i[var_y],
-                                            mode='markers',
-                                            name=f'Cluster {i+1}',
-                                            marker=dict(
-                                                size=12,
-                                                color=cores[i % len(cores)],
-                                                opacity=0.7,
-                                                line=dict(color='white', width=1)
-                                            ),
-                                            text=dados_i['Atleta'],
-                                            hovertemplate='<b>%{text}</b><br>' +
-                                                          f'{var_x}: %{{x:.2f}}<br>' +
-                                                          f'{var_y}: %{{y:.2f}}<br>' +
-                                                          f'Posição: %{{customdata}}<br>' +
-                                                          '<extra></extra>',
-                                            customdata=dados_i['Posição']
-                                        ))
-                                    
-                                    # Adicionar centroides
-                                    fig_kmeans.add_trace(go.Scatter(
-                                        x=centroides[:, 0],
-                                        y=centroides[:, 1],
-                                        mode='markers',
-                                        name='Centroides',
-                                        marker=dict(
-                                            size=20,
-                                            color='black',
-                                            symbol='x',
-                                            line=dict(color='white', width=3)
-                                        )
-                                    ))
-                                    
-                                    fig_kmeans.update_layout(
-                                        title=f'<b>Clusters: {var_x} vs {var_y}</b>',
-                                        xaxis_title=var_x,
-                                        yaxis_title=var_y,
-                                        plot_bgcolor='rgba(30,41,59,0.8)',
-                                        paper_bgcolor='rgba(0,0,0,0)',
-                                        font=dict(color='white', size=12),
-                                        title_font=dict(color='#8b5cf6', size=20),
-                                        height=600,
-                                        hovermode='closest',
-                                        legend=dict(
-                                            font=dict(color='white'),
-                                            bgcolor='rgba(30,41,59,0.8)',
-                                            bordercolor='#334155',
-                                            borderwidth=1
-                                        )
-                                    )
-                                    
-                                    fig_kmeans.update_xaxes(
-                                        gridcolor='#334155', 
-                                        tickfont=dict(color='white'),
-                                        title_font=dict(color='#94a3b8')
-                                    )
-                                    fig_kmeans.update_yaxes(
-                                        gridcolor='#334155', 
-                                        tickfont=dict(color='white'),
-                                        title_font=dict(color='#94a3b8')
-                                    )
-                                    
-                                    st.plotly_chart(fig_kmeans, use_container_width=True)
-                                    
-                                    # ============================================================
-                                    # ESTATÍSTICAS DOS CLUSTERS
-                                    # ============================================================
-                                    st.markdown("### 📊 Perfil dos Clusters")
-                                    
-                                    stats_data = []
-                                    for i in range(st.session_state.kmeans_n_clusters):
-                                        dados_i = df_cluster[df_cluster['Cluster'] == i]
-                                        
-                                        # Calcular estatísticas
-                                        media_x = dados_i[var_x].mean()
-                                        media_y = dados_i[var_y].mean()
-                                        desvio_x = dados_i[var_x].std()
-                                        desvio_y = dados_i[var_y].std()
-                                        atletas_unicos = dados_i['Atleta'].unique()
-                                        posicoes = dados_i['Posição'].unique()
-                                        
-                                        stats_data.append({
-                                            'Cluster': f'Cluster {i+1}',
-                                            '🎯 Atletas': len(atletas_unicos),
-                                            '📊 Obs': len(dados_i),
-                                            f'📈 Média {var_x}': f'{media_x:.2f}',
-                                            f'📉 Média {var_y}': f'{media_y:.2f}',
-                                            f'📊 Desvio {var_x}': f'{desvio_x:.2f}',
-                                            f'📊 Desvio {var_y}': f'{desvio_y:.2f}',
-                                            '📍 Posições': ', '.join(posicoes) if len(posicoes) <= 3 else f'{len(posicoes)} posições'
-                                        })
-                                    
-                                    df_stats = pd.DataFrame(stats_data)
-                                    st.dataframe(
-                                        df_stats,
-                                        use_container_width=True,
-                                        hide_index=True
-                                    )
-                                    
-                                    # ============================================================
-                                    # INSIGHTS AUTOMÁTICOS
-                                    # ============================================================
-                                    st.markdown("### 💡 Insights")
-                                    
-                                    col_i1, col_i2 = st.columns(2)
-                                    
-                                    with col_i1:
-                                        # Identificar cluster com maior média em X
-                                        medias_x = [float(s[f'📈 Média {var_x}']) for s in stats_data]
-                                        idx_max_x = np.argmax(medias_x)
-                                        
-                                        st.markdown(f"""
-                                        <div class="metric-container" style="border-left-color: {cores[idx_max_x % len(cores)]};">
-                                            <h4>⚡ Maior {var_x}</h4>
-                                            <p><strong>Cluster {idx_max_x + 1}:</strong> {medias_x[idx_max_x]:.2f}</p>
-                                            <p><small>Atletas com maior desempenho nesta métrica</small></p>
-                                        </div>
-                                        """, unsafe_allow_html=True)
-                                    
-                                    with col_i2:
-                                        # Identificar cluster com maior média em Y
-                                        medias_y = [float(s[f'📉 Média {var_y}']) for s in stats_data]
-                                        idx_max_y = np.argmax(medias_y)
-                                        
-                                        st.markdown(f"""
-                                        <div class="metric-container" style="border-left-color: {cores[idx_max_y % len(cores)]};">
-                                            <h4>⚡ Maior {var_y}</h4>
-                                            <p><strong>Cluster {idx_max_y + 1}:</strong> {medias_y[idx_max_y]:.2f}</p>
-                                            <p><small>Atletas com maior desempenho nesta métrica</small></p>
-                                        </div>
-                                        """, unsafe_allow_html=True)
-                                    
-                                    # ============================================================
-                                    # TABELA DETALHADA DOS ATLETAS POR CLUSTER
-                                    # ============================================================
-                                    with st.expander("📋 Ver detalhamento dos atletas por cluster"):
-                                        for i in range(st.session_state.kmeans_n_clusters):
-                                            dados_i = df_cluster[df_cluster['Cluster'] == i]
-                                            st.markdown(f"**Cluster {i+1}** ({len(dados_i)} observações)")
-                                            
-                                            # Agrupar por atleta para mostrar médias
-                                            atletas_cluster = dados_i.groupby('Atleta').agg({
-                                                var_x: 'mean',
-                                                var_y: 'mean',
-                                                'Posição': 'first'
-                                            }).reset_index()
-                                            
-                                            atletas_cluster.columns = ['Atleta', f'Média {var_x}', f'Média {var_y}', 'Posição']
-                                            st.dataframe(
-                                                atletas_cluster.sort_values(f'Média {var_x}', ascending=False),
-                                                use_container_width=True,
-                                                hide_index=True
-                                            )
-                                    
-                                    # Reset do estado de processamento
-                                    st.session_state.kmeans_processar = False
-                                    
-                            except Exception as e:
-                                st.error(f"Erro na análise: {str(e)}")
-                                st.session_state.kmeans_processar = False
+                                # Agrupar por atleta
+                                atletas_cluster = dados_i.groupby('Atleta').agg({
+                                    var_x: 'mean',
+                                    var_y: 'mean',
+                                    'Posição': 'first'
+                                }).reset_index()
+                                
+                                atletas_cluster.columns = ['Atleta', f'Média {var_x}', f'Média {var_y}', 'Posição']
+                                st.dataframe(
+                                    atletas_cluster.sort_values(f'Média {var_x}', ascending=False),
+                                    use_container_width=True,
+                                    hide_index=True
+                                )
                     
-                    # Mensagem quando não processado
-                    elif not st.session_state.kmeans_processar and var_x and var_y:
+                    elif var_x and var_y:
                         st.info("👆 Clique em **PROCESSAR** para gerar a análise de clusters")
                 
                 else:
                     st.info("ℹ️ São necessárias pelo menos 2 variáveis para análise de clusters")
-
-
             
             # ABA 6: EXECUTIVO
             with tabs[5]:
