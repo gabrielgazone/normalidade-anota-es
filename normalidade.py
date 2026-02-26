@@ -1451,13 +1451,10 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
     
     return fig
 
-# ============================================================================
-# FUNÇÕES PARA COMPARADOR DE ATLETAS (SUNBURST)
-# ============================================================================
-
-def criar_grafico_barras_radial(df_atleta, df_posicao, df_geral, atleta_nome, posicao, variaveis, titulo="Comparação de Desempenho"):
+def criar_grafico_barras_desvio(df_atleta, df_posicao, df_geral, atleta_nome, posicao, variaveis, titulo="Comparação de Desempenho"):
     """
-    Cria um gráfico de barras radial estilo sunburst para comparação clara e moderna
+    Gráfico de barras mostrando o desvio percentual do atleta em relação às médias
+    Visualização extremamente clara e intuitiva
     """
     
     # Calcular valores
@@ -1465,126 +1462,194 @@ def criar_grafico_barras_radial(df_atleta, df_posicao, df_geral, atleta_nome, po
     valores_posicao = [df_posicao[var].mean() for var in variaveis]
     valores_geral = [df_geral[var].mean() for var in variaveis]
     
-    # Encontrar máximos para normalização
-    max_vals = [max(v) for v in zip(valores_atleta, valores_posicao, valores_geral)]
+    # Calcular desvios percentuais
+    desvios_vs_posicao = [((v - valores_posicao[i]) / valores_posicao[i]) * 100 if valores_posicao[i] != 0 else 0 
+                          for i, v in enumerate(valores_atleta)]
+    desvios_vs_geral = [((v - valores_geral[i]) / valores_geral[i]) * 100 if valores_geral[i] != 0 else 0 
+                        for i, v in enumerate(valores_atleta)]
     
-    # Normalizar
-    atleta_norm = [v / max_vals[i] if max_vals[i] != 0 else 0 for i, v in enumerate(valores_atleta)]
-    posicao_norm = [v / max_vals[i] if max_vals[i] != 0 else 0 for i, v in enumerate(valores_posicao)]
-    geral_norm = [v / max_vals[i] if max_vals[i] != 0 else 0 for i, v in enumerate(valores_geral)]
+    # Criar figura com subplots
+    fig = make_subplots(
+        rows=2, cols=1,
+        subplot_titles=(
+            f"<b>Valores Absolutos</b>", 
+            f"<b>Desvio Percentual do Atleta vs Médias</b>"
+        ),
+        vertical_spacing=0.15,
+        row_heights=[0.5, 0.5]
+    )
     
-    # Criar figura
-    fig = go.Figure()
+    # ============================================================
+    # GRÁFICO SUPERIOR - Valores absolutos
+    # ============================================================
     
-    # Número de variáveis
-    n_vars = len(variaveis)
+    # Barras do atleta
+    fig.add_trace(go.Bar(
+        x=variaveis,
+        y=valores_atleta,
+        name=atleta_nome,
+        marker_color='#3b82f6',
+        marker_line_color='white',
+        marker_line_width=1,
+        opacity=0.9,
+        text=[f'{v:.1f}' for v in valores_atleta],
+        textposition='outside',
+        textfont=dict(color='white', size=11, family="Arial Black"),
+        hovertemplate='<b>%{x}</b><br>' +
+                      f'{atleta_nome}: %{{y:.2f}}<br>' +
+                      '<extra></extra>'
+    ), row=1, col=1)
     
-    # Ângulos para cada barra
-    angles = list(range(0, 360, 360 // n_vars))
-    
-    # Largura das barras (em graus)
-    bar_width = 360 // n_vars * 0.8
-    
-    # Adicionar círculos de referência
-    for r_val, opacidade in [(0.25, 0.1), (0.5, 0.15), (0.75, 0.2), (1.0, 0.25)]:
-        theta_circle = list(range(0, 361))
-        r_circle = [r_val] * len(theta_circle)
-        
-        fig.add_trace(go.Scatterpolar(
-            r=r_circle,
-            theta=theta_circle,
-            mode='lines',
-            line=dict(color='rgba(148, 163, 184, 0.3)', width=1, dash='dot'),
-            showlegend=False,
-            hoverinfo='none',
-            opacity=opacidade
-        ))
-    
-    # Adicionar barras para o atleta
-    for i, (val, angle) in enumerate(zip(atleta_norm, angles)):
-        fig.add_trace(go.Barpolar(
-            r=[val],
-            theta=[angle],
-            width=[bar_width],
-            marker=dict(
-                color='#3b82f6',
-                line=dict(color='white', width=2)
-            ),
-            name=f'{atleta_nome}' if i == 0 else '',
-            showlegend=(i == 0),
-            hovertemplate=f'<b>{variaveis[i]}</b><br>' +
-                          f'{atleta_nome}: {valores_atleta[i]:.2f}<br>' +
-                          f'Média {posicao}: {valores_posicao[i]:.2f}<br>' +
-                          f'Média Geral: {valores_geral[i]:.2f}<br>' +
-                          '<extra></extra>'
-        ))
-    
-    # Adicionar linha circular para a média da posição
-    theta_circle = list(range(0, 361))
-    r_circle = [posicao_norm[i % n_vars] for i in range(len(theta_circle))]
-    
-    fig.add_trace(go.Scatterpolar(
-        r=r_circle,
-        theta=theta_circle,
-        mode='lines',
+    # Linha para média da posição
+    fig.add_trace(go.Scatter(
+        x=variaveis,
+        y=valores_posicao,
         name=f'Média {posicao}',
+        mode='lines+markers',
         line=dict(color='#f59e0b', width=3, dash='dash'),
-        fill=None
-    ))
+        marker=dict(size=10, color='#f59e0b', symbol='diamond'),
+        hovertemplate='<b>%{x}</b><br>' +
+                      f'Média {posicao}: %{{y:.2f}}<br>' +
+                      '<extra></extra>'
+    ), row=1, col=1)
     
-    # Adicionar linha circular para a média geral
-    r_circle_geral = [geral_norm[i % n_vars] for i in range(len(theta_circle))]
-    
-    fig.add_trace(go.Scatterpolar(
-        r=r_circle_geral,
-        theta=theta_circle,
-        mode='lines',
+    # Linha para média geral
+    fig.add_trace(go.Scatter(
+        x=variaveis,
+        y=valores_geral,
         name='Média Geral',
-        line=dict(color='#94a3b8', width=2, dash='dot'),
-        fill=None
-    ))
+        mode='lines+markers',
+        line=dict(color='#94a3b8', width=3, dash='dot'),
+        marker=dict(size=10, color='#94a3b8', symbol='circle'),
+        hovertemplate='<b>%{x}</b><br>' +
+                      'Média Geral: %{y:.2f}<br>' +
+                      '<extra></extra>'
+    ), row=1, col=1)
     
-    # Configurar layout
+    # ============================================================
+    # GRÁFICO INFERIOR - Desvios percentuais
+    # ============================================================
+    
+    # Cores baseadas no sinal do desvio (verde positivo, vermelho negativo)
+    cores_desvio = ['#10b981' if d > 0 else '#ef4444' if d < 0 else '#94a3b8' for d in desvios_vs_posicao]
+    
+    # Barras de desvio vs posição
+    fig.add_trace(go.Bar(
+        x=variaveis,
+        y=desvios_vs_posicao,
+        name=f'Desvio vs {posicao}',
+        marker_color=cores_desvio,
+        marker_line_color='white',
+        marker_line_width=1,
+        opacity=0.8,
+        text=[f'{d:+.1f}%' for d in desvios_vs_posicao],
+        textposition='outside',
+        textfont=dict(color='white', size=10, family="Arial Black"),
+        hovertemplate='<b>%{x}</b><br>' +
+                      f'vs {posicao}: %{{y:+.1f}}%<br>' +
+                      '<extra></extra>'
+    ), row=2, col=1)
+    
+    # Adicionar pontos para desvio vs geral (como scatter)
+    fig.add_trace(go.Scatter(
+        x=variaveis,
+        y=desvios_vs_geral,
+        name='Desvio vs Geral',
+        mode='markers',
+        marker=dict(
+            size=12,
+            color='#8b5cf6',
+            symbol='star',
+            line=dict(color='white', width=1)
+        ),
+        text=[f'{d:+.1f}%' for d in desvios_vs_geral],
+        textposition='top center',
+        textfont=dict(color='white', size=9),
+        hovertemplate='<b>%{x}</b><br>' +
+                      'vs Geral: %{y:+.1f}%<br>' +
+                      '<extra></extra>'
+    ), row=2, col=1)
+    
+    # Linha de referência zero
+    fig.add_hline(y=0, line_dash="solid", line_color="#94a3b8", line_width=1, opacity=0.5, row=2, col=1)
+    
+    # ============================================================
+    # CONFIGURAÇÃO DO LAYOUT
+    # ============================================================
+    
     fig.update_layout(
         title=dict(
             text=f"<b>{titulo}</b>",
-            font=dict(size=22, color='white'),
+            font=dict(size=24, color='white', family="Arial Black"),
             x=0.5
         ),
-        polar=dict(
-            radialaxis=dict(
-                range=[0, 1.1],
-                showticklabels=False,
-                gridcolor='#4a5568'
-            ),
-            angularaxis=dict(
-                tickmode='array',
-                tickvals=angles,
-                ticktext=variaveis,
-                gridcolor='#4a5568',
-                tickfont=dict(color='white', size=12)
-            ),
-            bgcolor='rgba(30,41,59,0.5)'
-        ),
+        plot_bgcolor='rgba(30,41,59,0.8)',
         paper_bgcolor='rgba(0,0,0,0)',
         font=dict(color='white'),
-        height=600,
-        width=700,
+        height=800,
+        width=900,
         showlegend=True,
         legend=dict(
-            font=dict(color='white'),
-            bgcolor='rgba(30,41,59,0.8)',
-            bordercolor='#334155',
+            font=dict(color='white', size=11),
+            bgcolor='rgba(30,41,59,0.9)',
+            bordercolor='#3b82f6',
+            borderwidth=1,
             orientation='h',
             yanchor='bottom',
-            y=1.1,
+            y=1.02,
             xanchor='center',
-            x=0.5
-        )
+            x=0.5,
+            itemclick='toggle',
+            itemdoubleclick='toggleothers'
+        ),
+        hovermode='x unified',
+        margin=dict(l=80, r=80, t=100, b=80)
+    )
+    
+    # Configurar eixos do gráfico superior
+    fig.update_xaxes(
+        gridcolor='#334155', 
+        tickfont=dict(color='white', size=11),
+        title_font=dict(color='white'),
+        showline=True,
+        linecolor='#334155',
+        row=1, col=1
+    )
+    
+    fig.update_yaxes(
+        gridcolor='#334155', 
+        tickfont=dict(color='white'),
+        title="Valor",
+        title_font=dict(color='white', size=12),
+        showline=True,
+        linecolor='#334155',
+        row=1, col=1
+    )
+    
+    # Configurar eixos do gráfico inferior
+    fig.update_xaxes(
+        gridcolor='#334155', 
+        tickfont=dict(color='white', size=11),
+        title_font=dict(color='white'),
+        showline=True,
+        linecolor='#334155',
+        row=2, col=1
+    )
+    
+    fig.update_yaxes(
+        gridcolor='#334155', 
+        tickfont=dict(color='white'),
+        title="Desvio (%)",
+        title_font=dict(color='white', size=12),
+        showline=True,
+        linecolor='#334155',
+        zeroline=True,
+        zerolinecolor='#4a5568',
+        zerolinewidth=1,
+        row=2, col=1
     )
     
     return fig, valores_atleta, valores_posicao, valores_geral
-
 def criar_tabela_comparativa(atleta_nome, posicao, variaveis, valores_atleta, valores_posicao, valores_geral):
     """
     Cria uma tabela comparativa com diferenças percentuais
@@ -3067,11 +3132,11 @@ if st.session_state.df_completo is not None:
                             # ============================================================
                             # GRÁFICO DE BARRAS RADIAL (SUNBURST)
                             # ============================================================
-                            fig_radar, valores_atleta, valores_posicao, valores_geral = criar_grafico_barras_radial(
-                                df_atleta, df_posicao, df_geral,
-                                atleta_comp, posicao_atleta, vars_comp,
-                                f"Comparação: {atleta_comp} vs Média da Posição vs Média Geral"
-                            )
+                            fig_radar, valores_atleta, valores_posicao, valores_geral = criar_grafico_barras_desvio(
+    df_atleta, df_posicao, df_geral,
+    atleta_comp, posicao_atleta, vars_comp,
+    f"Comparação: {atleta_comp} vs Média da Posição vs Média Geral"
+)
                             
                             st.plotly_chart(fig_radar, use_container_width=True)
                             
