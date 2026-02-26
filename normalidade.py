@@ -38,6 +38,7 @@ translations = {
         'tab_temporal': '📈 Estatísticas & Temporal',
         'tab_boxplots': '📦 Boxplots',
         'tab_correlation': '🔥 Correlações',
+        'tab_kmeans': '🤖 K-means Clusters',
         'tab_executive': '📋 Executivo',
         'positions': 'Posições',
         'periods': 'Períodos',
@@ -132,6 +133,7 @@ translations = {
         'tab_temporal': '📈 Statistics & Temporal',
         'tab_boxplots': '📦 Boxplots',
         'tab_correlation': '🔥 Correlations',
+        'tab_kmeans': '🤖 K-means Clusters',
         'tab_executive': '📋 Executive',
         'positions': 'Positions',
         'periods': 'Periods',
@@ -226,6 +228,7 @@ translations = {
         'tab_temporal': '📈 Estadísticas & Temporal',
         'tab_boxplots': '📦 Boxplots',
         'tab_correlation': '🔥 Correlaciones',
+        'tab_kmeans': '🤖 Clústeres K-means',
         'tab_executive': '📋 Ejecutivo',
         'positions': 'Posiciones',
         'periods': 'Períodos',
@@ -1866,6 +1869,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 t['tab_temporal'], 
                 t['tab_boxplots'], 
                 t['tab_correlation'],
+                t['tab_kmeans'],
                 t['tab_executive']
             ]
             
@@ -2619,9 +2623,216 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     st.info("ℹ️ " + ("São necessárias pelo menos 2 variáveis" if st.session_state.idioma == 'pt' else 
                                    "At least 2 variables are needed" if st.session_state.idioma == 'en' else
                                    "Se necesitan al menos 2 variables"))
+                    
+
+                        # ABA 5: K-MEANS CLUSTERS
+            with tabs[4]:  # Ajuste o índice - será 4 porque agora temos 5 abas
+                st.markdown(f"<h3>{t['tab_kmeans']}</h3>", unsafe_allow_html=True)
+                
+                st.markdown("""
+                <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); 
+                            padding: 15px; border-radius: 12px; margin-bottom: 20px;
+                            border-left: 4px solid #8b5cf6;">
+                    <p style="color: #94a3b8; margin: 0;">
+                        <span style="color: #8b5cf6;">🎯 Segmentação de Atletas:</span> 
+                        Identifique perfis similares baseados em múltiplas variáveis.
+                        Escolha duas variáveis para os eixos X e Y.
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                if len(st.session_state.variaveis_quantitativas) >= 2:
+                    col_k1, col_k2, col_k3 = st.columns([2, 2, 1])
+                    
+                    with col_k1:
+                        var_x = st.selectbox(
+                            "Variável do eixo X",
+                            options=st.session_state.variaveis_quantitativas,
+                            index=0,
+                            key="kmeans_var_x"
+                        )
+                    
+                    with col_k2:
+                        # Filtrar para não permitir a mesma variável
+                        opcoes_y = [v for v in st.session_state.variaveis_quantitativas if v != var_x]
+                        var_y = st.selectbox(
+                            "Variável do eixo Y",
+                            options=opcoes_y,
+                            index=0 if opcoes_y else None,
+                            key="kmeans_var_y"
+                        )
+                    
+                    with col_k3:
+                        n_clusters = st.slider(
+                            "Nº Clusters",
+                            min_value=2,
+                            max_value=6,
+                            value=3,
+                            key="kmeans_clusters"
+                        )
+                    
+                    if var_x and var_y:
+                        from sklearn.cluster import KMeans
+                        from sklearn.preprocessing import StandardScaler
+                        
+                        try:
+                            with st.spinner('🔄 Calculando clusters...'):
+                                # Preparar dados
+                                dados_cluster = df_filtrado[[var_x, var_y]].dropna()
+                                
+                                if len(dados_cluster) >= n_clusters * 2:  # Mínimo de dados
+                                    # Padronizar
+                                    scaler = StandardScaler()
+                                    dados_padronizados = scaler.fit_transform(dados_cluster)
+                                    
+                                    # K-means
+                                    kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
+                                    clusters = kmeans.fit_predict(dados_padronizados)
+                                    
+                                    # Preparar dataframe com clusters
+                                    df_cluster = dados_cluster.copy()
+                                    df_cluster['Cluster'] = clusters
+                                    df_cluster['Atleta'] = df_filtrado.loc[dados_cluster.index, 'Nome'].values
+                                    df_cluster['Posição'] = df_filtrado.loc[dados_cluster.index, 'Posição'].values
+                                    
+                                    # Centroides
+                                    centroides = scaler.inverse_transform(kmeans.cluster_centers_)
+                                    
+                                    # Criar figura
+                                    fig_kmeans = go.Figure()
+                                    cores = px.colors.qualitative.Set1
+                                    
+                                    for i in range(n_clusters):
+                                        dados_i = df_cluster[df_cluster['Cluster'] == i]
+                                        
+                                        fig_kmeans.add_trace(go.Scatter(
+                                            x=dados_i[var_x],
+                                            y=dados_i[var_y],
+                                            mode='markers',
+                                            name=f'Cluster {i+1}',
+                                            marker=dict(
+                                                size=10,
+                                                color=cores[i % len(cores)],
+                                                opacity=0.7,
+                                                line=dict(color='white', width=1)
+                                            ),
+                                            text=dados_i['Atleta'],
+                                            hovertemplate='<b>%{text}</b><br>' +
+                                                          f'{var_x}: %{{x:.2f}}<br>' +
+                                                          f'{var_y}: %{{y:.2f}}<br>' +
+                                                          f'Posição: %{{customdata}}<br>' +
+                                                          '<extra></extra>',
+                                            customdata=dados_i['Posição']
+                                        ))
+                                    
+                                    # Centroides
+                                    fig_kmeans.add_trace(go.Scatter(
+                                        x=centroides[:, 0],
+                                        y=centroides[:, 1],
+                                        mode='markers',
+                                        name='Centroides',
+                                        marker=dict(
+                                            size=18,
+                                            color='black',
+                                            symbol='x',
+                                            line=dict(color='white', width=3)
+                                        )
+                                    ))
+                                    
+                                    fig_kmeans.update_layout(
+                                        title=f'Clusters: {var_x} vs {var_y}',
+                                        xaxis_title=var_x,
+                                        yaxis_title=var_y,
+                                        plot_bgcolor='rgba(30,41,59,0.8)',
+                                        paper_bgcolor='rgba(0,0,0,0)',
+                                        font=dict(color='white'),
+                                        title_font=dict(color='#8b5cf6', size=18),
+                                        height=600,
+                                        legend=dict(
+                                            font=dict(color='white'),
+                                            bgcolor='rgba(30,41,59,0.8)',
+                                            bordercolor='#334155'
+                                        )
+                                    )
+                                    
+                                    fig_kmeans.update_xaxes(gridcolor='#334155', tickfont=dict(color='white'))
+                                    fig_kmeans.update_yaxes(gridcolor='#334155', tickfont=dict(color='white'))
+                                    
+                                    st.plotly_chart(fig_kmeans, use_container_width=True)
+                                    
+                                    # Estatísticas dos clusters
+                                    st.markdown("### 📊 Perfil dos Clusters")
+                                    
+                                    stats = []
+                                    for i in range(n_clusters):
+                                        dados_i = df_cluster[df_cluster['Cluster'] == i]
+                                        stats.append({
+                                            'Cluster': f'Cluster {i+1}',
+                                            'Nº Atletas': len(dados_i['Atleta'].unique()),
+                                            'Nº Obs': len(dados_i),
+                                            f'Média {var_x}': dados_i[var_x].mean(),
+                                            f'Média {var_y}': dados_i[var_y].mean(),
+                                            'Desvio X': dados_i[var_x].std(),
+                                            'Desvio Y': dados_i[var_y].std(),
+                                            'Posições': ', '.join(dados_i['Posição'].unique())
+                                        })
+                                    
+                                    df_stats = pd.DataFrame(stats)
+                                    st.dataframe(
+                                        df_stats.style.format({
+                                            f'Média {var_x}': '{:.2f}',
+                                            f'Média {var_y}': '{:.2f}',
+                                            'Desvio X': '{:.2f}',
+                                            'Desvio Y': '{:.2f}'
+                                        }),
+                                        use_container_width=True,
+                                        hide_index=True
+                                    )
+                                    
+                                    # Interpretação
+                                    st.markdown("### 💡 Insights")
+                                    col_ins1, col_ins2 = st.columns(2)
+                                    
+                                    with col_ins1:
+                                        # Encontrar cluster com mais atletas
+                                        idx_mais_atletas = pd.Series([s['Nº Atletas'] for s in stats]).argmax()
+                                        st.markdown(f"""
+                                        <div class="metric-container">
+                                            <h4>🎯 Perfil Dominante</h4>
+                                            <p><strong>Cluster com mais atletas:</strong> 
+                                            Cluster {stats[idx_mais_atletas]['Cluster']}</p>
+                                            <p><strong>Características:</strong> 
+                                            {var_x}: {stats[idx_mais_atletas][f'Média {var_x}']:.1f} | 
+                                            {var_y}: {stats[idx_mais_atletas][f'Média {var_y}']:.1f}</p>
+                                        </div>
+                                        """, unsafe_allow_html=True)
+                                    
+                                    with col_ins2:
+                                        # Calcular variabilidade total
+                                        variabilidades = [s['Desvio X'] + s['Desvio Y'] for s in stats]
+                                        idx_mais_variavel = pd.Series(variabilidades).argmax()
+                                        idx_mais_homogeneo = pd.Series(variabilidades).argmin()
+                                        st.markdown(f"""
+                                        <div class="metric-container">
+                                            <h4>📈 Dispersão</h4>
+                                            <p><strong>Maior variabilidade:</strong> 
+                                            {stats[idx_mais_variavel]['Cluster']}</p>
+                                            <p><strong>Mais homogêneo:</strong> 
+                                            {stats[idx_mais_homogeneo]['Cluster']}</p>
+                                        </div>
+                                        """, unsafe_allow_html=True)
+                                    
+                                else:
+                                    st.warning("⚠️ Dados insuficientes para clustering. Selecione mais dados ou reduza o número de clusters.")
+                                    
+                        except Exception as e:
+                            st.error(f"Erro na análise: {str(e)}")
+                else:
+                    st.info("ℹ️ São necessárias pelo menos 2 variáveis para análise de clusters")
+
             
-            # ABA 5: EXECUTIVO
-            with tabs[4]:
+            # ABA 6: EXECUTIVO
+            with tabs[5]:
                 st.markdown(f"<h3>{t['tab_executive']}</h3>", unsafe_allow_html=True)
                 
                 # Comparação de atletas
