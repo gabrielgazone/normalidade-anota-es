@@ -31,6 +31,31 @@ st.set_page_config(
 )
 
 # ============================================================================
+# CORES ACESSÍVEIS PARA DALTÔNICOS (Colorblind-Friendly Palette)
+# ============================================================================
+# Baseado na paleta "Okabe-Ito" - padrão ouro para acessibilidade
+COLORS = {
+    'blue': '#0072B2',      # Azul seguro
+    'orange': '#E69F00',     # Laranja seguro
+    'green': '#009E73',      # Verde seguro
+    'red': '#D55E00',        # Vermelho alaranjado (seguro)
+    'purple': '#CC79A7',     # Roxo seguro
+    'yellow': '#F0E442',     # Amarelo seguro
+    'skyblue': '#56B4E9',    # Azul claro seguro
+    'black': '#000000',      # Preto
+    'gray': '#999999',       # Cinza
+    'darkblue': '#003366'    # Azul escuro
+}
+
+# Mapeamento para uso no código
+COR_PRIMARIA = COLORS['blue']
+COR_SECUNDARIA = COLORS['orange']
+COR_SUCESSO = COLORS['green']
+COR_ALERTA = COLORS['red']
+COR_DESTAQUE = COLORS['purple']
+COR_NEUTRA = COLORS['gray']
+
+# ============================================================================
 # INTERNACIONALIZAÇÃO
 # ============================================================================
 
@@ -50,6 +75,7 @@ translations = {
         'tab_correlation': '🔥 Correlações',
         'tab_kmeans': '🤖 K-means Clusters',
         'tab_comparador': '🆚 Comparador de Atletas',
+        'tab_mbi': '🔬 Análise MBI',
         'tab_executive': '📋 Executivo',
         'positions': 'Posições',
         'periods': 'Períodos',
@@ -146,6 +172,7 @@ translations = {
         'tab_correlation': '🔥 Correlations',
         'tab_kmeans': '🤖 K-means Clusters',
         'tab_comparador': '🆚 Athlete Comparator',
+        'tab_mbi': '🔬 MBI Analysis',
         'tab_executive': '📋 Executive',
         'positions': 'Positions',
         'periods': 'Periods',
@@ -242,6 +269,7 @@ translations = {
         'tab_correlation': '🔥 Correlaciones',
         'tab_kmeans': '🤖 Clústeres K-means',
         'tab_comparador': '🆚 Comparador de Atletas',
+        'tab_mbi': '🔬 Análisis MBI',
         'tab_executive': '📋 Ejecutivo',
         'positions': 'Posiciones',
         'periods': 'Períodos',
@@ -326,74 +354,74 @@ translations = {
 }
 
 # ============================================================================
-# CSS PERSONALIZADO
+# CSS PERSONALIZADO COM CORES ACESSÍVEIS
 # ============================================================================
 
-st.markdown("""
+st.markdown(f"""
 <style>
     /* Tema base profissional */
-    .stApp {
+    .stApp {{
         background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    }
+    }}
     
     /* Sidebar elegante */
-    .css-1d391kg, .css-1wrcr25 {
+    .css-1d391kg, .css-1wrcr25 {{
         background: #020617 !important;
         border-right: 1px solid #334155;
-    }
+    }}
     
-    .sidebar-title {
+    .sidebar-title {{
         color: #f8fafc !important;
         font-size: 1.1rem;
         font-weight: 600;
         margin-bottom: 15px;
         padding-bottom: 8px;
-        border-bottom: 2px solid #3b82f6;
+        border-bottom: 2px solid {COR_PRIMARIA};
         text-transform: uppercase;
         letter-spacing: 1.5px;
-    }
+    }}
     
     /* Cards executivos */
-    .executive-card {
+    .executive-card {{
         background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
         border-radius: 16px;
         padding: 20px;
-        border-left: 4px solid #3b82f6;
+        border-left: 4px solid {COR_PRIMARIA};
         box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3);
         transition: transform 0.2s ease, box-shadow 0.2s ease;
         margin-bottom: 15px;
-    }
+    }}
     
-    .executive-card:hover {
+    .executive-card:hover {{
         transform: translateY(-2px);
-        box-shadow: 0 15px 30px -5px rgba(59, 130, 246, 0.2);
-    }
+        box-shadow: 0 15px 30px -5px rgba(0, 114, 178, 0.2);
+    }}
     
-    .executive-card .label {
+    .executive-card .label {{
         color: #94a3b8;
         font-size: 0.9rem;
         margin: 0;
-    }
+    }}
     
-    .executive-card .value {
+    .executive-card .value {{
         color: white;
         font-size: 2rem;
         font-weight: 700;
         margin: 5px 0;
-    }
+    }}
     
-    .executive-card .delta {
+    .executive-card .delta {{
         font-size: 0.9rem;
         margin: 0;
-    }
+    }}
     
-    .executive-card .icon {
+    .executive-card .icon {{
         font-size: 2.5rem;
-        color: #3b82f6;
-    }
+        color: {COR_PRIMARIA};
+    }}
     
     /* Cards de métricas */
-    .metric-card {
+    .metric-card {{
         background: rgba(30, 41, 59, 0.8);
         backdrop-filter: blur(10px);
         padding: 25px;
@@ -402,114 +430,114 @@ st.markdown("""
         text-align: center;
         color: white !important;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        border: 1px solid rgba(59, 130, 246, 0.2);
+        border: 1px solid rgba(0, 114, 178, 0.2);
         position: relative;
         overflow: hidden;
-    }
+    }}
     
-    .metric-card:hover {
+    .metric-card:hover {{
         transform: translateY(-2px);
-        box-shadow: 0 20px 40px rgba(59, 130, 246, 0.15);
-        border-color: #3b82f6;
-    }
+        box-shadow: 0 20px 40px rgba(0, 114, 178, 0.15);
+        border-color: {COR_PRIMARIA};
+    }}
     
-    .metric-card .icon {
+    .metric-card .icon {{
         font-size: 2.5rem;
         margin-bottom: 15px;
-        color: #3b82f6;
-    }
+        color: {COR_PRIMARIA};
+    }}
     
-    .metric-card h3 {
+    .metric-card h3 {{
         color: #94a3b8 !important;
         font-size: 0.9rem;
         text-transform: uppercase;
         letter-spacing: 2px;
         margin-bottom: 10px;
         font-weight: 500;
-    }
+    }}
     
-    .metric-card h2 {
+    .metric-card h2 {{
         color: white !important;
         font-size: 2.2rem;
         font-weight: 700;
         margin: 10px 0;
-    }
+    }}
     
     /* Timeline cards */
-    .time-metric-card {
+    .time-metric-card {{
         background: rgba(30, 41, 59, 0.8);
         backdrop-filter: blur(10px);
         padding: 15px;
         border-radius: 12px;
-        border-left: 4px solid #3b82f6;
+        border-left: 4px solid {COR_PRIMARIA};
         margin: 10px 0;
-        border: 1px solid rgba(59, 130, 246, 0.2);
+        border: 1px solid rgba(0, 114, 178, 0.2);
         transition: all 0.3s ease;
-    }
+    }}
     
-    .time-metric-card:hover {
+    .time-metric-card:hover {{
         transform: translateX(2px);
-    }
+    }}
     
-    .time-metric-card .label {
+    .time-metric-card .label {{
         color: #94a3b8;
         font-size: 0.8rem;
         text-transform: uppercase;
         letter-spacing: 1px;
         font-weight: 500;
-    }
+    }}
     
-    .time-metric-card .value {
+    .time-metric-card .value {{
         color: white;
         font-size: 1.6rem;
         font-weight: 700;
-    }
+    }}
     
-    .time-metric-card .sub-value {
+    .time-metric-card .sub-value {{
         color: #64748b;
         font-size: 0.8rem;
-    }
+    }}
     
     /* Warning card */
-    .warning-card {
-        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    .warning-card {{
+        background: linear-gradient(135deg, {COR_ALERTA} 0%, #b94c1c 100%);
         padding: 20px;
         border-radius: 16px;
-        box-shadow: 0 10px 25px rgba(220, 38, 38, 0.2);
+        box-shadow: 0 10px 25px rgba(213, 94, 0, 0.2);
         text-align: center;
         color: white;
         margin: 10px 0;
         border: 1px solid rgba(255, 255, 255, 0.1);
         animation: pulse 2s infinite;
-    }
+    }}
     
-    @keyframes pulse {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.02); }
-        100% { transform: scale(1); }
-    }
+    @keyframes pulse {{
+        0% {{ transform: scale(1); }}
+        50% {{ transform: scale(1.02); }}
+        100% {{ transform: scale(1); }}
+    }}
     
-    .warning-card .label {
+    .warning-card .label {{
         font-size: 0.9rem;
         text-transform: uppercase;
         letter-spacing: 2px;
         opacity: 0.9;
         font-weight: 500;
-    }
+    }}
     
-    .warning-card .value {
+    .warning-card .value {{
         font-size: 2.5rem;
         font-weight: 700;
         margin: 10px 0;
-    }
+    }}
     
-    .warning-card .sub-label {
+    .warning-card .sub-label {{
         font-size: 0.8rem;
         opacity: 0.8;
-    }
+    }}
     
     /* Zone cards */
-    .zone-card {
+    .zone-card {{
         background: rgba(30, 41, 59, 0.8);
         backdrop-filter: blur(10px);
         padding: 12px;
@@ -517,189 +545,189 @@ st.markdown("""
         margin: 5px 0;
         border-left: 4px solid;
         transition: all 0.3s ease;
-    }
+    }}
     
-    .zone-card:hover {
+    .zone-card:hover {{
         transform: translateX(2px);
-    }
+    }}
     
-    .zone-card .zone-name {
+    .zone-card .zone-name {{
         font-size: 0.9rem;
         color: #94a3b8;
         text-transform: uppercase;
         letter-spacing: 1px;
-    }
+    }}
     
-    .zone-card .zone-value {
+    .zone-card .zone-value {{
         font-size: 1.2rem;
         color: white;
         font-weight: 600;
-    }
+    }}
     
-    .zone-card .zone-count {
+    .zone-card .zone-count {{
         font-size: 0.9rem;
-        color: #3b82f6;
-    }
+        color: {COR_PRIMARIA};
+    }}
     
     /* Anotação cards */
-    .note-card {
+    .note-card {{
         background: #1e293b;
         padding: 10px;
         border-radius: 8px;
         margin: 5px 0;
-        border-left: 3px solid #3b82f6;
-    }
+        border-left: 3px solid {COR_PRIMARIA};
+    }}
     
-    .note-card .note-date {
+    .note-card .note-date {{
         color: #94a3b8;
         font-size: 0.8rem;
         margin: 0;
-    }
+    }}
     
-    .note-card .note-text {
+    .note-card .note-text {{
         color: white;
         margin: 5px 0;
-    }
+    }}
     
     /* Títulos */
-    h1 {
+    h1 {{
         color: white !important;
         font-size: 2.5rem;
         font-weight: 700;
-        text-shadow: 0 0 30px rgba(59, 130, 246, 0.5);
-        background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+        text-shadow: 0 0 30px rgba(0, 114, 178, 0.5);
+        background: linear-gradient(135deg, {COR_PRIMARIA}, {COR_DESTAQUE});
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         text-align: center;
         margin-bottom: 10px;
-    }
+    }}
     
-    h2 {
+    h2 {{
         color: white !important;
         font-size: 1.8rem;
         font-weight: 600;
-        border-bottom: 2px solid #3b82f6;
+        border-bottom: 2px solid {COR_PRIMARIA};
         padding-bottom: 10px;
         margin-bottom: 25px;
-    }
+    }}
     
-    h3 {
-        color: #3b82f6 !important;
+    h3 {{
+        color: {COR_PRIMARIA} !important;
         font-size: 1.4rem;
         font-weight: 500;
-    }
+    }}
     
-    h4 {
-        color: #8b5cf6 !important;
+    h4 {{
+        color: {COR_DESTAQUE} !important;
         font-size: 1.2rem;
         font-weight: 500;
-    }
+    }}
     
     /* Abas com transição suave */
-    .stTabs [data-baseweb="tab-list"] {
+    .stTabs [data-baseweb="tab-list"] {{
         gap: 8px;
         background: rgba(30, 41, 59, 0.6);
         backdrop-filter: blur(10px);
         padding: 8px;
         border-radius: 50px;
-        border: 1px solid rgba(59, 130, 246, 0.2);
-    }
+        border: 1px solid rgba(0, 114, 178, 0.2);
+    }}
     
-    .stTabs [data-baseweb="tab"] {
+    .stTabs [data-baseweb="tab"] {{
         border-radius: 50px;
         padding: 10px 20px;
         font-weight: 500;
         color: #94a3b8 !important;
         transition: all 0.3s ease;
         font-size: 0.9rem;
-    }
+    }}
     
-    .stTabs [aria-selected="true"] {
-        background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%) !important;
+    .stTabs [aria-selected="true"] {{
+        background: linear-gradient(135deg, {COR_PRIMARIA} 0%, {COR_DESTAQUE} 100%) !important;
         color: white !important;
-        box-shadow: 0 5px 15px rgba(59, 130, 246, 0.2);
-    }
+        box-shadow: 0 5px 15px rgba(0, 114, 178, 0.2);
+    }}
     
-    .stTabs [data-baseweb="tab-panel"] {
+    .stTabs [data-baseweb="tab-panel"] {{
         animation: fadeSlide 0.4s ease-out;
-    }
+    }}
     
-    @keyframes fadeSlide {
-        from {
+    @keyframes fadeSlide {{
+        from {{
             opacity: 0;
             transform: translateX(10px);
-        }
-        to {
+        }}
+        to {{
             opacity: 1;
             transform: translateX(0);
-        }
-    }
+        }}
+    }}
     
     /* Containers de métricas */
-    .metric-container {
+    .metric-container {{
         background: rgba(30, 41, 59, 0.8);
         backdrop-filter: blur(10px);
         border-radius: 16px;
         padding: 20px;
-        border: 1px solid rgba(59, 130, 246, 0.2);
+        border: 1px solid rgba(0, 114, 178, 0.2);
         box-shadow: 0 8px 20px rgba(0,0,0,0.2);
         transition: all 0.3s ease;
         height: 100%;
-    }
+    }}
     
-    .metric-container:hover {
-        border-color: #3b82f6;
-        box-shadow: 0 12px 30px rgba(59, 130, 246, 0.1);
-    }
+    .metric-container:hover {{
+        border-color: {COR_PRIMARIA};
+        box-shadow: 0 12px 30px rgba(0, 114, 178, 0.1);
+    }}
     
-    .metric-container h4 {
-        color: #3b82f6 !important;
+    .metric-container h4 {{
+        color: {COR_PRIMARIA} !important;
         margin-bottom: 15px;
         font-size: 1rem;
         text-transform: uppercase;
         letter-spacing: 1px;
-    }
+    }}
     
-    .metric-container p {
+    .metric-container p {{
         color: #e2e8f0 !important;
         margin: 10px 0;
         font-size: 0.95rem;
-    }
+    }}
     
-    .metric-container strong {
-        color: #8b5cf6;
-    }
+    .metric-container strong {{
+        color: {COR_DESTAQUE};
+    }}
     
     /* Dataframe estilizado */
-    .dataframe {
+    .dataframe {{
         background: rgba(30, 41, 59, 0.8) !important;
         backdrop-filter: blur(10px) !important;
         border-radius: 12px !important;
-        border: 1px solid rgba(59, 130, 246, 0.2) !important;
+        border: 1px solid rgba(0, 114, 178, 0.2) !important;
         color: white !important;
-    }
+    }}
     
-    .dataframe th {
+    .dataframe th {{
         background: #1e293b !important;
-        color: #3b82f6 !important;
+        color: {COR_PRIMARIA} !important;
         font-weight: 600;
         padding: 12px !important;
-    }
+    }}
     
-    .dataframe td {
+    .dataframe td {{
         background: rgba(30, 41, 59, 0.6) !important;
         color: #e2e8f0 !important;
         border-color: #334155 !important;
         padding: 10px !important;
-    }
+    }}
     
-    p, li, .caption, .stMarkdown {
+    p, li, .caption, .stMarkdown {{
         color: #cbd5e1 !important;
         line-height: 1.6;
-    }
+    }}
     
-    .stButton > button {
-        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    .stButton > button {{
+        background: linear-gradient(135deg, {COR_PRIMARIA} 0%, {COLORS['darkblue']} 100%);
         color: white;
         border: none;
         border-radius: 50px;
@@ -710,33 +738,63 @@ st.markdown("""
         letter-spacing: 1px;
         font-size: 0.9rem;
         border: 1px solid rgba(255,255,255,0.1);
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
-    }
+        box-shadow: 0 4px 12px rgba(0, 114, 178, 0.2);
+    }}
     
-    .stButton > button:hover {
+    .stButton > button:hover {{
         transform: translateY(-1px);
-        box-shadow: 0 6px 16px rgba(59, 130, 246, 0.3);
-    }
+        box-shadow: 0 6px 16px rgba(0, 114, 178, 0.3);
+    }}
     
     /* Scrollbar elegante */
-    ::-webkit-scrollbar {
+    ::-webkit-scrollbar {{
         width: 8px;
         height: 8px;
-    }
+    }}
     
-    ::-webkit-scrollbar-track {
+    ::-webkit-scrollbar-track {{
         background: #1e293b;
         border-radius: 10px;
-    }
+    }}
     
-    ::-webkit-scrollbar-thumb {
-        background: #3b82f6;
+    ::-webkit-scrollbar-thumb {{
+        background: {COR_PRIMARIA};
         border-radius: 10px;
-    }
+    }}
     
-    ::-webkit-scrollbar-thumb:hover {
-        background: #2563eb;
-    }
+    ::-webkit-scrollbar-thumb:hover {{
+        background: {COLORS['darkblue']};
+    }}
+
+    /* Footer com referências */
+    .references-footer {{
+        background: #0f172a;
+        padding: 25px;
+        border-radius: 16px;
+        margin-top: 40px;
+        border-top: 3px solid {COR_PRIMARIA};
+        font-size: 0.85rem;
+    }}
+    
+    .references-footer h4 {{
+        color: {COR_PRIMARIA} !important;
+        margin-bottom: 15px;
+    }}
+    
+    .references-footer p {{
+        color: #94a3b8;
+        margin: 8px 0;
+        line-height: 1.6;
+    }}
+    
+    .references-footer a {{
+        color: {COR_SECUNDARIA};
+        text-decoration: none;
+    }}
+    
+    .references-footer a:hover {{
+        text-decoration: underline;
+    }}
 </style>
 """, unsafe_allow_html=True)
 
@@ -761,16 +819,16 @@ n_colunas = 1 if mobile else 4
 
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
-    st.markdown("""
+    st.markdown(f"""
     <div style="text-align: center; padding: 20px 0;">
         <h1>🏃 Sports Science Analytics Pro</h1>
         <p style="color: #94a3b8; font-size: 1.2rem; margin-top: 10px;">
             Professional Dashboard for Elite Performance Analysis
         </p>
         <div style="display: flex; justify-content: center; gap: 10px; margin-top: 20px;">
-            <span style="background: #3b82f6; color: white; padding: 5px 15px; border-radius: 50px; font-size: 0.9rem;">⚡ Real-time</span>
-            <span style="background: #8b5cf6; color: white; padding: 5px 15px; border-radius: 50px; font-size: 0.9rem;">📊 Statistical</span>
-            <span style="background: #10b981; color: white; padding: 5px 15px; border-radius: 50px; font-size: 0.9rem;">🎯 Precision</span>
+            <span style="background: {COR_PRIMARIA}; color: white; padding: 5px 15px; border-radius: 50px; font-size: 0.9rem;">⚡ Real-time</span>
+            <span style="background: {COR_DESTAQUE}; color: white; padding: 5px 15px; border-radius: 50px; font-size: 0.9rem;">📊 Statistical</span>
+            <span style="background: {COR_SUCESSO}; color: white; padding: 5px 15px; border-radius: 50px; font-size: 0.9rem;">🎯 Precision</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -851,10 +909,10 @@ def interpretar_teste(p_valor, nome_teste, t):
     
     if p_valor > 0.05:
         status = f"✅ {t['normality_test'].split('🧪')[1] if '🧪' in t['normality_test'] else 'Dados normais'}"
-        cor = "#10b981"
+        cor = COR_SUCESSO
     else:
         status = f"⚠️ {t['normality_test'].split('🧪')[1] if '🧪' in t['normality_test'] else 'Dados não normais'}"
-        cor = "#ef4444"
+        cor = COR_ALERTA
     
     st.markdown(f"""
     <div style="background: rgba(30, 41, 59, 0.8); border-radius: 12px; padding: 20px; border-left: 5px solid {cor}; backdrop-filter: blur(10px);">
@@ -891,9 +949,9 @@ def verificar_estruturas_arquivos(dataframes):
     
     return True, primeira_estrutura
 
-def executive_card(titulo, valor, delta, icone, cor_status="#3b82f6"):
+def executive_card(titulo, valor, delta, icone, cor_status=COR_PRIMARIA):
     delta_icon = "▲" if delta > 0 else "▼"
-    delta_color = "#10b981" if delta > 0 else "#ef4444"
+    delta_color = COR_SUCESSO if delta > 0 else COR_ALERTA
     
     st.markdown(f"""
     <div class="executive-card" style="border-left-color: {cor_status};">
@@ -919,7 +977,7 @@ def metric_card(titulo, valor, icone, cor_gradiente):
     </div>
     """, unsafe_allow_html=True)
 
-def time_metric_card(label, valor, sub_label="", cor="#3b82f6"):
+def time_metric_card(label, valor, sub_label="", cor=COR_PRIMARIA):
     st.markdown(f"""
     <div class="time-metric-card" style="border-left-color: {cor};">
         <div class="label">{label}</div>
@@ -996,7 +1054,7 @@ def criar_timeline_profissional(df, variavel, t):
     fig.add_hrect(
         y0=limiar_80,
         y1=valor_maximo * 1.05,
-        fillcolor="rgba(239, 68, 68, 0.15)",
+        fillcolor=f"rgba(213, 94, 0, 0.15)",
         line_width=0,
         layer="below",
         name=f"{t['above_threshold']}"
@@ -1005,7 +1063,7 @@ def criar_timeline_profissional(df, variavel, t):
     fig.add_hrect(
         y0=0,
         y1=limiar_80,
-        fillcolor="rgba(59, 130, 246, 0.1)",
+        fillcolor=f"rgba(0, 114, 178, 0.1)",
         line_width=0,
         layer="below",
         name=f"{t['below_threshold']}"
@@ -1014,7 +1072,7 @@ def criar_timeline_profissional(df, variavel, t):
     fig.add_hline(
         y=limiar_80,
         line_dash="solid",
-        line_color="#ef4444",
+        line_color=COR_ALERTA,
         line_width=2,
         annotation_text=f"🔴 {t['threshold_80']}: {limiar_80:.2f}",
         annotation_position="top left",
@@ -1032,7 +1090,7 @@ def criar_timeline_profissional(df, variavel, t):
             name=t['above_threshold'],
             marker=dict(
                 size=10,
-                color='#ef4444',
+                color=COR_ALERTA,
                 symbol='circle',
                 line=dict(color='white', width=1)
             ),
@@ -1048,7 +1106,7 @@ def criar_timeline_profissional(df, variavel, t):
             name=t['below_threshold'],
             marker=dict(
                 size=8,
-                color='#3b82f6',
+                color=COR_PRIMARIA,
                 symbol='circle',
                 line=dict(color='white', width=1)
             ),
@@ -1061,7 +1119,7 @@ def criar_timeline_profissional(df, variavel, t):
         y=media_movevel,
         mode='lines',
         name='Média Móvel (5)',
-        line=dict(color='#f59e0b', width=2, dash='dot')
+        line=dict(color=COR_SECUNDARIA, width=2, dash='dot')
     ))
     
     media = df[variavel].mean()
@@ -1079,7 +1137,7 @@ def criar_timeline_profissional(df, variavel, t):
     fig.add_hrect(
         y0=media-desvio, 
         y1=media+desvio,
-        fillcolor="#3b82f6", 
+        fillcolor=COR_PRIMARIA, 
         opacity=0.1, 
         line_width=0,
         annotation_text="±1 DP",
@@ -1094,7 +1152,7 @@ def criar_timeline_profissional(df, variavel, t):
         plot_bgcolor='rgba(30,41,59,0.8)',
         paper_bgcolor='rgba(0,0,0,0)',
         font=dict(color='white', size=12),
-        title_font=dict(color='#3b82f6', size=18),
+        title_font=dict(color=COR_PRIMARIA, size=18),
         showlegend=True,
         legend=dict(
             font=dict(color='white'),
@@ -1122,7 +1180,7 @@ def criar_tabela_destaque(df, colunas_destaque):
     if 'Média' in df.columns:
         def highlight_max_row(row):
             if row.name == df['Média'].idxmax():
-                return ['background-color: rgba(16, 185, 129, 0.2)'] * len(row)
+                return ['background-color: rgba(0, 158, 115, 0.2)'] * len(row)
             return [''] * len(row)
         
         styled_df = styled_df.apply(highlight_max_row, axis=1)
@@ -1139,7 +1197,7 @@ def comparar_atletas(df, atleta1, atleta2, variaveis, t):
         st.markdown(f"### {atleta1}")
         for var in variaveis:
             delta = ((dados1[var] - dados2[var]) / dados2[var]) * 100 if dados2[var] != 0 else 0
-            cor = "#10b981" if delta > 0 else "#ef4444"
+            cor = COR_SUCESSO if delta > 0 else COR_ALERTA
             st.markdown(f"""
             <div style="background: #1e293b; padding: 10px; border-radius: 8px; margin: 5px 0;
                         border-left: 3px solid {cor};">
@@ -1156,7 +1214,7 @@ def comparar_atletas(df, atleta1, atleta2, variaveis, t):
         st.markdown(f"### {atleta2}")
         for var in variaveis:
             delta = ((dados2[var] - dados1[var]) / dados1[var]) * 100 if dados1[var] != 0 else 0
-            cor = "#10b981" if delta > 0 else "#ef4444"
+            cor = COR_SUCESSO if delta > 0 else COR_ALERTA
             st.markdown(f"""
             <div style="background: #1e293b; padding: 10px; border-radius: 8px; margin: 5px 0;
                         border-left: 3px solid {cor};">
@@ -1261,8 +1319,8 @@ def criar_timeline_multipla(df, variavel, periodos, t):
                 y=df_periodo[variavel],
                 mode='lines+markers',
                 name=f'Período {periodo}',
-                line=dict(color='#3b82f6', width=2),
-                marker=dict(size=6, color='#3b82f6'),
+                line=dict(color=COR_PRIMARIA, width=2),
+                marker=dict(size=6, color=COR_PRIMARIA),
                 showlegend=False
             ),
             row=i, col=1
@@ -1271,7 +1329,7 @@ def criar_timeline_multipla(df, variavel, periodos, t):
         fig.add_hline(
             y=limiar_80,
             line_dash="dash",
-            line_color="#ef4444",
+            line_color=COR_ALERTA,
             line_width=1,
             row=i, col=1
         )
@@ -1280,7 +1338,7 @@ def criar_timeline_multipla(df, variavel, periodos, t):
         fig.add_hline(
             y=media_periodo,
             line_dash="dot",
-            line_color="#10b981",
+            line_color=COR_SUCESSO,
             line_width=1,
             row=i, col=1
         )
@@ -1305,7 +1363,7 @@ def criar_timeline_multipla(df, variavel, periodos, t):
         plot_bgcolor='rgba(30,41,59,0.8)',
         paper_bgcolor='rgba(0,0,0,0)',
         font=dict(color='white', size=11),
-        title_font=dict(color='#3b82f6', size=18),
+        title_font=dict(color=COR_PRIMARIA, size=18),
         height=300 * n_periodos,
         showlegend=False
     )
@@ -1342,7 +1400,7 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
     
     if periodo_escolhido == 'Todos os períodos':
         periodos_unicos = df_plot['Período'].unique()
-        cores = px.colors.qualitative.Set2
+        cores = [COR_PRIMARIA, COR_SECUNDARIA, COR_SUCESSO, COR_DESTAQUE, COR_ALERTA]
         
         for i, periodo in enumerate(periodos_unicos):
             df_periodo = df_plot[df_plot['Período'] == periodo]
@@ -1369,7 +1427,7 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
         fig.add_hrect(
             y0=limiar_80,
             y1=valor_maximo * 1.05,
-            fillcolor="rgba(239, 68, 68, 0.15)",
+            fillcolor=f"rgba(213, 94, 0, 0.15)",
             line_width=0,
             layer="below",
             name="Acima do limiar"
@@ -1378,7 +1436,7 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
         fig.add_hrect(
             y0=0,
             y1=limiar_80,
-            fillcolor="rgba(59, 130, 246, 0.1)",
+            fillcolor=f"rgba(0, 114, 178, 0.1)",
             line_width=0,
             layer="below",
             name="Abaixo do limiar"
@@ -1387,7 +1445,7 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
         fig.add_hline(
             y=limiar_80,
             line_dash="solid",
-            line_color="#ef4444",
+            line_color=COR_ALERTA,
             line_width=2,
             annotation_text=f"🔴 Limiar 80%: {limiar_80:.2f}",
             annotation_position="top left"
@@ -1404,7 +1462,7 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
         fig.add_hrect(
             y0=media-desvio,
             y1=media+desvio,
-            fillcolor="#3b82f6",
+            fillcolor=COR_PRIMARIA,
             opacity=0.1,
             line_width=0,
             annotation_text="±1 DP"
@@ -1415,8 +1473,8 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
             y=df_plot[variavel],
             mode='lines+markers',
             name=variavel,
-            line=dict(color='#3b82f6', width=2),
-            marker=dict(size=8, color='#3b82f6', line=dict(color='white', width=1)),
+            line=dict(color=COR_PRIMARIA, width=2),
+            marker=dict(size=8, color=COR_PRIMARIA, line=dict(color='white', width=1)),
             hovertemplate='<b>Minuto:</b> %{x}<br>' +
                           '<b>Valor:</b> %{y:.2f}<extra></extra>'
         ))
@@ -1427,7 +1485,7 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
             y=media_movevel,
             mode='lines',
             name='Média Móvel (5)',
-            line=dict(color='#f59e0b', width=2, dash='dot')
+            line=dict(color=COR_SECUNDARIA, width=2, dash='dot')
         ))
     
     fig.update_layout(
@@ -1437,7 +1495,7 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
         plot_bgcolor='rgba(30,41,59,0.8)',
         paper_bgcolor='rgba(0,0,0,0)',
         font=dict(color='white', size=12),
-        title_font=dict(color='#3b82f6', size=18),
+        title_font=dict(color=COR_PRIMARIA, size=18),
         hovermode='closest',
         legend=dict(
             font=dict(color='white'),
@@ -1454,7 +1512,6 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
 def criar_grafico_barras_desvio(df_atleta, df_posicao, df_geral, atleta_nome, posicao, variaveis, titulo="Comparação de Desempenho"):
     """
     Gráfico de barras mostrando o desvio percentual do atleta em relação às médias
-    Visualização extremamente clara e intuitiva
     """
     
     # Calcular valores
@@ -1479,16 +1536,12 @@ def criar_grafico_barras_desvio(df_atleta, df_posicao, df_geral, atleta_nome, po
         row_heights=[0.5, 0.5]
     )
     
-    # ============================================================
-    # GRÁFICO SUPERIOR - Valores absolutos
-    # ============================================================
-    
-    # Barras do atleta
+    # Gráfico superior - Valores absolutos
     fig.add_trace(go.Bar(
         x=variaveis,
         y=valores_atleta,
         name=atleta_nome,
-        marker_color='#3b82f6',
+        marker_color=COR_PRIMARIA,
         marker_line_color='white',
         marker_line_width=1,
         opacity=0.9,
@@ -1500,40 +1553,33 @@ def criar_grafico_barras_desvio(df_atleta, df_posicao, df_geral, atleta_nome, po
                       '<extra></extra>'
     ), row=1, col=1)
     
-    # Linha para média da posição
     fig.add_trace(go.Scatter(
         x=variaveis,
         y=valores_posicao,
         name=f'Média {posicao}',
         mode='lines+markers',
-        line=dict(color='#f59e0b', width=3, dash='dash'),
-        marker=dict(size=10, color='#f59e0b', symbol='diamond'),
+        line=dict(color=COR_SECUNDARIA, width=3, dash='dash'),
+        marker=dict(size=10, color=COR_SECUNDARIA, symbol='diamond'),
         hovertemplate='<b>%{x}</b><br>' +
                       f'Média {posicao}: %{{y:.2f}}<br>' +
                       '<extra></extra>'
     ), row=1, col=1)
     
-    # Linha para média geral
     fig.add_trace(go.Scatter(
         x=variaveis,
         y=valores_geral,
         name='Média Geral',
         mode='lines+markers',
-        line=dict(color='#94a3b8', width=3, dash='dot'),
-        marker=dict(size=10, color='#94a3b8', symbol='circle'),
+        line=dict(color=COLORS['gray'], width=3, dash='dot'),
+        marker=dict(size=10, color=COLORS['gray'], symbol='circle'),
         hovertemplate='<b>%{x}</b><br>' +
                       'Média Geral: %{y:.2f}<br>' +
                       '<extra></extra>'
     ), row=1, col=1)
     
-    # ============================================================
-    # GRÁFICO INFERIOR - Desvios percentuais
-    # ============================================================
+    # Gráfico inferior - Desvios percentuais
+    cores_desvio = [COR_SUCESSO if d > 0 else COR_ALERTA if d < 0 else COLORS['gray'] for d in desvios_vs_posicao]
     
-    # Cores baseadas no sinal do desvio (verde positivo, vermelho negativo)
-    cores_desvio = ['#10b981' if d > 0 else '#ef4444' if d < 0 else '#94a3b8' for d in desvios_vs_posicao]
-    
-    # Barras de desvio vs posição
     fig.add_trace(go.Bar(
         x=variaveis,
         y=desvios_vs_posicao,
@@ -1550,7 +1596,6 @@ def criar_grafico_barras_desvio(df_atleta, df_posicao, df_geral, atleta_nome, po
                       '<extra></extra>'
     ), row=2, col=1)
     
-    # Adicionar pontos para desvio vs geral (como scatter)
     fig.add_trace(go.Scatter(
         x=variaveis,
         y=desvios_vs_geral,
@@ -1558,7 +1603,7 @@ def criar_grafico_barras_desvio(df_atleta, df_posicao, df_geral, atleta_nome, po
         mode='markers',
         marker=dict(
             size=12,
-            color='#8b5cf6',
+            color=COR_DESTAQUE,
             symbol='star',
             line=dict(color='white', width=1)
         ),
@@ -1570,12 +1615,7 @@ def criar_grafico_barras_desvio(df_atleta, df_posicao, df_geral, atleta_nome, po
                       '<extra></extra>'
     ), row=2, col=1)
     
-    # Linha de referência zero
-    fig.add_hline(y=0, line_dash="solid", line_color="#94a3b8", line_width=1, opacity=0.5, row=2, col=1)
-    
-    # ============================================================
-    # CONFIGURAÇÃO DO LAYOUT
-    # ============================================================
+    fig.add_hline(y=0, line_dash="solid", line_color=COLORS['gray'], line_width=1, opacity=0.5, row=2, col=1)
     
     fig.update_layout(
         title=dict(
@@ -1592,7 +1632,7 @@ def criar_grafico_barras_desvio(df_atleta, df_posicao, df_geral, atleta_nome, po
         legend=dict(
             font=dict(color='white', size=11),
             bgcolor='rgba(30,41,59,0.9)',
-            bordercolor='#3b82f6',
+            bordercolor=COR_PRIMARIA,
             borderwidth=1,
             orientation='h',
             yanchor='bottom',
@@ -1606,7 +1646,6 @@ def criar_grafico_barras_desvio(df_atleta, df_posicao, df_geral, atleta_nome, po
         margin=dict(l=80, r=80, t=100, b=80)
     )
     
-    # Configurar eixos do gráfico superior
     fig.update_xaxes(
         gridcolor='#334155', 
         tickfont=dict(color='white', size=11),
@@ -1614,6 +1653,14 @@ def criar_grafico_barras_desvio(df_atleta, df_posicao, df_geral, atleta_nome, po
         showline=True,
         linecolor='#334155',
         row=1, col=1
+    )
+    fig.update_xaxes(
+        gridcolor='#334155', 
+        tickfont=dict(color='white', size=11),
+        title_font=dict(color='white'),
+        showline=True,
+        linecolor='#334155',
+        row=2, col=1
     )
     
     fig.update_yaxes(
@@ -1624,16 +1671,6 @@ def criar_grafico_barras_desvio(df_atleta, df_posicao, df_geral, atleta_nome, po
         showline=True,
         linecolor='#334155',
         row=1, col=1
-    )
-    
-    # Configurar eixos do gráfico inferior
-    fig.update_xaxes(
-        gridcolor='#334155', 
-        tickfont=dict(color='white', size=11),
-        title_font=dict(color='white'),
-        showline=True,
-        linecolor='#334155',
-        row=2, col=1
     )
     
     fig.update_yaxes(
@@ -1650,6 +1687,7 @@ def criar_grafico_barras_desvio(df_atleta, df_posicao, df_geral, atleta_nome, po
     )
     
     return fig, valores_atleta, valores_posicao, valores_geral
+
 def criar_tabela_comparativa(atleta_nome, posicao, variaveis, valores_atleta, valores_posicao, valores_geral):
     """
     Cria uma tabela comparativa com diferenças percentuais
@@ -1661,13 +1699,10 @@ def criar_tabela_comparativa(atleta_nome, posicao, variaveis, valores_atleta, va
         val_posicao = valores_posicao[i]
         val_geral = valores_geral[i]
         
-        # Calcular diferenças percentuais
         diff_vs_posicao = ((val_atleta - val_posicao) / val_posicao) * 100 if val_posicao != 0 else 0
         diff_vs_geral = ((val_atleta - val_geral) / val_geral) * 100 if val_geral != 0 else 0
         
-        # Determinar ícones e cores
         icone_pos = '▲' if diff_vs_posicao > 0 else '▼' if diff_vs_posicao < 0 else '◆'
-        
         icone_geral = '▲' if diff_vs_geral > 0 else '▼' if diff_vs_geral < 0 else '◆'
         
         dados.append({
@@ -1685,12 +1720,10 @@ def criar_card_resumo(atleta_nome, posicao, dados_comparativos):
     """
     Cria cards de resumo com os destaques do atleta
     """
-    # Encontrar maiores diferenças
     maiores_vantagens = []
     maiores_desvantagens = []
     
     for item in dados_comparativos:
-        # Extrair valor percentual da string
         valor_str = item['🎯 vs Posição']
         if '▲' in valor_str:
             pct = float(valor_str.replace('▲', '').replace('%', '').strip())
@@ -1699,11 +1732,186 @@ def criar_card_resumo(atleta_nome, posicao, dados_comparativos):
             pct = float(valor_str.replace('▼', '').replace('%', '').strip())
             maiores_desvantagens.append((item['📊 Métrica'], pct))
     
-    # Ordenar
     maiores_vantagens.sort(key=lambda x: x[1], reverse=True)
     maiores_desvantagens.sort(key=lambda x: x[1], reverse=True)
     
     return maiores_vantagens[:3], maiores_desvantagens[:3]
+
+# ============================================================================
+# FUNÇÕES PARA MAGNITUDE-BASED INFERENCE (MBI)
+# ============================================================================
+
+def calcular_mbi(valor_atleta, media_grupo, desvio_grupo, n_grupo=30, small_effect=0.2):
+    """
+    Implementa Magnitude-Based Inference segundo Hopkins & Batterham (2006)
+    """
+    from scipy import stats
+    import numpy as np
+    
+    diferenca = valor_atleta - media_grupo
+    cohen_d = diferenca / desvio_grupo if desvio_grupo != 0 else 0
+    
+    limiar_pequeno = small_effect * desvio_grupo
+    limiar_moderado = 0.6 * desvio_grupo
+    limiar_grande = 1.2 * desvio_grupo
+    
+    if abs(cohen_d) < 0.2:
+        magnitude = "trivial"
+    elif abs(cohen_d) < 0.6:
+        magnitude = "pequena"
+    elif abs(cohen_d) < 1.2:
+        magnitude = "moderada"
+    else:
+        magnitude = "grande"
+    
+    erro_padrao = desvio_grupo / np.sqrt(n_grupo) if n_grupo > 0 else 0
+    ic_inf = diferenca - 1.645 * erro_padrao
+    ic_sup = diferenca + 1.645 * erro_padrao
+    
+    if ic_inf > limiar_pequeno:
+        inferencia = "Muito provavelmente benéfico"
+        cor = COR_SUCESSO
+        prob = 0.95
+        icone = "✅"
+    elif ic_sup < -limiar_pequeno:
+        inferencia = "Muito provavelmente prejudicial"
+        cor = COR_ALERTA
+        prob = 0.95
+        icone = "❌"
+    elif ic_inf > -limiar_pequeno and ic_sup < limiar_pequeno:
+        inferencia = "Quase certamente trivial"
+        cor = COLORS['gray']
+        prob = 0.90
+        icone = "➖"
+    elif ic_inf > -limiar_pequeno and ic_sup > limiar_pequeno and ic_inf < limiar_pequeno:
+        if abs(cohen_d) < 0.2:
+            inferencia = "Pouco claro (possivelmente trivial/benéfico)"
+        else:
+            inferencia = "Possivelmente benéfico"
+        cor = COR_SECUNDARIA
+        prob = 0.75
+        icone = "⚠️"
+    elif ic_inf < -limiar_pequeno and ic_sup < -limiar_pequeno and ic_sup > -limiar_pequeno:
+        inferencia = "Possivelmente prejudicial"
+        cor = COR_SECUNDARIA
+        prob = 0.75
+        icone = "⚠️"
+    else:
+        inferencia = "Não claro (necessário mais dados)"
+        cor = COR_PRIMARIA
+        prob = 0.50
+        icone = "❓"
+    
+    return {
+        'inferencia': inferencia,
+        'cor': cor,
+        'cohen_d': cohen_d,
+        'ic_90': (ic_inf, ic_sup),
+        'probabilidade': prob,
+        'magnitude': magnitude,
+        'icone': icone
+    }
+
+def criar_card_mbi(resultado, atleta_nome, var_nome):
+    """Card estilizado para apresentar resultados MBI"""
+    
+    st.markdown(f"""
+    <div style="background: rgba(30, 41, 59, 0.8); border-radius: 12px; padding: 20px; 
+                border-left: 8px solid {resultado['cor']}; margin: 15px 0;
+                backdrop-filter: blur(10px);">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h4 style="color: white; margin: 0;">{var_nome}</h4>
+                <p style="color: white; font-size: 1.2rem; margin: 5px 0;">
+                    <strong>{resultado['inferencia']}</strong>
+                </p>
+                <p style="color: #94a3b8; margin: 5px 0;">
+                    Cohen's d = {resultado['cohen_d']:.2f} 
+                    <span style="background: {resultado['cor']}; color: white; padding: 2px 8px; border-radius: 12px; margin-left: 10px;">
+                        {resultado['magnitude']}
+                    </span>
+                </p>
+                <p style="color: #94a3b8; font-size: 0.9rem; margin: 5px 0;">
+                    IC 90%: [{resultado['ic_90'][0]:.2f}, {resultado['ic_90'][1]:.2f}]
+                </p>
+            </div>
+            <div style="text-align: center;">
+                <div style="font-size: 2.5rem;">{resultado['icone']}</div>
+                <p style="color: white; margin: 0;">{resultado['probabilidade']*100:.0f}%</p>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+def criar_heatmap_magnitude(df, posicao_referencia=None):
+    """
+    Heatmap mostrando magnitudes dos atletas vs referência
+    """
+    metricas = df.select_dtypes(include=[np.number]).columns.tolist()
+    metricas = [m for m in metricas if m not in ['Minuto']]
+    
+    if len(metricas) > 10:
+        metricas = metricas[:10]
+    
+    dados_heatmap = []
+    for atleta in df['Nome'].unique():
+        df_atleta = df[df['Nome'] == atleta]
+        linha = {'Atleta': atleta}
+        
+        for metrica in metricas:
+            if metrica in df.columns:
+                valor = df_atleta[metrica].mean()
+                media_grupo = df[metrica].mean()
+                desvio_grupo = df[metrica].std()
+                
+                z_score = (valor - media_grupo) / desvio_grupo if desvio_grupo != 0 else 0
+                linha[metrica] = z_score
+        
+        dados_heatmap.append(linha)
+    
+    df_heat = pd.DataFrame(dados_heatmap).set_index('Atleta')
+    
+    # Escala de cores acessível para daltônicos
+    colorscale = [
+        [0, 'rgb(0, 114, 178)'],      # Azul escuro
+        [0.25, 'rgb(86, 180, 233)'],   # Azul claro
+        [0.5, 'rgb(255, 255, 255)'],   # Branco
+        [0.75, 'rgb(230, 159, 0)'],    # Laranja
+        [1, 'rgb(213, 94, 0)']         # Vermelho alaranjado
+    ]
+    
+    fig = px.imshow(
+        df_heat.T,
+        text_auto='.2f',
+        aspect="auto",
+        color_continuous_scale=colorscale,
+        title=f"Perfil de Magnitudes (Z-Scores) - {'Todas Posições' if not posicao_referencia else posicao_referencia}",
+        labels=dict(x="Atleta", y="Métrica", color="Z-Score")
+    )
+    
+    fig.update_layout(
+        plot_bgcolor='rgba(30,41,59,0.8)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='white', family="Arial"),
+        title_font=dict(color=COR_PRIMARIA, size=18),
+        height=500,
+        width=900,
+        xaxis=dict(tickangle=-45, tickfont=dict(color='white', size=10)),
+        yaxis=dict(tickfont=dict(color='white', size=10)),
+        coloraxis_colorbar=dict(
+            title="Magnitude",
+            tickvals=[-2, -1, 0, 1, 2],
+            ticktext=['Muito Baixo (-2σ)', 'Baixo (-1σ)', 'Média (0σ)', 'Alto (+1σ)', 'Muito Alto (+2σ)'],
+            title_font=dict(color='white', size=11),
+            tickfont=dict(color='white', size=10)
+        )
+    )
+    
+    fig.update_traces(textfont=dict(size=9, color='black'))
+    fig.update_xaxes(gridcolor='#334155')
+    fig.update_yaxes(gridcolor='#334155')
+    
+    return fig
 
 # ============================================================================
 # CALLBACKS
@@ -2057,17 +2265,17 @@ if st.session_state.df_completo is not None:
         
         if n_colunas == 1:
             executive_card(t['mean'], f"{media_global:.2f}", 5.2, "📊")
-            executive_card("Melhor Posição", melhor_posicao, 8.1, "🏆", "#10b981")
-            executive_card("Pior Posição", pior_posicao, -3.4, "📉", "#ef4444")
+            executive_card("Melhor Posição", melhor_posicao, 8.1, "🏆", COR_SUCESSO)
+            executive_card("Pior Posição", pior_posicao, -3.4, "📉", COR_ALERTA)
             executive_card(t['observations'], len(df_filtrado), 0, "👥")
         else:
             cols_exec = st.columns(4)
             with cols_exec[0]:
                 executive_card(t['mean'], f"{media_global:.2f}", 5.2, "📊")
             with cols_exec[1]:
-                executive_card("Melhor Posição", melhor_posicao, 8.1, "🏆", "#10b981")
+                executive_card("Melhor Posição", melhor_posicao, 8.1, "🏆", COR_SUCESSO)
             with cols_exec[2]:
-                executive_card("Pior Posição", pior_posicao, -3.4, "📉", "#ef4444")
+                executive_card("Pior Posição", pior_posicao, -3.4, "📉", COR_ALERTA)
             with cols_exec[3]:
                 executive_card(t['observations'], len(df_filtrado), 0, "👥")
         
@@ -2084,6 +2292,7 @@ if st.session_state.df_completo is not None:
             t['tab_correlation'],
             t['tab_kmeans'],
             t['tab_comparador'],
+            t['tab_mbi'],  # NOVA ABA MBI
             t['tab_executive']
         ]
         
@@ -2102,7 +2311,7 @@ if st.session_state.df_completo is not None:
                     x=dados_hist,
                     nbinsx=n_classes,
                     name='Frequência',
-                    marker_color='#3b82f6',
+                    marker_color=COR_PRIMARIA,
                     opacity=0.8
                 ))
                 
@@ -2110,7 +2319,7 @@ if st.session_state.df_completo is not None:
                 fig_hist.add_vline(
                     x=media_hist,
                     line_dash="dash",
-                    line_color="#ef4444",
+                    line_color=COR_ALERTA,
                     line_width=2,
                     annotation_text=f"{t['mean']}: {media_hist:.2f}",
                     annotation_position="top",
@@ -2121,7 +2330,7 @@ if st.session_state.df_completo is not None:
                 fig_hist.add_vline(
                     x=mediana_hist,
                     line_dash="dot",
-                    line_color="#f59e0b",
+                    line_color=COR_SECUNDARIA,
                     line_width=2,
                     annotation_text=f"{t['median']}: {mediana_hist:.2f}",
                     annotation_position="bottom",
@@ -2133,7 +2342,7 @@ if st.session_state.df_completo is not None:
                     plot_bgcolor='rgba(30, 41, 59, 0.8)',
                     paper_bgcolor='rgba(0,0,0,0)',
                     font=dict(color='white', size=11),
-                    title_font=dict(color='#3b82f6', size=16),
+                    title_font=dict(color=COR_PRIMARIA, size=16),
                     xaxis_title=variavel_analise,
                     yaxis_title="Frequência",
                     showlegend=False,
@@ -2163,7 +2372,7 @@ if st.session_state.df_completo is not None:
                     y=quantis_observados,
                     mode='markers',
                     name='Dados',
-                    marker=dict(color='#3b82f6', size=8, opacity=0.7)
+                    marker=dict(color=COR_PRIMARIA, size=8, opacity=0.7)
                 ))
                 
                 fig_qq.add_trace(go.Scatter(
@@ -2171,7 +2380,7 @@ if st.session_state.df_completo is not None:
                     y=linha_ref(quantis_teoricos),
                     mode='lines',
                     name=f'Referência (R² = {r2:.3f})',
-                    line=dict(color='#ef4444', width=2)
+                    line=dict(color=COR_ALERTA, width=2)
                 ))
                 
                 fig_qq.update_layout(
@@ -2179,7 +2388,7 @@ if st.session_state.df_completo is not None:
                     plot_bgcolor='rgba(30, 41, 59, 0.8)',
                     paper_bgcolor='rgba(0,0,0,0)',
                     font=dict(color='white', size=11),
-                    title_font=dict(color='#3b82f6', size=16),
+                    title_font=dict(color=COR_PRIMARIA, size=16),
                     xaxis_title="Quantis Teóricos",
                     yaxis_title="Quantis Observados"
                 )
@@ -2238,13 +2447,13 @@ if st.session_state.df_completo is not None:
             
             cols_t = st.columns(5)
             with cols_t[0]:
-                time_metric_card(t['max_value'], f"{valor_maximo:.2f}", f"{t['minute_of_max']}: {minuto_maximo}", "#ef4444")
+                time_metric_card(t['max_value'], f"{valor_maximo:.2f}", f"{t['minute_of_max']}: {minuto_maximo}", COR_ALERTA)
             with cols_t[1]:
-                time_metric_card(t['min_value'], f"{valor_minimo:.2f}", f"{t['minute_of_min']}: {minuto_minimo}", "#10b981")
+                time_metric_card(t['min_value'], f"{valor_minimo:.2f}", f"{t['minute_of_min']}: {minuto_minimo}", COR_SUCESSO)
             with cols_t[2]:
-                time_metric_card(t['mean'], f"{media_tempo:.2f}", t['mean'], "#3b82f6")
+                time_metric_card(t['mean'], f"{media_tempo:.2f}", t['mean'], COR_PRIMARIA)
             with cols_t[3]:
-                time_metric_card(t['threshold_80'], f"{limiar_80:.2f}", f"80% do máx ({valor_maximo:.2f})", "#f59e0b")
+                time_metric_card(t['threshold_80'], f"{limiar_80:.2f}", f"80% do máx ({valor_maximo:.2f})", COR_SECUNDARIA)
             with cols_t[4]:
                 warning_card(t['critical_events'], f"{eventos_acima_80}", f"{percentual_acima_80:.1f}% {t['above_threshold']}", "⚠️")
             
@@ -2265,7 +2474,7 @@ if st.session_state.df_completo is not None:
             zonas = criar_zonas_intensidade(df_filtrado, variavel_analise, st.session_state.metodo_zona)
             
             if zonas:
-                cores_zonas = ['#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#10b981']
+                cores_zonas = [COR_PRIMARIA, COR_DESTAQUE, COR_SECUNDARIA, COR_ALERTA, COR_SUCESSO]
                 st.markdown("##### Limiares das Zonas:")
                 cols_zone = st.columns(5)
                 for i, (zona, limite) in enumerate(zonas.items()):
@@ -2439,8 +2648,8 @@ if st.session_state.df_completo is not None:
                     x=['IC 95%'],
                     y=[media],
                     mode='markers',
-                    marker=dict(color='#3b82f6', size=20),
-                    error_y=dict(type='constant', value=(ic_sup - media), color='#ef4444', thickness=3, width=15),
+                    marker=dict(color=COR_PRIMARIA, size=20),
+                    error_y=dict(type='constant', value=(ic_sup - media), color=COR_ALERTA, thickness=3, width=15),
                     name=t['mean']
                 ))
                 
@@ -2449,7 +2658,7 @@ if st.session_state.df_completo is not None:
                     plot_bgcolor='rgba(30, 41, 59, 0.8)',
                     paper_bgcolor='rgba(0,0,0,0)',
                     font=dict(color='white', size=11),
-                    title_font=dict(color='#3b82f6', size=14),
+                    title_font=dict(color=COR_PRIMARIA, size=14),
                     showlegend=False,
                     yaxis_title=variavel_analise
                 )
@@ -2457,36 +2666,6 @@ if st.session_state.df_completo is not None:
                 fig_ic.update_yaxes(gridcolor='#334155', tickfont=dict(color='white'))
                 
                 st.plotly_chart(fig_ic, use_container_width=True)
-            
-            st.markdown("---")
-            st.markdown(f"<h4>{t['normality_test']}</h4>", unsafe_allow_html=True)
-            
-            dados_teste = df_filtrado[variavel_analise].dropna()
-            n_teste = len(dados_teste)
-            
-            if n_teste < 3:
-                st.error("❌ " + ("Amostra muito pequena (n < 3)" if st.session_state.idioma == 'pt' else 
-                                "Sample too small (n < 3)" if st.session_state.idioma == 'en' else
-                                "Muestra muy pequeña (n < 3)"))
-            elif n_teste > 5000:
-                st.info("ℹ️ " + ("Amostra grande demais. Usando D'Agostino-Pearson." if st.session_state.idioma == 'pt' else
-                                "Sample too large. Using D'Agostino-Pearson." if st.session_state.idioma == 'en' else
-                                "Muestra demasiado grande. Usando D'Agostino-Pearson."))
-                try:
-                    k2, p = stats.normaltest(dados_teste)
-                    interpretar_teste(p, "D'Agostino-Pearson", t)
-                except:
-                    st.warning("⚠️ " + ("Teste alternativo não disponível" if st.session_state.idioma == 'pt' else
-                                      "Alternative test not available" if st.session_state.idioma == 'en' else
-                                      "Prueba alternativa no disponible"))
-            else:
-                try:
-                    shapiro = stats.shapiro(dados_teste)
-                    interpretar_teste(shapiro.pvalue, "Shapiro-Wilk", t)
-                except:
-                    st.error("❌ " + ("Erro no teste" if st.session_state.idioma == 'pt' else
-                                    "Test error" if st.session_state.idioma == 'en' else
-                                    "Error en la prueba"))
             
             st.markdown("---")
             st.markdown(f"<h4>{t['summary_by_group']}</h4>", unsafe_allow_html=True)
@@ -2556,9 +2735,9 @@ if st.session_state.df_completo is not None:
                         y=dados_pos,
                         name=posicao,
                         boxmean='sd',
-                        marker_color='#3b82f6',
+                        marker_color=COR_PRIMARIA,
                         line_color='white',
-                        fillcolor='rgba(59, 130, 246, 0.7)',
+                        fillcolor=f'rgba(0, 114, 178, 0.7)',
                         jitter=0.3,
                         pointpos=-1.8,
                         opacity=0.8
@@ -2569,7 +2748,7 @@ if st.session_state.df_completo is not None:
                 plot_bgcolor='rgba(30, 41, 59, 0.8)',
                 paper_bgcolor='rgba(0,0,0,0)',
                 font=dict(color='white', size=11),
-                title_font=dict(color='#3b82f6', size=16),
+                title_font=dict(color=COR_PRIMARIA, size=16),
                 yaxis_title=variavel_analise,
                 showlegend=False
             )
@@ -2587,9 +2766,9 @@ if st.session_state.df_completo is not None:
                         y=dados_atl,
                         name=atleta[:20] + "..." if len(atleta) > 20 else atleta,
                         boxmean='sd',
-                        marker_color='#8b5cf6',
+                        marker_color=COR_DESTAQUE,
                         line_color='white',
-                        fillcolor='rgba(139, 92, 246, 0.7)',
+                        fillcolor=f'rgba(204, 121, 167, 0.7)',
                         jitter=0.3,
                         pointpos=-1.8,
                         opacity=0.8
@@ -2602,7 +2781,7 @@ if st.session_state.df_completo is not None:
                 plot_bgcolor='rgba(30, 41, 59, 0.8)',
                 paper_bgcolor='rgba(0,0,0,0)',
                 font=dict(color='white', size=11),
-                title_font=dict(color='#3b82f6', size=16),
+                title_font=dict(color=COR_PRIMARIA, size=16),
                 yaxis_title=variavel_analise,
                 showlegend=False,
                 height=altura_boxplot
@@ -2614,7 +2793,7 @@ if st.session_state.df_completo is not None:
             with st.expander(f"📊 {t['descriptive_stats']} {t['athlete'].lower()}"):
                 st.markdown(f"""
                 <div style="background: rgba(30, 41, 59, 0.8); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
-                    <h5 style="color: #3b82f6;">{t['iqr_title']}</h5>
+                    <h5 style="color: {COR_PRIMARIA};">{t['iqr_title']}</h5>
                     <p style="color: #94a3b8;">{t['iqr_explanation']}</p>
                 </div>
                 """, unsafe_allow_html=True)
@@ -2687,14 +2866,13 @@ if st.session_state.df_completo is not None:
                 if len(vars_corr) >= 2:
                     df_corr = df_filtrado[vars_corr].corr()
                     
+                    # Escala de cores acessível para daltônicos
                     colorscale = [
-                        [0, 'rgba(0, 0, 139, 0.7)'],
-                        [0.25, 'rgba(65, 105, 225, 0.7)'],
-                        [0.45, 'rgba(220, 220, 220, 0.5)'],
-                        [0.5, 'rgba(211, 211, 211, 0.3)'],
-                        [0.55, 'rgba(220, 220, 220, 0.5)'],
-                        [0.75, 'rgba(255, 99, 71, 0.7)'],
-                        [1, 'rgba(139, 0, 0, 0.7)']
+                        [0, 'rgba(0, 114, 178, 0.9)'],      # Azul escuro
+                        [0.25, 'rgba(86, 180, 233, 0.9)'],   # Azul claro
+                        [0.5, 'rgba(255, 255, 255, 0.9)'],   # Branco
+                        [0.75, 'rgba(230, 159, 0, 0.9)'],    # Laranja
+                        [1, 'rgba(213, 94, 0, 0.9)']         # Vermelho alaranjado
                     ]
                     
                     df_corr_display = df_corr.copy()
@@ -2736,7 +2914,7 @@ if st.session_state.df_completo is not None:
                         plot_bgcolor='rgba(30, 41, 59, 0.8)',
                         paper_bgcolor='rgba(0,0,0,0)',
                         font=dict(color='white', size=11),
-                        title_font=dict(color='#3b82f6', size=16),
+                        title_font=dict(color=COR_PRIMARIA, size=16),
                         height=500
                     )
                     fig_corr.update_xaxes(gridcolor='#334155', tickfont=dict(color='white'))
@@ -2750,7 +2928,7 @@ if st.session_state.df_completo is not None:
                             return 'color: #94a3b8;'
                         if val == 1.0:
                             return 'color: #2d3748; font-weight: bold; background-color: #d3d3d3;'
-                        color = '#ef4444' if abs(val) > 0.7 else '#f59e0b' if abs(val) > 0.5 else '#3b82f6'
+                        color = COR_ALERTA if abs(val) > 0.7 else COR_SECUNDARIA if abs(val) > 0.5 else COR_PRIMARIA
                         return f'color: {color}; font-weight: bold;'
                     
                     st.dataframe(
@@ -2769,13 +2947,13 @@ if st.session_state.df_completo is not None:
                             title=f"{vars_corr[0]} vs {vars_corr[1]}",
                             opacity=0.7,
                             trendline="ols",
-                            color_discrete_sequence=px.colors.qualitative.Set2
+                            color_discrete_sequence=[COR_PRIMARIA, COR_SECUNDARIA, COR_SUCESSO, COR_DESTAQUE, COR_ALERTA]
                         )
                         fig_scatter.update_layout(
                             plot_bgcolor='rgba(30, 41, 59, 0.8)',
                             paper_bgcolor='rgba(0,0,0,0)',
                             font=dict(color='white', size=11),
-                            title_font=dict(color='#3b82f6', size=16),
+                            title_font=dict(color=COR_PRIMARIA, size=16),
                             height=500
                         )
                         fig_scatter.update_xaxes(gridcolor='#334155', tickfont=dict(color='white'))
@@ -2810,24 +2988,22 @@ if st.session_state.df_completo is not None:
                         """, unsafe_allow_html=True)
                 else:
                     st.info("ℹ️ " + ("Selecione pelo menos 2 variáveis" if st.session_state.idioma == 'pt' else 
-                                   "Select at least 2 variables" if st.session_state.idioma == 'en' else
-                                   "Seleccione al menos 2 variables"))
+                                   "Select at least 2 variables"))
             else:
                 st.info("ℹ️ " + ("São necessárias pelo menos 2 variáveis" if st.session_state.idioma == 'pt' else 
-                               "At least 2 variables are needed" if st.session_state.idioma == 'en' else
-                               "Se necesitan al menos 2 variables"))
+                               "At least 2 variables are needed"))
         
         with tabs[4]:
             st.markdown(f"<h3>{t['tab_kmeans']}</h3>", unsafe_allow_html=True)
             
             st.session_state.kmeans_ativo = True
             
-            st.markdown("""
+            st.markdown(f"""
             <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); 
                         padding: 15px; border-radius: 12px; margin-bottom: 20px;
-                        border-left: 4px solid #8b5cf6;">
+                        border-left: 4px solid {COR_DESTAQUE};">
                 <p style="color: #94a3b8; margin: 0;">
-                    <span style="color: #8b5cf6;">🎯 Segmentação de Atletas:</span> 
+                    <span style="color: {COR_DESTAQUE};">🎯 Segmentação de Atletas:</span> 
                     Selecione as variáveis e clique em PROCESSAR para gerar os clusters.
                 </p>
             </div>
@@ -2945,7 +3121,7 @@ if st.session_state.df_completo is not None:
                     n_clusters = resultados['n_clusters']
                     
                     fig_kmeans = go.Figure()
-                    cores = px.colors.qualitative.Set1
+                    cores = [COR_PRIMARIA, COR_SECUNDARIA, COR_SUCESSO, COR_DESTAQUE, COR_ALERTA, COLORS['yellow']]
                     
                     for i in range(n_clusters):
                         dados_i = df_cluster[df_cluster['Cluster'] == i]
@@ -2990,7 +3166,7 @@ if st.session_state.df_completo is not None:
                         plot_bgcolor='rgba(30,41,59,0.8)',
                         paper_bgcolor='rgba(0,0,0,0)',
                         font=dict(color='white', size=12),
-                        title_font=dict(color='#8b5cf6', size=20),
+                        title_font=dict(color=COR_DESTAQUE, size=20),
                         height=600,
                         hovermode='closest',
                         legend=dict(
@@ -3056,26 +3232,22 @@ if st.session_state.df_completo is not None:
             else:
                 st.info("ℹ️ São necessárias pelo menos 2 variáveis para análise de clusters")
         
-        with tabs[5]:  # COMPARADOR DE ATLETAS (SUNBURST)
+        with tabs[5]:
             st.markdown(f"<h3>{t['tab_comparador']}</h3>", unsafe_allow_html=True)
             
-            st.markdown("""
+            st.markdown(f"""
             <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); 
                         padding: 20px; border-radius: 16px; margin-bottom: 25px;
-                        border-left: 4px solid #8b5cf6;">
+                        border-left: 4px solid {COR_DESTAQUE};">
                 <p style="color: #94a3b8; margin: 0;">
-                    <span style="color: #8b5cf6; font-size: 1.2rem;">🆚 Comparação Individual</span><br>
+                    <span style="color: {COR_DESTAQUE}; font-size: 1.2rem;">🆚 Comparação Individual</span><br>
                     Compare o desempenho de um atleta com a média da sua posição e a média geral de todos os atletas.
                 </p>
             </div>
             """, unsafe_allow_html=True)
             
-            # Verificar se há dados suficientes
             if len(st.session_state.variaveis_quantitativas) >= 3 and len(atletas_selecionados) >= 1:
                 
-                # ============================================================
-                # SELEÇÕES
-                # ============================================================
                 col_s1, col_s2, col_s3 = st.columns([2, 2, 1])
                 
                 with col_s1:
@@ -3085,14 +3257,12 @@ if st.session_state.df_completo is not None:
                         key="comp_atleta"
                     )
                 
-                # Obter posição do atleta selecionado
                 if not df_filtrado[df_filtrado['Nome'] == atleta_comp].empty:
                     posicao_atleta = df_filtrado[df_filtrado['Nome'] == atleta_comp]['Posição'].iloc[0]
                 else:
                     posicao_atleta = None
                 
                 with col_s2:
-                    # Mostrar posição do atleta
                     st.markdown(f"""
                     <div style="background: rgba(30, 41, 59, 0.8); padding: 10px; border-radius: 8px; margin-top: 25px;">
                         <p style="color: #94a3b8; margin: 0;">Posição do Atleta</p>
@@ -3109,7 +3279,6 @@ if st.session_state.df_completo is not None:
                         key="comp_processar"
                     )
                 
-                # Seleção de variáveis para comparar
                 vars_comp = st.multiselect(
                     "Selecione as variáveis para comparação (mínimo 3, máximo 8)",
                     options=st.session_state.variaveis_quantitativas,
@@ -3122,27 +3291,20 @@ if st.session_state.df_completo is not None:
                     with st.spinner('🔄 Gerando comparação...'):
                         time.sleep(0.5)
                         
-                        # Filtrar dados
                         df_atleta = df_filtrado[df_filtrado['Nome'] == atleta_comp].copy()
                         df_posicao = df_filtrado[df_filtrado['Posição'] == posicao_atleta].copy()
                         df_geral = df_filtrado.copy()
                         
                         if not df_atleta.empty and not df_posicao.empty:
                             
-                            # ============================================================
-                            # GRÁFICO DE BARRAS RADIAL (SUNBURST)
-                            # ============================================================
                             fig_radar, valores_atleta, valores_posicao, valores_geral = criar_grafico_barras_desvio(
-    df_atleta, df_posicao, df_geral,
-    atleta_comp, posicao_atleta, vars_comp,
-    f"Comparação: {atleta_comp} vs Média da Posição vs Média Geral"
-)
+                                df_atleta, df_posicao, df_geral,
+                                atleta_comp, posicao_atleta, vars_comp,
+                                f"Comparação: {atleta_comp} vs Média da Posição vs Média Geral"
+                            )
                             
                             st.plotly_chart(fig_radar, use_container_width=True)
                             
-                            # ============================================================
-                            # TABELA COMPARATIVA
-                            # ============================================================
                             st.markdown("### 📊 Tabela Comparativa Detalhada")
                             
                             dados_tabela = criar_tabela_comparativa(
@@ -3150,15 +3312,13 @@ if st.session_state.df_completo is not None:
                                 valores_atleta, valores_posicao, valores_geral
                             )
                             
-                            # Criar DataFrame
                             df_comp = pd.DataFrame(dados_tabela)
                             
-                            # Aplicar cores condicionais
                             def color_diff(val):
                                 if '▲' in str(val):
-                                    return 'color: #10b981; font-weight: bold;'
+                                    return f'color: {COR_SUCESSO}; font-weight: bold;'
                                 elif '▼' in str(val):
-                                    return 'color: #ef4444; font-weight: bold;'
+                                    return f'color: {COR_ALERTA}; font-weight: bold;'
                                 return 'color: #94a3b8;'
                             
                             styled_df = df_comp[['📊 Métrica', '🏃 Atleta', '📊 Média Posição', '📈 Média Geral', '🎯 vs Posição', '🌍 vs Geral']].style.applymap(
@@ -3171,9 +3331,6 @@ if st.session_state.df_completo is not None:
                                 hide_index=True
                             )
                             
-                            # ============================================================
-                            # CARDS DE DESTAQUE
-                            # ============================================================
                             st.markdown("### 🏆 Destaques do Atleta")
                             
                             vantagens, desvantagens = criar_card_resumo(atleta_comp, posicao_atleta, dados_tabela)
@@ -3181,10 +3338,10 @@ if st.session_state.df_completo is not None:
                             col_d1, col_d2 = st.columns(2)
                             
                             with col_d1:
-                                st.markdown("""
+                                st.markdown(f"""
                                 <div style="background: rgba(30, 41, 59, 0.8); padding: 20px; 
-                                            border-radius: 16px; border-left: 4px solid #10b981;">
-                                    <h4 style="color: #10b981; margin-top: 0;">✅ Pontos Fortes</h4>
+                                            border-radius: 16px; border-left: 4px solid {COR_SUCESSO};">
+                                    <h4 style="color: {COR_SUCESSO}; margin-top: 0;">✅ Pontos Fortes</h4>
                                 """, unsafe_allow_html=True)
                                 
                                 if vantagens:
@@ -3192,7 +3349,7 @@ if st.session_state.df_completo is not None:
                                         st.markdown(f"""
                                         <div style="display: flex; justify-content: space-between; margin: 10px 0;">
                                             <span style="color: white;">{metrica}</span>
-                                            <span style="color: #10b981; font-weight: bold;">+{pct:.1f}%</span>
+                                            <span style="color: {COR_SUCESSO}; font-weight: bold;">+{pct:.1f}%</span>
                                         </div>
                                         """, unsafe_allow_html=True)
                                 else:
@@ -3201,10 +3358,10 @@ if st.session_state.df_completo is not None:
                                 st.markdown("</div>", unsafe_allow_html=True)
                             
                             with col_d2:
-                                st.markdown("""
+                                st.markdown(f"""
                                 <div style="background: rgba(30, 41, 59, 0.8); padding: 20px; 
-                                            border-radius: 16px; border-left: 4px solid #ef4444;">
-                                    <h4 style="color: #ef4444; margin-top: 0;">⚠️ Pontos a Desenvolver</h4>
+                                            border-radius: 16px; border-left: 4px solid {COR_ALERTA};">
+                                    <h4 style="color: {COR_ALERTA}; margin-top: 0;">⚠️ Pontos a Desenvolver</h4>
                                 """, unsafe_allow_html=True)
                                 
                                 if desvantagens:
@@ -3212,7 +3369,7 @@ if st.session_state.df_completo is not None:
                                         st.markdown(f"""
                                         <div style="display: flex; justify-content: space-between; margin: 10px 0;">
                                             <span style="color: white;">{metrica}</span>
-                                            <span style="color: #ef4444; font-weight: bold;">-{pct:.1f}%</span>
+                                            <span style="color: {COR_ALERTA}; font-weight: bold;">-{pct:.1f}%</span>
                                         </div>
                                         """, unsafe_allow_html=True)
                                 else:
@@ -3220,13 +3377,9 @@ if st.session_state.df_completo is not None:
                                 
                                 st.markdown("</div>", unsafe_allow_html=True)
                             
-                            # ============================================================
-                            # INSIGHTS AUTOMÁTICOS
-                            # ============================================================
                             st.markdown("---")
                             st.markdown("### 💡 Insights Automáticos")
                             
-                            # Calcular performance geral
                             performance_media = 0
                             count = 0
                             for i, v in enumerate(valores_atleta):
@@ -3239,19 +3392,19 @@ if st.session_state.df_completo is not None:
                                 
                                 if performance_media > 10:
                                     status = "EXCELENTE"
-                                    cor = "#10b981"
+                                    cor = COR_SUCESSO
                                     icone = "🏆"
                                 elif performance_media > 0:
                                     status = "ACIMA DA MÉDIA"
-                                    cor = "#3b82f6"
+                                    cor = COR_PRIMARIA
                                     icone = "📈"
                                 elif performance_media > -10:
                                     status = "NA MÉDIA"
-                                    cor = "#94a3b8"
+                                    cor = COLORS['gray']
                                     icone = "📊"
                                 else:
                                     status = "ABAIXO DA MÉDIA"
-                                    cor = "#ef4444"
+                                    cor = COR_ALERTA
                                     icone = "📉"
                                 
                                 st.markdown(f"""
@@ -3287,7 +3440,124 @@ if st.session_state.df_completo is not None:
             else:
                 st.info("ℹ️ São necessários pelo menos 3 atletas e 3 variáveis para comparação")
         
-        with tabs[6]:
+        with tabs[6]:  # NOVA ABA MBI
+            st.markdown(f"<h3>🔬 Análise de Magnitude (MBI)</h3>", unsafe_allow_html=True)
+            
+            st.markdown(f"""
+            <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); 
+                        padding: 20px; border-radius: 16px; margin-bottom: 25px;
+                        border-left: 4px solid {COR_DESTAQUE};">
+                <p style="color: #94a3b8; margin: 0;">
+                    <span style="color: {COR_DESTAQUE}; font-size: 1.2rem;">📊 Magnitude-Based Inference</span><br>
+                    Baseado em Hopkins & Batterham (2006). Inferência sobre a importância clínica/prática das diferenças.
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # HEATMAP DE MAGNITUDES
+            st.markdown("### 🔥 Heatmap de Magnitudes (Z-Scores)")
+            
+            with st.expander("ℹ️ Sobre o Heatmap de Magnitudes"):
+                st.markdown("""
+                <p style="color: #94a3b8;">
+                    O heatmap mostra o perfil de magnitudes de cada atleta em relação à média geral.
+                    Valores positivos (laranja/vermelho) indicam desempenho acima da média, 
+                    negativos (azul) abaixo da média. Esta visualização é acessível para daltônicos.
+                </p>
+                """, unsafe_allow_html=True)
+            
+            # Seletor de posição para filtrar o heatmap
+            posicao_heatmap = st.selectbox(
+                "Filtrar por posição (opcional)",
+                options=["Todas as posições"] + list(posicoes_selecionadas),
+                key="heatmap_posicao"
+            )
+            
+            if posicao_heatmap == "Todas as posições":
+                df_heatmap = df_filtrado
+                pos_ref = None
+            else:
+                df_heatmap = df_filtrado[df_filtrado['Posição'] == posicao_heatmap]
+                pos_ref = posicao_heatmap
+            
+            if len(df_heatmap) > 0:
+                fig_heatmap = criar_heatmap_magnitude(df_heatmap, pos_ref)
+                st.plotly_chart(fig_heatmap, use_container_width=True)
+            
+            st.markdown("---")
+            
+            # ANÁLISE MBI INDIVIDUAL
+            st.markdown("### 📊 Análise Individual por Magnitude")
+            
+            col_m1, col_m2 = st.columns(2)
+            
+            with col_m1:
+                atleta_mbi = st.selectbox(
+                    "Selecione o Atleta para análise MBI",
+                    options=atletas_selecionados,
+                    key="mbi_atleta"
+                )
+            
+            with col_m2:
+                referencia_mbi = st.selectbox(
+                    "Referência de comparação",
+                    options=["Média da Posição", "Média Geral"],
+                    key="mbi_referencia"
+                )
+            
+            df_atleta_mbi = df_filtrado[df_filtrado['Nome'] == atleta_mbi]
+            
+            if len(df_atleta_mbi) > 0:
+                
+                if referencia_mbi == "Média da Posição":
+                    posicao_atleta = df_atleta_mbi['Posição'].iloc[0]
+                    df_ref = df_filtrado[df_filtrado['Posição'] == posicao_atleta]
+                    nome_ref = f"Média {posicao_atleta}"
+                else:
+                    df_ref = df_filtrado
+                    nome_ref = "Média Geral"
+                
+                metricas_mbi = st.multiselect(
+                    "Selecione as métricas para análise MBI",
+                    options=st.session_state.variaveis_quantitativas,
+                    default=st.session_state.variaveis_quantitativas[:3],
+                    key="mbi_metricas"
+                )
+                
+                if metricas_mbi and st.button("🔬 Calcular MBI", key="btn_mbi", use_container_width=True):
+                    
+                    resultados_mbi = []
+                    
+                    for metrica in metricas_mbi:
+                        valor_atleta = df_atleta_mbi[metrica].mean()
+                        valores_ref = df_ref[metrica].dropna()
+                        
+                        if len(valores_ref) > 1:
+                            media_ref = valores_ref.mean()
+                            desvio_ref = valores_ref.std()
+                            n_ref = len(valores_ref)
+                            
+                            resultado = calcular_mbi(valor_atleta, media_ref, desvio_ref, n_ref)
+                            
+                            st.markdown(f"### 📈 {metrica}")
+                            criar_card_mbi(resultado, atleta_mbi, metrica)
+                            
+                            resultados_mbi.append({
+                                'Métrica': metrica,
+                                'Atleta': f'{valor_atleta:.2f}',
+                                'Referência': f'{media_ref:.2f}',
+                                'Cohen\'s d': f'{resultado["cohen_d"]:.2f}',
+                                'Magnitude': resultado['magnitude'],
+                                'Inferência': resultado['inferencia'],
+                                'IC 90%': f'[{resultado["ic_90"][0]:.2f}, {resultado["ic_90"][1]:.2f}]'
+                            })
+                    
+                    if resultados_mbi:
+                        st.markdown("### 📋 Resumo das Análises MBI")
+                        df_resultados = pd.DataFrame(resultados_mbi)
+                        st.dataframe(df_resultados, use_container_width=True, hide_index=True)
+        
+        with tabs[7]:
             st.markdown(f"<h3>{t['tab_executive']}</h3>", unsafe_allow_html=True)
             
             st.markdown("### 🆚 Comparação de Atletas")
@@ -3404,8 +3674,43 @@ elif st.session_state.dados_processados:
             st.caption(f"**{t['periods']}:** {', '.join(st.session_state.todos_periodos)}")
 
 # ============================================================================
-# GARANTIR QUE NÃO PERCA O ESTADO AO RECARREGAR
+# RODAPÉ COM REFERÊNCIAS ACADÊMICAS
 # ============================================================================
-if st.session_state.dados_processados and not st.session_state.processar_click:
-    # Manter na mesma aba - apenas para garantir que o estado persista
-    pass
+
+st.markdown(f"""
+<div class="references-footer">
+    <h4>📚 Referências Acadêmicas</h4>
+    <p>
+        <strong>Batterham, A. M., & Hopkins, W. G. (2006).</strong> Making meaningful inferences about magnitudes. 
+        <em>International Journal of Sports Physiology and Performance</em>, 1(1), 50-57.
+        <br><em>Base para a análise de Magnitude-Based Inference (MBI) utilizada na aba "Análise MBI".</em>
+    </p>
+    <p>
+        <strong>Hopkins, W. G., Marshall, S. W., Batterham, A. M., & Hanin, J. (2009).</strong> 
+        Progressive statistics for studies in sports medicine and exercise science. 
+        <em>Medicine & Science in Sports & Exercise</em>, 41(1), 3-12.
+        <br><em>Fundamentação para intervalos de confiança, tamanhos de efeito e interpretação de resultados.</em>
+    </p>
+    <p>
+        <strong>Cohen, J. (1988).</strong> <em>Statistical power analysis for the behavioral sciences</em> (2nd ed.). 
+        Lawrence Erlbaum Associates.
+        <br><em>Referência para interpretação do tamanho de efeito (Cohen's d) utilizado em todas as análises comparativas.</em>
+    </p>
+    <p>
+        <strong>Gabbett, T. J. (2016).</strong> The training—injury prevention paradox: should athletes be training smarter 
+        and harder?. <em>British Journal of Sports Medicine</em>, 50(5), 273-280.
+        <br><em>Conceitos de carga de treino aplicáveis à análise de carga e risco (ACWR).</em>
+    </p>
+    <p>
+        <strong>Altman, D. G., & Bland, J. M. (2005).</strong> Standard deviations and standard errors. 
+        <em>BMJ</em>, 331(7521), 903.
+        <br><em>Base para o cálculo de erros padrão e intervalos de confiança nas estatísticas descritivas.</em>
+    </p>
+    <p>
+        <strong>Field, A. (2018).</strong> <em>Discovering statistics using IBM SPSS statistics</em> (5th ed.). 
+        SAGE Publications.
+        <br><em>Referência para testes de normalidade (Shapiro-Wilk) e interpretação de boxplots.</em>
+    </p>
+    <p>
+        <strong>Okabe, M., & Ito, K. (2008).</strong> Color universal design (CUD) - How to make figures and presentations 
+        that are friendly to colorblind people. <em>J*Fly
