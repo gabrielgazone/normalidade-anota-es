@@ -5,8 +5,6 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import scipy.stats as stats
-import io
-import base64
 from datetime import datetime, timedelta
 import time
 import warnings
@@ -1454,97 +1452,129 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
     return fig
 
 # ============================================================================
-# FUNÇÕES PARA COMPARADOR DE ATLETAS
+# FUNÇÕES PARA COMPARADOR DE ATLETAS (SUNBURST)
 # ============================================================================
 
-def criar_grafico_radar(df_atleta, df_posicao, df_geral, atleta_nome, posicao, variaveis, titulo="Comparação de Desempenho"):
+def criar_grafico_barras_radial(df_atleta, df_posicao, df_geral, atleta_nome, posicao, variaveis, titulo="Comparação de Desempenho"):
     """
-    Cria um gráfico de radar comparando atleta vs média da posição vs média geral
+    Cria um gráfico de barras radial estilo sunburst para comparação clara e moderna
     """
     
-    # Calcular valores para cada métrica
-    valores_atleta = []
-    valores_posicao = []
-    valores_geral = []
+    # Calcular valores
+    valores_atleta = [df_atleta[var].mean() for var in variaveis]
+    valores_posicao = [df_posicao[var].mean() for var in variaveis]
+    valores_geral = [df_geral[var].mean() for var in variaveis]
     
-    for var in variaveis:
-        # Valor do atleta
-        val_atleta = df_atleta[var].mean()
-        valores_atleta.append(val_atleta)
-        
-        # Média da posição
-        val_posicao = df_posicao[var].mean()
-        valores_posicao.append(val_posicao)
-        
-        # Média geral
-        val_geral = df_geral[var].mean()
-        valores_geral.append(val_geral)
+    # Encontrar máximos para normalização
+    max_vals = [max(v) for v in zip(valores_atleta, valores_posicao, valores_geral)]
+    
+    # Normalizar
+    atleta_norm = [v / max_vals[i] if max_vals[i] != 0 else 0 for i, v in enumerate(valores_atleta)]
+    posicao_norm = [v / max_vals[i] if max_vals[i] != 0 else 0 for i, v in enumerate(valores_posicao)]
+    geral_norm = [v / max_vals[i] if max_vals[i] != 0 else 0 for i, v in enumerate(valores_geral)]
     
     # Criar figura
     fig = go.Figure()
     
-    # Adicionar trace do atleta
+    # Número de variáveis
+    n_vars = len(variaveis)
+    
+    # Ângulos para cada barra
+    angles = list(range(0, 360, 360 // n_vars))
+    
+    # Largura das barras (em graus)
+    bar_width = 360 // n_vars * 0.8
+    
+    # Adicionar círculos de referência
+    for r_val, opacidade in [(0.25, 0.1), (0.5, 0.15), (0.75, 0.2), (1.0, 0.25)]:
+        theta_circle = list(range(0, 361))
+        r_circle = [r_val] * len(theta_circle)
+        
+        fig.add_trace(go.Scatterpolar(
+            r=r_circle,
+            theta=theta_circle,
+            mode='lines',
+            line=dict(color='rgba(148, 163, 184, 0.3)', width=1, dash='dot'),
+            showlegend=False,
+            hoverinfo='none',
+            opacity=opacidade
+        ))
+    
+    # Adicionar barras para o atleta
+    for i, (val, angle) in enumerate(zip(atleta_norm, angles)):
+        fig.add_trace(go.Barpolar(
+            r=[val],
+            theta=[angle],
+            width=[bar_width],
+            marker=dict(
+                color='#3b82f6',
+                line=dict(color='white', width=2)
+            ),
+            name=f'{atleta_nome}' if i == 0 else '',
+            showlegend=(i == 0),
+            hovertemplate=f'<b>{variaveis[i]}</b><br>' +
+                          f'{atleta_nome}: {valores_atleta[i]:.2f}<br>' +
+                          f'Média {posicao}: {valores_posicao[i]:.2f}<br>' +
+                          f'Média Geral: {valores_geral[i]:.2f}<br>' +
+                          '<extra></extra>'
+        ))
+    
+    # Adicionar linha circular para a média da posição
+    theta_circle = list(range(0, 361))
+    r_circle = [posicao_norm[i % n_vars] for i in range(len(theta_circle))]
+    
     fig.add_trace(go.Scatterpolar(
-        r=valores_atleta + [valores_atleta[0]],  # Fechar o polígono
-        theta=variaveis + [variaveis[0]],
-        fill='toself',
-        name=f'🏃 {atleta_nome}',
-        line=dict(color='#3b82f6', width=3),
-        fillcolor='rgba(59, 130, 246, 0.3)'
+        r=r_circle,
+        theta=theta_circle,
+        mode='lines',
+        name=f'Média {posicao}',
+        line=dict(color='#f59e0b', width=3, dash='dash'),
+        fill=None
     ))
     
-    # Adicionar trace da posição
-    fig.add_trace(go.Scatterpolar(
-        r=valores_posicao + [valores_posicao[0]],
-        theta=variaveis + [variaveis[0]],
-        fill='toself',
-        name=f'📊 Média {posicao}',
-        line=dict(color='#f59e0b', width=2, dash='dash'),
-        fillcolor='rgba(245, 158, 11, 0.2)'
-    ))
+    # Adicionar linha circular para a média geral
+    r_circle_geral = [geral_norm[i % n_vars] for i in range(len(theta_circle))]
     
-    # Adicionar trace geral
     fig.add_trace(go.Scatterpolar(
-        r=valores_geral + [valores_geral[0]],
-        theta=variaveis + [variaveis[0]],
-        fill='toself',
-        name='📈 Média Geral',
+        r=r_circle_geral,
+        theta=theta_circle,
+        mode='lines',
+        name='Média Geral',
         line=dict(color='#94a3b8', width=2, dash='dot'),
-        fillcolor='rgba(148, 163, 184, 0.2)'
+        fill=None
     ))
     
     # Configurar layout
     fig.update_layout(
         title=dict(
             text=f"<b>{titulo}</b>",
-            font=dict(size=20, color='white'),
+            font=dict(size=22, color='white'),
             x=0.5
         ),
         polar=dict(
             radialaxis=dict(
-                visible=True,
-                gridcolor='#334155',
-                gridwidth=1,
-                tickfont=dict(color='white', size=10),
-                tickformat='.1f'
+                range=[0, 1.1],
+                showticklabels=False,
+                gridcolor='#4a5568'
             ),
             angularaxis=dict(
-                gridcolor='#334155',
-                tickfont=dict(color='white', size=11, weight='bold'),
-                rotation=90
+                tickmode='array',
+                tickvals=angles,
+                ticktext=variaveis,
+                gridcolor='#4a5568',
+                tickfont=dict(color='white', size=12)
             ),
             bgcolor='rgba(30,41,59,0.5)'
         ),
         paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
         font=dict(color='white'),
         height=600,
+        width=700,
         showlegend=True,
         legend=dict(
-            font=dict(color='white', size=12),
+            font=dict(color='white'),
             bgcolor='rgba(30,41,59,0.8)',
             bordercolor='#334155',
-            borderwidth=1,
             orientation='h',
             yanchor='bottom',
             y=1.1,
@@ -1572,10 +1602,8 @@ def criar_tabela_comparativa(atleta_nome, posicao, variaveis, valores_atleta, va
         
         # Determinar ícones e cores
         icone_pos = '▲' if diff_vs_posicao > 0 else '▼' if diff_vs_posicao < 0 else '◆'
-        cor_pos = '#10b981' if diff_vs_posicao > 0 else '#ef4444' if diff_vs_posicao < 0 else '#94a3b8'
         
         icone_geral = '▲' if diff_vs_geral > 0 else '▼' if diff_vs_geral < 0 else '◆'
-        cor_geral = '#10b981' if diff_vs_geral > 0 else '#ef4444' if diff_vs_geral < 0 else '#94a3b8'
         
         dados.append({
             '📊 Métrica': var,
@@ -2963,7 +2991,7 @@ if st.session_state.df_completo is not None:
             else:
                 st.info("ℹ️ São necessárias pelo menos 2 variáveis para análise de clusters")
         
-        with tabs[5]:  # COMPARADOR DE ATLETAS
+        with tabs[5]:  # COMPARADOR DE ATLETAS (SUNBURST)
             st.markdown(f"<h3>{t['tab_comparador']}</h3>", unsafe_allow_html=True)
             
             st.markdown("""
@@ -3037,9 +3065,9 @@ if st.session_state.df_completo is not None:
                         if not df_atleta.empty and not df_posicao.empty:
                             
                             # ============================================================
-                            # GRÁFICO DE RADAR
+                            # GRÁFICO DE BARRAS RADIAL (SUNBURST)
                             # ============================================================
-                            fig_radar, valores_atleta, valores_posicao, valores_geral = criar_grafico_radar(
+                            fig_radar, valores_atleta, valores_posicao, valores_geral = criar_grafico_barras_radial(
                                 df_atleta, df_posicao, df_geral,
                                 atleta_comp, posicao_atleta, vars_comp,
                                 f"Comparação: {atleta_comp} vs Média da Posição vs Média Geral"
