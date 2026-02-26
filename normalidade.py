@@ -114,7 +114,10 @@ translations = {
             1. Prepare seus arquivos CSV com a **mesma estrutura** de colunas
             2. Selecione todos os arquivos desejados
             3. O sistema verificará compatibilidade e concatenará automaticamente
-        '''
+        ''',
+        'select_period_timeline': 'Selecione o período para visualização temporal',
+        'all_periods': 'Todos os períodos (gráfico único)',
+        'compare_periods': 'Comparar períodos (múltiplos gráficos)'
     },
     'en': {
         'title': 'Sports Science Analytics Pro',
@@ -205,7 +208,10 @@ translations = {
             1. Prepare your CSV files with the **same column structure**
             2. Select all desired files
             3. The system will check compatibility and concatenate automatically
-        '''
+        ''',
+        'select_period_timeline': 'Select period for temporal visualization',
+        'all_periods': 'All periods (single chart)',
+        'compare_periods': 'Compare periods (multiple charts)'
     },
     'es': {
         'title': 'Sports Science Analytics Pro',
@@ -296,7 +302,10 @@ translations = {
             1. Prepare sus archivos CSV con la **misma estructura** de columnas
             2. Seleccione todos los archivos deseados
             3. El sistema verificará compatibilidad y concatenará automáticamente
-        '''
+        ''',
+        'select_period_timeline': 'Seleccione el período para visualización temporal',
+        'all_periods': 'Todos los períodos (gráfico único)',
+        'compare_periods': 'Comparar períodos (múltiples gráficos)'
     }
 }
 
@@ -795,6 +804,10 @@ def init_session_state():
         st.session_state.n_classes = 5
     if 'upload_concluido' not in st.session_state:
         st.session_state.upload_concluido = False
+    if 'modo_timeline' not in st.session_state:
+        st.session_state.modo_timeline = 'unico'  # 'unico' ou 'multiplo'
+    if 'periodo_timeline' not in st.session_state:
+        st.session_state.periodo_timeline = None
 
 init_session_state()
 
@@ -1210,11 +1223,265 @@ def time_range_selector(t):
     return data_inicio, data_fim
 
 # ============================================================================
-# CALLBACKS CORRIGIDOS
+# FUNÇÕES CORRIGIDAS PARA TIMELINE
+# ============================================================================
+
+def atualizar_modo_timeline():
+    """Callback para atualizar modo de timeline"""
+    valor_radio = st.session_state.modo_timeline_radio
+    if valor_radio == "Gráfico único":
+        st.session_state.modo_timeline = 'unico'
+    else:
+        st.session_state.modo_timeline = 'multiplo'
+
+def criar_timeline_multipla(df, variavel, periodos, t):
+    """Cria múltiplos gráficos de timeline, um para cada período"""
+    
+    # Criar subplots com n linhas (um por período)
+    n_periodos = len(periodos)
+    fig = make_subplots(
+        rows=n_periodos, 
+        cols=1,
+        subplot_titles=[f"Período: {p}" for p in periodos],
+        shared_xaxes=True,
+        vertical_spacing=0.08
+    )
+    
+    for i, periodo in enumerate(periodos, 1):
+        df_periodo = df[df['Período'] == periodo].sort_values('Minuto').copy()
+        
+        if df_periodo.empty:
+            continue
+        
+        # Calcular valores para este período
+        valor_maximo = df_periodo[variavel].max()
+        limiar_80 = valor_maximo * 0.8
+        
+        # Adicionar linha de evolução
+        fig.add_trace(
+            go.Scatter(
+                x=df_periodo['Minuto'],
+                y=df_periodo[variavel],
+                mode='lines+markers',
+                name=f'Período {periodo}',
+                line=dict(color='#3b82f6', width=2),
+                marker=dict(size=6, color='#3b82f6'),
+                showlegend=False
+            ),
+            row=i, col=1
+        )
+        
+        # Adicionar linha do limiar 80%
+        fig.add_hline(
+            y=limiar_80,
+            line_dash="dash",
+            line_color="#ef4444",
+            line_width=1,
+            row=i, col=1
+        )
+        
+        # Adicionar média
+        media_periodo = df_periodo[variavel].mean()
+        fig.add_hline(
+            y=media_periodo,
+            line_dash="dot",
+            line_color="#10b981",
+            line_width=1,
+            row=i, col=1
+        )
+        
+        # Configurar eixos
+        fig.update_xaxes(
+            title_text="Minuto" if i == n_periodos else "",
+            gridcolor='#334155',
+            tickfont=dict(color='white', size=9),
+            tickangle=-45,
+            row=i, col=1
+        )
+        
+        fig.update_yaxes(
+            title_text=variavel if i == n_periodos//2 + 1 else "",
+            gridcolor='#334155',
+            tickfont=dict(color='white'),
+            row=i, col=1
+        )
+    
+    # Configurar layout geral
+    fig.update_layout(
+        title=f"Evolução Temporal por Período - {variavel}",
+        plot_bgcolor='rgba(30,41,59,0.8)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='white', size=11),
+        title_font=dict(color='#3b82f6', size=18),
+        height=300 * n_periodos,
+        showlegend=False
+    )
+    
+    return fig
+
+def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
+    """Cria uma única timeline com seletor de período"""
+    
+    # Seletor de período
+    opcoes_periodo = ['Todos os períodos'] + list(periodos_selecionados)
+    
+    # CORREÇÃO: Usar session state para manter o valor selecionado
+    indice_atual = 0
+    if st.session_state.periodo_timeline in opcoes_periodo:
+        indice_atual = opcoes_periodo.index(st.session_state.periodo_timeline)
+    
+    periodo_escolhido = st.selectbox(
+        t['select_period_timeline'],
+        options=opcoes_periodo,
+        index=indice_atual,
+        key="periodo_timeline_select"
+    )
+    
+    # Atualizar session state
+    if periodo_escolhido != st.session_state.periodo_timeline:
+        st.session_state.periodo_timeline = periodo_escolhido
+        st.rerun()
+    
+    # Filtrar dados conforme seleção
+    if periodo_escolhido == 'Todos os períodos':
+        df_plot = df.copy()
+        titulo = f"Evolução Temporal - {variavel} (Todos os períodos)"
+    else:
+        df_plot = df[df['Período'] == periodo_escolhido].copy()
+        titulo = f"Evolução Temporal - {variavel} (Período: {periodo_escolhido})"
+    
+    # Ordenar por minuto
+    df_plot = df_plot.sort_values('Minuto').reset_index(drop=True)
+    
+    # Criar figura
+    fig = go.Figure()
+    
+    # Se for todos os períodos, colorir por período
+    if periodo_escolhido == 'Todos os períodos':
+        periodos_unicos = df_plot['Período'].unique()
+        cores = px.colors.qualitative.Set2
+        
+        for i, periodo in enumerate(periodos_unicos):
+            df_periodo = df_plot[df_plot['Período'] == periodo]
+            cor = cores[i % len(cores)]
+            
+            fig.add_trace(go.Scatter(
+                x=df_periodo['Minuto'],
+                y=df_periodo[variavel],
+                mode='lines+markers',
+                name=f'Período: {periodo}',
+                line=dict(color=cor, width=2),
+                marker=dict(size=6, color=cor),
+                hovertemplate='<b>Período:</b> %{text}<br>' +
+                              '<b>Minuto:</b> %{x}<br>' +
+                              '<b>Valor:</b> %{y:.2f}<extra></extra>',
+                text=[periodo] * len(df_periodo)
+            ))
+    else:
+        # Período único - adicionar todos os recursos visuais
+        valor_maximo = df_plot[variavel].max()
+        limiar_80 = valor_maximo * 0.8
+        media = df_plot[variavel].mean()
+        desvio = df_plot[variavel].std()
+        
+        # Áreas sombreadas
+        fig.add_hrect(
+            y0=limiar_80,
+            y1=valor_maximo * 1.05,
+            fillcolor="rgba(239, 68, 68, 0.15)",
+            line_width=0,
+            layer="below",
+            name="Acima do limiar"
+        )
+        
+        fig.add_hrect(
+            y0=0,
+            y1=limiar_80,
+            fillcolor="rgba(59, 130, 246, 0.1)",
+            line_width=0,
+            layer="below",
+            name="Abaixo do limiar"
+        )
+        
+        # Linha do limiar
+        fig.add_hline(
+            y=limiar_80,
+            line_dash="solid",
+            line_color="#ef4444",
+            line_width=2,
+            annotation_text=f"🔴 Limiar 80%: {limiar_80:.2f}",
+            annotation_position="top left"
+        )
+        
+        # Linha da média
+        fig.add_hline(
+            y=media,
+            line_dash="dash",
+            line_color="#94a3b8",
+            annotation_text=f"Média: {media:.2f}",
+            annotation_position="top left"
+        )
+        
+        # Área de ±1 DP
+        fig.add_hrect(
+            y0=media-desvio,
+            y1=media+desvio,
+            fillcolor="#3b82f6",
+            opacity=0.1,
+            line_width=0,
+            annotation_text="±1 DP"
+        )
+        
+        # Dados principais
+        fig.add_trace(go.Scatter(
+            x=df_plot['Minuto'],
+            y=df_plot[variavel],
+            mode='lines+markers',
+            name=variavel,
+            line=dict(color='#3b82f6', width=2),
+            marker=dict(size=8, color='#3b82f6', line=dict(color='white', width=1)),
+            hovertemplate='<b>Minuto:</b> %{x}<br>' +
+                          '<b>Valor:</b> %{y:.2f}<extra></extra>'
+        ))
+        
+        # Média móvel
+        media_movevel = df_plot[variavel].rolling(window=5, min_periods=1).mean()
+        fig.add_trace(go.Scatter(
+            x=df_plot['Minuto'],
+            y=media_movevel,
+            mode='lines',
+            name='Média Móvel (5)',
+            line=dict(color='#f59e0b', width=2, dash='dot')
+        ))
+    
+    # Configurar layout
+    fig.update_layout(
+        title=titulo,
+        xaxis_title="Minuto",
+        yaxis_title=variavel,
+        plot_bgcolor='rgba(30,41,59,0.8)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='white', size=12),
+        title_font=dict(color='#3b82f6', size=18),
+        hovermode='closest',
+        legend=dict(
+            font=dict(color='white'),
+            bgcolor='rgba(30,41,59,0.8)',
+            bordercolor='#334155'
+        )
+    )
+    
+    fig.update_xaxes(gridcolor='#334155', tickfont=dict(color='white'), tickangle=-45)
+    fig.update_yaxes(gridcolor='#334155', tickfont=dict(color='white'))
+    
+    return fig
+
+# ============================================================================
+# CALLBACKS
 # ============================================================================
 
 def atualizar_metodo_zona():
-    """Callback para atualizar método de zona - AGORA FUNCIONAL"""
+    """Callback para atualizar método de zona"""
     valor_radio = st.session_state.metodo_zona_radio
     if valor_radio in ["Percentis", "Percentiles"]:
         st.session_state.metodo_zona = 'percentis'
@@ -1226,10 +1493,6 @@ def atualizar_grupos():
     """Callback para atualizar grupos de comparação"""
     st.session_state.grupo1 = st.session_state.grupo1_select
     st.session_state.grupo2 = st.session_state.grupo2_select
-
-def atualizar_comparacao_atletas():
-    """Callback para atualizar comparação de atletas"""
-    pass
 
 # ============================================================================
 # SIDEBAR
@@ -1266,7 +1529,7 @@ with st.sidebar:
         key="file_uploader"
     )
     
-    # CORREÇÃO: Processar upload apenas uma vez
+    # Processar upload
     if upload_files and len(upload_files) > 0 and not st.session_state.upload_concluido:
         with st.spinner('🔄 Processando...'):
             time.sleep(0.5)
@@ -1444,9 +1707,7 @@ with st.sidebar:
                     st.session_state.dados_processados = False
                     st.rerun()
         
-        # ================================================================
-        # SELEÇÃO DE ATLETAS - CORRIGIDA
-        # ================================================================
+        # SELEÇÃO DE ATLETAS
         st.markdown("---")
         st.markdown(f"<h2 class='sidebar-title'>👤 {t['athlete']}</h2>", unsafe_allow_html=True)
         
@@ -1462,7 +1723,6 @@ with st.sidebar:
         
         if not atletas_disponiveis:
             st.warning("⚠️ Nenhum atleta disponível com os filtros atuais")
-            # Forçar limpeza da seleção de atletas
             st.session_state.atletas_selecionados = []
         else:
             # Filtrar atletas selecionados para manter apenas os que ainda estão disponíveis
@@ -1509,7 +1769,7 @@ with st.sidebar:
         st.markdown("---")
         st.markdown(f"<h2 class='sidebar-title'>⚙️ {t['config']}</h2>", unsafe_allow_html=True)
         
-        # CORREÇÃO 1: n_classes agora atualiza o session state e força rerun
+        # Configurações
         n_classes = st.slider(f"{t['config']}:", 3, 20, st.session_state.n_classes, key="classes_slider")
         if n_classes != st.session_state.n_classes:
             st.session_state.n_classes = n_classes
@@ -1599,7 +1859,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
             st.markdown("---")
             
             # ====================================================================
-            # ABAS PRINCIPAIS (SEM ABA DE COMPARAÇÃO)
+            # ABAS PRINCIPAIS
             # ====================================================================
             tab_titles = [
                 t['tab_distribution'], 
@@ -1620,7 +1880,6 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 with col1:
                     dados_hist = df_filtrado[variavel_analise].dropna()
                     
-                    # CORREÇÃO 1: Histograma usando n_classes do session state
                     fig_hist = go.Figure()
                     fig_hist.add_trace(go.Histogram(
                         x=dados_hist,
@@ -1745,12 +2004,13 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     hide_index=True
                 )
             
-            # ABA 2: ESTATÍSTICAS & TEMPORAL
+            # ABA 2: ESTATÍSTICAS & TEMPORAL (CORRIGIDA)
             with tabs[1]:
                 st.markdown(f"<h3>{t['tab_temporal']}</h3>", unsafe_allow_html=True)
                 
                 df_tempo = df_filtrado.sort_values('Minuto').reset_index(drop=True)
                 
+                # Cards de métricas temporais
                 valor_maximo = df_tempo[variavel_analise].max()
                 valor_minimo = df_tempo[variavel_analise].min()
                 minuto_maximo = extrair_minuto_do_extremo(df_tempo, variavel_analise, 'Minuto', 'max')
@@ -1776,7 +2036,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                 st.markdown("---")
                 st.markdown(f"<h4>{t['intensity_zones']}</h4>", unsafe_allow_html=True)
                 
-                # CORREÇÃO 2: Radio button com callback funcional
+                # Zonas de intensidade
                 opcoes = [t['percentiles'], t['based_on_max']]
                 idx_atual = 0 if st.session_state.metodo_zona == 'percentis' else 1
                 
@@ -1812,11 +2072,47 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                             """, unsafe_allow_html=True)
                 
                 st.markdown("---")
+                
+                # ================================================================
+                # TIMELINE CORRIGIDA COM SELEÇÃO DINÂMICA
+                # ================================================================
                 st.markdown(f"<h4>{t['tab_temporal']}</h4>", unsafe_allow_html=True)
                 
-                # Timeline profissional com áreas sombreadas
-                fig_tempo = criar_timeline_profissional(df_tempo, variavel_analise, t)
-                st.plotly_chart(fig_tempo, use_container_width=True)
+                # Opções de visualização
+                col_op1, col_op2 = st.columns([1, 3])
+                
+                with col_op1:
+                    opcoes_timeline = ["Gráfico único", "Comparar períodos"]
+                    idx_timeline = 0 if st.session_state.modo_timeline == 'unico' else 1
+                    
+                    modo_timeline = st.radio(
+                        "Modo de visualização",
+                        opcoes_timeline,
+                        index=idx_timeline,
+                        key="modo_timeline_radio",
+                        on_change=atualizar_modo_timeline,
+                        label_visibility="collapsed"
+                    )
+                
+                with col_op2:
+                    if st.session_state.modo_timeline == 'unico':
+                        # Gráfico único com seletor de período
+                        if len(periodos_selecionados) > 0:
+                            fig_tempo = criar_timeline_unica_com_seletor(df_filtrado, variavel_analise, periodos_selecionados, t)
+                            st.plotly_chart(fig_tempo, use_container_width=True)
+                        else:
+                            st.warning("Nenhum período selecionado")
+                    else:
+                        # Múltiplos gráficos (um por período)
+                        if len(periodos_selecionados) > 1:
+                            fig_multipla = criar_timeline_multipla(df_filtrado, variavel_analise, periodos_selecionados, t)
+                            st.plotly_chart(fig_multipla, use_container_width=True)
+                        elif len(periodos_selecionados) == 1:
+                            st.info("Selecione mais de um período para comparação")
+                            fig_tempo = criar_timeline_unica_com_seletor(df_filtrado, variavel_analise, periodos_selecionados, t)
+                            st.plotly_chart(fig_tempo, use_container_width=True)
+                        else:
+                            st.warning("Nenhum período selecionado")
                 
                 st.markdown("---")
                 st.markdown(f"<h4>{t['descriptive_stats']}</h4>", unsafe_allow_html=True)
@@ -2176,7 +2472,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     # Adicionar explicação do IQR ao final
                     st.caption(f"📌 {t['iqr_title']}: {t['iqr_explanation']}")
             
-            # ABA 4: CORRELAÇÕES (COM NOVO HEATMAP - CORES MAIS SUAVES)
+            # ABA 4: CORRELAÇÕES
             with tabs[3]:
                 st.markdown(f"<h3>{t['tab_correlation']}</h3>", unsafe_allow_html=True)
                 
@@ -2191,8 +2487,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     if len(vars_corr) >= 2:
                         df_corr = df_filtrado[vars_corr].corr()
                         
-                        # NOVO HEATMAP com cores mais suaves e translúcidas
-                        # Diagonal principal destacada em cinza
+                        # Heatmap com cores suaves
                         colorscale = [
                             [0, 'rgba(0, 0, 139, 0.7)'],      # Azul escuro translúcido para -1
                             [0.25, 'rgba(65, 105, 225, 0.7)'], # Azul médio translúcido para -0.5
@@ -2203,7 +2498,6 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                             [1, 'rgba(139, 0, 0, 0.7)']         # Vermelho escuro translúcido para 1
                         ]
                         
-                        # Criar matriz com valores da diagonal alterados para um valor especial
                         df_corr_display = df_corr.copy()
                         
                         fig_corr = px.imshow(
@@ -2215,7 +2509,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                             zmin=-1, zmax=1
                         )
                         
-                        # Destacar a diagonal principal em cinza (sobrescrevendo o valor)
+                        # Destacar a diagonal principal em cinza
                         for i in range(len(df_corr)):
                             fig_corr.add_annotation(
                                 x=i,
@@ -2223,13 +2517,13 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                                 text=f"{df_corr.iloc[i, i]:.2f}",
                                 showarrow=False,
                                 font=dict(color='white', size=12, weight='bold'),
-                                bgcolor='#4a5568',  # Cinza escuro para o fundo
+                                bgcolor='#4a5568',
                                 bordercolor='#718096',
                                 borderwidth=1,
                                 opacity=0.9
                             )
                             
-                            # Adicionar um retângulo cinza no fundo para destacar a diagonal
+                            # Adicionar um retângulo cinza no fundo
                             fig_corr.add_shape(
                                 type="rect",
                                 x0=i - 0.5,
@@ -2237,7 +2531,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                                 x1=i + 0.5,
                                 y1=i + 0.5,
                                 line=dict(width=0),
-                                fillcolor='rgba(74, 85, 104, 0.5)',  # Cinza translúcido
+                                fillcolor='rgba(74, 85, 104, 0.5)',
                                 layer="below"
                             )
                         
@@ -2258,7 +2552,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                             if pd.isna(val):
                                 return 'color: #94a3b8;'
                             if val == 1.0:
-                                return 'color: #2d3748; font-weight: bold; background-color: #d3d3d3;'  # Diagonal em cinza
+                                return 'color: #2d3748; font-weight: bold; background-color: #d3d3d3;'
                             color = '#ef4444' if abs(val) > 0.7 else '#f59e0b' if abs(val) > 0.5 else '#3b82f6'
                             return f'color: {color}; font-weight: bold;'
                         
@@ -2339,16 +2633,14 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                             "Atleta 1", 
                             atletas_selecionados, 
                             index=0, 
-                            key="atleta1_comp",
-                            on_change=atualizar_comparacao_atletas
+                            key="atleta1_comp"
                         )
                     with col_atl2:
                         atleta2_comp = st.selectbox(
                             "Atleta 2", 
                             atletas_selecionados, 
                             index=min(1, len(atletas_selecionados)-1), 
-                            key="atleta2_comp",
-                            on_change=atualizar_comparacao_atletas
+                            key="atleta2_comp"
                         )
                     
                     if atleta1_comp != atleta2_comp:
@@ -2356,8 +2648,7 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                             "Variáveis para comparar",
                             st.session_state.variaveis_quantitativas,
                             default=st.session_state.variaveis_quantitativas[:3],
-                            key="vars_comp",
-                            on_change=atualizar_comparacao_atletas
+                            key="vars_comp"
                         )
                         
                         if len(vars_comp) >= 1:
@@ -2392,12 +2683,12 @@ elif st.session_state.df_completo is None:
         
         exemplo_data = {
             'Nome-Período-Minuto': [
-                'Mariano-1 TEMPO 00:00-01:00',
-                'Maria-SEGUNDO TEMPO 05:00-06:00',
-                'Joao-2 TEMPO 44:00-45:00',
-                'Marta-PRIMEIRO TEMPO 11:00-12:00',
-                'Pedro-1 TEMPO 15:00-16:00',
-                'Ana-SEGUNDO TEMPO 22:00-23:00'
+                'Mariano-1 TEMPO-00:00-01:00',
+                'Maria-SEGUNDO TEMPO-05:00-06:00',
+                'Joao-2 TEMPO-44:00-45:00',
+                'Marta-PRIMEIRO TEMPO-11:00-12:00',
+                'Pedro-1 TEMPO-15:00-16:00',
+                'Ana-SEGUNDO TEMPO-22:00-23:00'
             ],
             'Posição': ['Atacante', 'Meio-campo', 'Zagueiro', 'Atacante', 'Goleiro', 'Meio-campo'],
             'Distancia Total': [250, 127, 200, 90, 45, 180],
