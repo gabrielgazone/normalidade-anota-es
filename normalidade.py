@@ -2102,8 +2102,8 @@ if st.session_state.df_completo is not None:
             t['tab_temporal'], 
             t['tab_boxplots'], 
             t['tab_correlation'],
-            t['tab_kmeans'],
             t['tab_analise_avancada'],
+            t['tab_kmeans'],
             t['tab_executive']
         ]
         
