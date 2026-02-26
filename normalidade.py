@@ -10,6 +10,18 @@ import base64
 from datetime import datetime, timedelta
 import time
 import warnings
+import subprocess
+import sys
+
+# Instalar scikit-learn se não estiver disponível
+try:
+    from sklearn.cluster import KMeans
+    from sklearn.preprocessing import StandardScaler
+except ImportError:
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "scikit-learn"])
+    from sklearn.cluster import KMeans
+    from sklearn.preprocessing import StandardScaler
+
 warnings.filterwarnings('ignore')
 
 # Configuração da página
