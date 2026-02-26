@@ -1439,24 +1439,19 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
     return fig
 
 # ============================================================================
-# FUNÇÕES PARA HEATMAP DE CORRELAÇÃO MELHORADO
+# FUNÇÕES PARA HEATMAP DE CORRELAÇÃO - VERSÕES CORRIGIDAS
 # ============================================================================
 
 def criar_heatmap_correlacao_impactante(df_corr, titulo="Matriz de Correlação"):
     """
-    Cria um heatmap de correlação extremamente impactante e visualmente atraente
+    Cria um heatmap de correlação impactante - VERSÃO CORRIGIDA
     """
     
     colorscale = [
         [0.0, 'rgb(0, 0, 139)'],
         [0.25, 'rgb(65, 105, 225)'],
-        [0.45, 'rgb(135, 206, 250)'],
-        [0.49, 'rgb(255, 255, 255)'],
         [0.5, 'rgb(255, 255, 255)'],
-        [0.51, 'rgb(255, 228, 225)'],
-        [0.6, 'rgb(255, 182, 193)'],
         [0.75, 'rgb(255, 105, 180)'],
-        [0.9, 'rgb(220, 20, 60)'],
         [1.0, 'rgb(139, 0, 0)']
     ]
     
@@ -1471,107 +1466,32 @@ def criar_heatmap_correlacao_impactante(df_corr, titulo="Matriz de Correlação"
         zmax=1,
         text=df_corr.values.round(3),
         texttemplate='%{text:.3f}',
-        textfont={"size": 14, "color": "white", "family": "Arial Black"},
-        hovertemplate='<b>%{y} ↔ %{x}</b><br><b>Correlação:</b> %{z:.3f}<br><extra></extra>',
+        textfont={"size": 12, "color": "black"},
+        hovertemplate='<b>%{y} ↔ %{x}</b><br>Correlação: %{z:.3f}<extra></extra>',
         colorbar=dict(
             title="Correlação",
-            titleside="right",
-            titlefont=dict(size=14, color="white"),
-            tickfont=dict(size=12, color="white"),
-            tickvals=[-1, -0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75, 1],
-            ticktext=['-1.0', '-0.75', '-0.5', '-0.25', '0', '0.25', '0.5', '0.75', '1.0'],
-            len=0.8,
-            thickness=25,
-            borderwidth=1,
-            bordercolor='#334155',
-            bgcolor='rgba(30, 41, 59, 0.9)'
+            titleside="right"
         )
     ))
-    
-    for i in range(len(df_corr)):
-        fig.add_shape(
-            type="circle",
-            x0=i - 0.35,
-            y0=i - 0.35,
-            x1=i + 0.35,
-            y1=i + 0.35,
-            line=dict(color="gold", width=2),
-            fillcolor="rgba(255, 215, 0, 0.2)",
-            layer="above"
-        )
-        
-        fig.add_annotation(
-            x=i,
-            y=i,
-            text=f"<b>{df_corr.iloc[i, i]:.3f}</b>",
-            showarrow=False,
-            font=dict(size=16, color="gold", family="Arial Black"),
-            bgcolor="rgba(0, 0, 0, 0.6)",
-            bordercolor="gold",
-            borderwidth=2,
-            borderpad=4
-        )
-    
-    for i in range(len(df_corr.index)):
-        for j in range(len(df_corr.columns)):
-            fig.add_shape(
-                type="rect",
-                x0=j - 0.5,
-                y0=i - 0.5,
-                x1=j + 0.5,
-                y1=i + 0.5,
-                line=dict(color="rgba(255,255,255,0.15)", width=1),
-                fillcolor="rgba(0,0,0,0)",
-                layer="below"
-            )
     
     fig.update_layout(
         title=dict(
             text=f"<b>{titulo}</b>",
-            font=dict(size=24, color="white", family="Arial Black"),
-            x=0.5,
-            xanchor="center"
+            x=0.5
         ),
-        plot_bgcolor='rgba(30, 41, 59, 0.95)',
-        paper_bgcolor='rgba(0, 0, 0, 0)',
-        font=dict(color='white', size=12, family="Arial"),
+        plot_bgcolor='rgba(30,41,59,0.95)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='white'),
         height=600,
         width=700,
-        margin=dict(l=100, r=100, t=100, b=100),
-        xaxis=dict(
-            title="",
-            tickangle=-45,
-            tickfont=dict(size=12, color="white", family="Arial"),
-            gridcolor='#334155',
-            showgrid=True,
-            side="bottom"
-        ),
-        yaxis=dict(
-            title="",
-            tickfont=dict(size=12, color="white", family="Arial"),
-            gridcolor='#334155',
-            showgrid=True,
-            autorange="reversed"
-        )
-    )
-    
-    fig.add_shape(
-        type="rect",
-        xref="paper",
-        yref="paper",
-        x0=0,
-        y0=0,
-        x1=1,
-        y1=1,
-        line=dict(color="rgba(59, 130, 246, 0.3)", width=2),
-        fillcolor="rgba(0,0,0,0)",
-        layer="below"
+        xaxis=dict(tickangle=-45, tickfont=dict(color='white')),
+        yaxis=dict(autorange="reversed", tickfont=dict(color='white'))
     )
     
     return fig
 
 def criar_heatmap_circular(df_corr, titulo="Matriz de Correlação Circular"):
-    """Versão com células circulares"""
+    """Versão com células circulares - CORRIGIDA"""
     n = len(df_corr)
     fig = go.Figure()
     
@@ -1580,121 +1500,87 @@ def criar_heatmap_circular(df_corr, titulo="Matriz de Correlação Circular"):
             corr_val = df_corr.iloc[i, j]
             
             if corr_val >= 0:
-                intensidade = min(1, corr_val)
-                cor = f'rgba(255, {int(99 + (156 * (1-intensidade)))}, 71, {0.5 + intensidade*0.5})'
+                cor = f'rgba(255, {int(100 + 155*(1-corr_val))}, 100, 0.8)'
             else:
-                intensidade = min(1, abs(corr_val))
-                cor = f'rgba({int(0 + (59 * (1-intensidade)))}, {int(0 + (130 * (1-intensidade)))}, 255, {0.5 + intensidade*0.5})'
+                cor = f'rgba(100, {int(100 + 155*(1+corr_val))}, 255, 0.8)'
             
-            tamanho = 20 + abs(corr_val) * 30
+            tamanho = 20 + abs(corr_val) * 20
             
             fig.add_trace(go.Scatter(
                 x=[j],
                 y=[i],
                 mode='markers+text',
-                marker=dict(
-                    size=tamanho,
-                    color=cor,
-                    line=dict(color='white', width=2 if abs(corr_val) > 0.7 else 1),
-                    symbol='circle'
-                ),
+                marker=dict(size=tamanho, color=cor, line=dict(color='white', width=1)),
                 text=[f'{corr_val:.2f}'],
                 textposition="middle center",
-                textfont=dict(size=10 + abs(corr_val) * 8, color='white', family='Arial Black'),
+                textfont=dict(size=10, color='white'),
                 showlegend=False,
-                hovertemplate='<b>%{customdata[0]} ↔ %{customdata[1]}</b><br><b>Correlação:</b> %{marker.color}<br><extra></extra>',
-                customdata=[[var_y, var_x]]
+                hovertemplate=f'<b>{var_y} ↔ {var_x}</b><br>Correlação: {corr_val:.3f}<extra></extra>'
             ))
     
     fig.update_layout(
-        title=dict(text=f"<b>{titulo}</b>", font=dict(size=24, color="white"), x=0.5),
-        plot_bgcolor='rgba(30, 41, 59, 0.95)',
+        title=dict(text=f"<b>{titulo}</b>", x=0.5),
+        plot_bgcolor='rgba(30,41,59,0.95)',
         paper_bgcolor='rgba(0,0,0,0)',
         height=600,
         width=700,
         xaxis=dict(
             tickvals=list(range(n)), 
             ticktext=df_corr.columns, 
-            tickangle=-45, 
-            tickfont=dict(color="white"),
-            gridcolor='#334155'
+            tickangle=-45,
+            tickfont=dict(color='white')
         ),
         yaxis=dict(
             tickvals=list(range(n)), 
             ticktext=df_corr.index, 
-            tickfont=dict(color="white"), 
             autorange="reversed",
-            gridcolor='#334155'
+            tickfont=dict(color='white')
         )
     )
     
     return fig
 
 def criar_heatmap_3d(df_corr, titulo="Matriz de Correlação 3D"):
-    """Versão 3D"""
+    """Versão 3D - CORRIGIDA"""
     fig = go.Figure(data=go.Surface(
         z=df_corr.values,
         x=list(df_corr.columns),
         y=list(df_corr.index),
-        colorscale=[
-            [0, 'rgb(0, 0, 139)'],
-            [0.25, 'rgb(65, 105, 225)'],
-            [0.5, 'rgb(255, 255, 255)'],
-            [0.75, 'rgb(255, 182, 193)'],
-            [1, 'rgb(139, 0, 0)']
-        ],
-        contours=dict(z=dict(show=True, usecolormap=True, project=dict(z=True))),
-        colorbar=dict(
-            title="Correlação", 
-            titlefont=dict(size=14, color="white"), 
-            tickfont=dict(size=12, color="white")
-        ),
-        hovertemplate='<b>%{y} ↔ %{x}</b><br><b>Correlação:</b> %{z:.3f}<br><extra></extra>'
+        colorscale='RdBu',
+        colorbar=dict(title="Correlação", titleside="right")
     ))
     
     fig.update_layout(
-        title=dict(text=f"<b>{titulo}</b>", font=dict(size=24, color="white"), x=0.5),
+        title=dict(text=f"<b>{titulo}</b>", x=0.5),
         scene=dict(
-            xaxis=dict(title="", tickfont=dict(color="white")),
-            yaxis=dict(title="", tickfont=dict(color="white")),
-            zaxis=dict(title="Correlação", tickfont=dict(color="white"), range=[-1, 1]),
-            bgcolor='rgba(30, 41, 59, 0.95)'
+            xaxis=dict(title="", tickfont=dict(color='white')),
+            yaxis=dict(title="", tickfont=dict(color='white')),
+            zaxis=dict(title="Correlação", range=[-1, 1], tickfont=dict(color='white')),
+            bgcolor='rgba(30,41,59,0.95)'
         ),
         paper_bgcolor='rgba(0,0,0,0)',
         height=600,
-        width=700,
-        font=dict(color='white')
+        width=700
     )
     
     return fig
 
 def criar_heatmap_com_estrelas(df_corr, titulo="Matriz de Correlação"):
-    """Versão com estrelas"""
+    """Versão com estrelas - CORRIGIDA"""
     fig = go.Figure()
     
     fig.add_trace(go.Heatmap(
         z=df_corr.values,
         x=df_corr.columns,
         y=df_corr.index,
-        colorscale=[
-            [0, 'rgb(0, 0, 139)'],
-            [0.25, 'rgb(65, 105, 225)'],
-            [0.5, 'rgb(255, 255, 255)'],
-            [0.75, 'rgb(255, 182, 193)'],
-            [1, 'rgb(139, 0, 0)']
-        ],
+        colorscale='RdBu',
         zmin=-1,
         zmax=1,
         text=df_corr.values.round(3),
         texttemplate='%{text:.3f}',
         textfont={"size": 12, "color": "white"},
-        colorbar=dict(
-            title="Correlação",
-            titleside="right",
-            titlefont=dict(size=14, color="white"),
-            tickfont=dict(size=12, color="white")
-        ),
-        hovertemplate='<b>%{y} ↔ %{x}</b><br><b>Correlação:</b> %{z:.3f}<br><extra></extra>'
+        colorbar=dict(title="Correlação", titleside="right"),
+        hovertemplate='<b>%{y} ↔ %{x}</b><br>Correlação: %{z:.3f}<extra></extra>'
     ))
     
     for i in range(len(df_corr.index)):
@@ -1702,45 +1588,20 @@ def criar_heatmap_com_estrelas(df_corr, titulo="Matriz de Correlação"):
             corr_val = abs(df_corr.iloc[i, j])
             if corr_val > 0.7:
                 fig.add_annotation(
-                    x=j, 
-                    y=i, 
-                    text="⭐", 
-                    showarrow=False, 
-                    font=dict(size=16), 
-                    xshift=15, 
-                    yshift=10
-                )
-            elif corr_val > 0.5:
-                fig.add_annotation(
-                    x=j, 
-                    y=i, 
-                    text="✨", 
-                    showarrow=False, 
-                    font=dict(size=14), 
-                    xshift=15, 
-                    yshift=10
+                    x=j, y=i, text="⭐", 
+                    showarrow=False, font=dict(size=16, color='gold'),
+                    xshift=15, yshift=10
                 )
     
     fig.update_layout(
-        title=dict(
-            text=f"<b>{titulo}</b>", 
-            font=dict(size=24, color="white"), 
-            x=0.5
-        ),
-        plot_bgcolor='rgba(30, 41, 59, 0.95)',
+        title=dict(text=f"<b>{titulo}</b>", x=0.5),
+        plot_bgcolor='rgba(30,41,59,0.95)',
         paper_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='white'),
         height=600,
         width=700,
-        xaxis=dict(
-            tickangle=-45, 
-            tickfont=dict(color="white"),
-            gridcolor='#334155'
-        ),
-        yaxis=dict(
-            tickfont=dict(color="white"), 
-            autorange="reversed",
-            gridcolor='#334155'
-        )
+        xaxis=dict(tickangle=-45, tickfont=dict(color='white')),
+        yaxis=dict(autorange="reversed", tickfont=dict(color='white'))
     )
     
     return fig
@@ -2712,8 +2573,8 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     with col_style1:
                         estilo_heatmap = st.radio(
                             "Selecione o estilo:",
-                            ["Impactante", "Circular", "3D", "Com Estrelas"],
-                            index=0,
+                            ["Clássico", "Impactante", "Circular", "3D", "Com Estrelas"],
+                            index=1,
                             key="estilo_heatmap"
                         )
                     
@@ -2740,7 +2601,26 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                     if len(vars_corr) >= 2:
                         df_corr = df_filtrado[vars_corr].corr()
                         
-                        if estilo_heatmap == "Impactante":
+                        if estilo_heatmap == "Clássico":
+                            fig_corr = px.imshow(
+                                df_corr,
+                                text_auto='.2f',
+                                aspect="auto",
+                                color_continuous_scale='RdBu_r',
+                                title=f"{t['tab_correlation']}",
+                                zmin=-1, zmax=1
+                            )
+                            fig_corr.update_layout(
+                                plot_bgcolor='rgba(30, 41, 59, 0.8)',
+                                paper_bgcolor='rgba(0,0,0,0)',
+                                font=dict(color='white', size=11),
+                                title_font=dict(color='#3b82f6', size=16),
+                                height=500
+                            )
+                            fig_corr.update_xaxes(gridcolor='#334155', tickfont=dict(color='white'))
+                            fig_corr.update_yaxes(gridcolor='#334155', tickfont=dict(color='white'))
+                            
+                        elif estilo_heatmap == "Impactante":
                             fig_corr = criar_heatmap_correlacao_impactante(df_corr, t['tab_correlation'])
                         elif estilo_heatmap == "Circular":
                             fig_corr = criar_heatmap_circular(df_corr, t['tab_correlation'])
@@ -2748,10 +2628,6 @@ if st.session_state.processar_click and st.session_state.df_completo is not None
                             fig_corr = criar_heatmap_3d(df_corr, t['tab_correlation'])
                         elif estilo_heatmap == "Com Estrelas":
                             fig_corr = criar_heatmap_com_estrelas(df_corr, t['tab_correlation'])
-                        
-                        if estilo_heatmap != "3D":
-                            fig_corr.update_xaxes(gridcolor='#334155', tickfont=dict(color='white'))
-                            fig_corr.update_yaxes(gridcolor='#334155', tickfont=dict(color='white'))
                         
                         st.plotly_chart(fig_corr, use_container_width=True)
                         
