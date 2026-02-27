@@ -3713,4 +3713,8 @@ st.markdown(f"""
     </p>
     <p>
         <strong>Okabe, M., & Ito, K. (2008).</strong> Color universal design (CUD) - How to make figures and presentations 
-        that are friendly to colorblind people. <em>J*Fly
+        that are friendly to colorblind people. <em>J*Fly</em>
+        <br><em>Paleta de cores acessível para daltônicos utilizada em todos os gráficos.</em>
+    </p>
+</div>
+""", unsafe_allow_html=True)
