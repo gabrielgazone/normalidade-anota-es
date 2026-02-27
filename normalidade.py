@@ -3697,11 +3697,6 @@ st.markdown(f"""
         <br><em>Referência para interpretação do tamanho de efeito (Cohen's d) utilizado em todas as análises comparativas.</em>
     </p>
     <p>
-        <strong>Gabbett, T. J. (2016).</strong> The training—injury prevention paradox: should athletes be training smarter 
-        and harder?. <em>British Journal of Sports Medicine</em>, 50(5), 273-280.
-        <br><em>Conceitos de carga de treino aplicáveis à análise de carga e risco (ACWR).</em>
-    </p>
-    <p>
         <strong>Altman, D. G., & Bland, J. M. (2005).</strong> Standard deviations and standard errors. 
         <em>BMJ</em>, 331(7521), 903.
         <br><em>Base para o cálculo de erros padrão e intervalos de confiança nas estatísticas descritivas.</em>
