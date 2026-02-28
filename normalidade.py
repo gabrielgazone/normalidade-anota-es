@@ -3698,7 +3698,7 @@ st.markdown(f"""
     </p>
     <p>
         <strong>Altman, D. G., & Bland, J. M. (2005).</strong> Standard deviations and standard errors. 
-        <em>BMJ</em>, 331(7521), 903.
+        <em>BMJ</em>, 331(7521), 903;.
         <br><em>Base para o cálculo de erros padrão e intervalos de confiança nas estatísticas descritivas.</em>
     </p>
     <p>
