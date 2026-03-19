@@ -2416,6 +2416,25 @@ if st.session_state.df_completo is not None:
                 'Frequência': [int(contagens.get(r, 0)) for r in rotulos],
                 'Percentual (%)': [contagens.get(r, 0) / len(df_filtrado) * 100 for r in rotulos]
             })
+            
+            # =================================================================
+            # NOVA COLUNA: Faixa Percentual baseada nos VALORES (não na frequência)
+            # =================================================================
+            percentuais_valores = []
+            for i in range(n_classes):
+                limite_inferior = limites[i]
+                limite_superior = limites[i+1]
+                
+                # Calcula o percentual que este valor representa do total da amplitude
+                percentual_inferior = ((limite_inferior - minimo) / amplitude) * 100 if amplitude > 0 else 0
+                percentual_superior = ((limite_superior - minimo) / amplitude) * 100 if amplitude > 0 else 100
+                
+                percentuais_valores.append(f"{percentual_inferior:.1f}% - {percentual_superior:.1f}%")
+            
+            # Inserir a nova coluna após 'Faixa de Valores' (posição 1)
+            freq_table.insert(1, 'Faixa Percentual (baseada nos valores)', percentuais_valores)
+            
+            # Continuar com as colunas existentes
             freq_table['Frequência Acumulada'] = freq_table['Frequência'].cumsum()
             freq_table['Percentual Acumulado (%)'] = freq_table['Percentual (%)'].cumsum()
             
@@ -3697,8 +3716,13 @@ st.markdown(f"""
         <br><em>Referência para interpretação do tamanho de efeito (Cohen's d) utilizado em todas as análises comparativas.</em>
     </p>
     <p>
+        <strong>Gabbett, T. J. (2016).</strong> The training—injury prevention paradox: should athletes be training smarter 
+        and harder?. <em>British Journal of Sports Medicine</em>, 50(5), 273-280.
+        <br><em>Conceitos de carga de treino aplicáveis à análise de carga e risco (ACWR).</em>
+    </p>
+    <p>
         <strong>Altman, D. G., & Bland, J. M. (2005).</strong> Standard deviations and standard errors. 
-        <em>BMJ</em>, 331(7521), 903;.
+        <em>BMJ</em>, 331(7521), 903.
         <br><em>Base para o cálculo de erros padrão e intervalos de confiança nas estatísticas descritivas.</em>
     </p>
     <p>
