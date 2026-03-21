@@ -33,21 +33,19 @@ st.set_page_config(
 # ============================================================================
 # CORES ACESSÍVEIS PARA DALTÔNICOS (Colorblind-Friendly Palette)
 # ============================================================================
-# Baseado na paleta "Okabe-Ito" - padrão ouro para acessibilidade
 COLORS = {
-    'blue': '#0072B2',      # Azul seguro
-    'orange': '#E69F00',     # Laranja seguro
-    'green': '#009E73',      # Verde seguro
-    'red': '#D55E00',        # Vermelho alaranjado (seguro)
-    'purple': '#CC79A7',     # Roxo seguro
-    'yellow': '#F0E442',     # Amarelo seguro
-    'skyblue': '#56B4E9',    # Azul claro seguro
-    'black': '#000000',      # Preto
-    'gray': '#999999',       # Cinza
-    'darkblue': '#003366'    # Azul escuro
+    'blue': '#0072B2',
+    'orange': '#E69F00',
+    'green': '#009E73',
+    'red': '#D55E00',
+    'purple': '#CC79A7',
+    'yellow': '#F0E442',
+    'skyblue': '#56B4E9',
+    'black': '#000000',
+    'gray': '#999999',
+    'darkblue': '#003366'
 }
 
-# Mapeamento para uso no código
 COR_PRIMARIA = COLORS['blue']
 COR_SECUNDARIA = COLORS['orange']
 COR_SUCESSO = COLORS['green']
@@ -795,6 +793,16 @@ st.markdown(f"""
     .references-footer a:hover {{
         text-decoration: underline;
     }}
+    
+    /* Estilo para a tabela de frequência sem scroll */
+    .stDataFrame {{
+        width: 100% !important;
+        overflow-x: visible !important;
+    }}
+    
+    .stDataFrame [data-testid="stDataFrameResizable"] {{
+        overflow-x: auto !important;
+    }}
 </style>
 """, unsafe_allow_html=True)
 
@@ -1510,22 +1518,15 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
     return fig
 
 def criar_grafico_barras_desvio(df_atleta, df_posicao, df_geral, atleta_nome, posicao, variaveis, titulo="Comparação de Desempenho"):
-    """
-    Gráfico de barras mostrando o desvio percentual do atleta em relação às médias
-    """
-    
-    # Calcular valores
     valores_atleta = [df_atleta[var].mean() for var in variaveis]
     valores_posicao = [df_posicao[var].mean() for var in variaveis]
     valores_geral = [df_geral[var].mean() for var in variaveis]
     
-    # Calcular desvios percentuais
     desvios_vs_posicao = [((v - valores_posicao[i]) / valores_posicao[i]) * 100 if valores_posicao[i] != 0 else 0 
                           for i, v in enumerate(valores_atleta)]
     desvios_vs_geral = [((v - valores_geral[i]) / valores_geral[i]) * 100 if valores_geral[i] != 0 else 0 
                         for i, v in enumerate(valores_atleta)]
     
-    # Criar figura com subplots
     fig = make_subplots(
         rows=2, cols=1,
         subplot_titles=(
@@ -1536,7 +1537,6 @@ def criar_grafico_barras_desvio(df_atleta, df_posicao, df_geral, atleta_nome, po
         row_heights=[0.5, 0.5]
     )
     
-    # Gráfico superior - Valores absolutos
     fig.add_trace(go.Bar(
         x=variaveis,
         y=valores_atleta,
@@ -1577,7 +1577,6 @@ def criar_grafico_barras_desvio(df_atleta, df_posicao, df_geral, atleta_nome, po
                       '<extra></extra>'
     ), row=1, col=1)
     
-    # Gráfico inferior - Desvios percentuais
     cores_desvio = [COR_SUCESSO if d > 0 else COR_ALERTA if d < 0 else COLORS['gray'] for d in desvios_vs_posicao]
     
     fig.add_trace(go.Bar(
@@ -1689,9 +1688,6 @@ def criar_grafico_barras_desvio(df_atleta, df_posicao, df_geral, atleta_nome, po
     return fig, valores_atleta, valores_posicao, valores_geral
 
 def criar_tabela_comparativa(atleta_nome, posicao, variaveis, valores_atleta, valores_posicao, valores_geral):
-    """
-    Cria uma tabela comparativa com diferenças percentuais
-    """
     dados = []
     
     for i, var in enumerate(variaveis):
@@ -1717,9 +1713,6 @@ def criar_tabela_comparativa(atleta_nome, posicao, variaveis, valores_atleta, va
     return dados
 
 def criar_card_resumo(atleta_nome, posicao, dados_comparativos):
-    """
-    Cria cards de resumo com os destaques do atleta
-    """
     maiores_vantagens = []
     maiores_desvantagens = []
     
@@ -1742,9 +1735,6 @@ def criar_card_resumo(atleta_nome, posicao, dados_comparativos):
 # ============================================================================
 
 def calcular_mbi(valor_atleta, media_grupo, desvio_grupo, n_grupo=30, small_effect=0.2):
-    """
-    Implementa Magnitude-Based Inference segundo Hopkins & Batterham (2006)
-    """
     from scipy import stats
     import numpy as np
     
@@ -1813,8 +1803,6 @@ def calcular_mbi(valor_atleta, media_grupo, desvio_grupo, n_grupo=30, small_effe
     }
 
 def criar_card_mbi(resultado, atleta_nome, var_nome):
-    """Card estilizado para apresentar resultados MBI"""
-    
     st.markdown(f"""
     <div style="background: rgba(30, 41, 59, 0.8); border-radius: 12px; padding: 20px; 
                 border-left: 8px solid {resultado['cor']}; margin: 15px 0;
@@ -1844,9 +1832,6 @@ def criar_card_mbi(resultado, atleta_nome, var_nome):
     """, unsafe_allow_html=True)
 
 def criar_heatmap_magnitude(df, posicao_referencia=None):
-    """
-    Heatmap mostrando magnitudes dos atletas vs referência
-    """
     metricas = df.select_dtypes(include=[np.number]).columns.tolist()
     metricas = [m for m in metricas if m not in ['Minuto']]
     
@@ -1871,13 +1856,12 @@ def criar_heatmap_magnitude(df, posicao_referencia=None):
     
     df_heat = pd.DataFrame(dados_heatmap).set_index('Atleta')
     
-    # Escala de cores acessível para daltônicos
     colorscale = [
-        [0, 'rgb(0, 114, 178)'],      # Azul escuro
-        [0.25, 'rgb(86, 180, 233)'],   # Azul claro
-        [0.5, 'rgb(255, 255, 255)'],   # Branco
-        [0.75, 'rgb(230, 159, 0)'],    # Laranja
-        [1, 'rgb(213, 94, 0)']         # Vermelho alaranjado
+        [0, 'rgb(0, 114, 178)'],
+        [0.25, 'rgb(86, 180, 233)'],
+        [0.5, 'rgb(255, 255, 255)'],
+        [0.75, 'rgb(230, 159, 0)'],
+        [1, 'rgb(213, 94, 0)']
     ]
     
     fig = px.imshow(
@@ -1912,6 +1896,91 @@ def criar_heatmap_magnitude(df, posicao_referencia=None):
     fig.update_yaxes(gridcolor='#334155')
     
     return fig
+
+# ============================================================================
+# FUNÇÃO PRINCIPAL PARA PROCESSAR UPLOAD
+# ============================================================================
+
+def processar_upload(upload_files):
+    """Processa os arquivos enviados e atualiza o session state"""
+    dataframes = []
+    arquivos_validos = []
+    arquivos_invalidos = []
+    
+    for uploaded_file in upload_files:
+        try:
+            data = pd.read_csv(uploaded_file)
+            
+            if data.shape[1] >= 3 and not data.empty:
+                dataframes.append(data)
+                arquivos_validos.append(uploaded_file.name)
+            else:
+                arquivos_invalidos.append(f"{uploaded_file.name}")
+        except Exception as e:
+            arquivos_invalidos.append(f"{uploaded_file.name}")
+    
+    if dataframes:
+        estruturas_ok, estrutura_referencia = verificar_estruturas_arquivos(dataframes)
+        
+        if not estruturas_ok:
+            st.error("❌ Arquivos com estruturas diferentes")
+            return False
+        
+        data = pd.concat(dataframes, ignore_index=True)
+        
+        if data.shape[1] >= 3 and not data.empty:
+            primeira_coluna = data.iloc[:, 0].astype(str)
+            segunda_coluna = data.iloc[:, 1].astype(str)
+            
+            nomes = primeira_coluna.str.split('-').str[0].str.strip()
+            minutos = primeira_coluna.str[-13:].str.strip()
+            periodos = primeira_coluna.apply(extrair_periodo)
+            
+            periodos_unicos = sorted([p for p in periodos.unique() if p and p.strip() != ""])
+            posicoes_unicas = sorted([p for p in segunda_coluna.unique() if p and p.strip() != ""])
+            
+            variaveis_quant = []
+            dados_quantitativos = {}
+            
+            for col_idx in range(2, data.shape[1]):
+                nome_var = data.columns[col_idx]
+                valores = pd.to_numeric(data.iloc[:, col_idx], errors='coerce')
+                
+                if not valores.dropna().empty:
+                    variaveis_quant.append(nome_var)
+                    dados_quantitativos[nome_var] = valores.reset_index(drop=True)
+            
+            if variaveis_quant:
+                df_completo = pd.DataFrame({
+                    'Nome': nomes.reset_index(drop=True),
+                    'Posição': segunda_coluna.reset_index(drop=True),
+                    'Período': periodos.reset_index(drop=True),
+                    'Minuto': minutos.reset_index(drop=True)
+                })
+                
+                for var_nome, var_valores in dados_quantitativos.items():
+                    df_completo[var_nome] = var_valores
+                
+                df_completo = df_completo[df_completo['Nome'].str.len() > 0]
+                
+                if not df_completo.empty:
+                    st.session_state.df_completo = df_completo
+                    st.session_state.variaveis_quantitativas = variaveis_quant
+                    st.session_state.atletas_selecionados = sorted(df_completo['Nome'].unique().tolist())
+                    st.session_state.todos_posicoes = posicoes_unicas
+                    st.session_state.posicoes_selecionadas = posicoes_unicas.copy()
+                    st.session_state.todos_periodos = periodos_unicos
+                    st.session_state.periodos_selecionados = periodos_unicos.copy()
+                    st.session_state.ordem_personalizada = periodos_unicos.copy()
+                    st.session_state.upload_files_names = arquivos_validos
+                    st.session_state.upload_concluido = True
+                    
+                    if variaveis_quant and st.session_state.variavel_selecionada is None:
+                        st.session_state.variavel_selecionada = variaveis_quant[0]
+                    
+                    return True
+    
+    return False
 
 # ============================================================================
 # CALLBACKS
@@ -1962,94 +2031,22 @@ with st.sidebar:
         key="file_uploader"
     )
     
-    if upload_files and len(upload_files) > 0 and not st.session_state.upload_concluido:
-        with st.spinner('🔄 Processando...'):
-            time.sleep(0.5)
-            try:
-                dataframes = []
-                arquivos_validos = []
-                arquivos_invalidos = []
-                
-                for uploaded_file in upload_files:
-                    try:
-                        data = pd.read_csv(uploaded_file)
-                        
-                        if data.shape[1] >= 3 and not data.empty:
-                            dataframes.append(data)
-                            arquivos_validos.append(uploaded_file.name)
-                        else:
-                            arquivos_invalidos.append(f"{uploaded_file.name}")
-                    except Exception as e:
-                        arquivos_invalidos.append(f"{uploaded_file.name}")
-                
-                if dataframes:
-                    estruturas_ok, estrutura_referencia = verificar_estruturas_arquivos(dataframes)
-                    
-                    if not estruturas_ok:
-                        st.error("❌ " + ("Arquivos com estruturas diferentes" if st.session_state.idioma == 'pt' else 
-                                        "Files with different structures" if st.session_state.idioma == 'en' else
-                                        "Archivos con estructuras diferentes"))
-                        st.stop()
-                    
-                    data = pd.concat(dataframes, ignore_index=True)
-                    
-                    if data.shape[1] >= 3 and not data.empty:
-                        primeira_coluna = data.iloc[:, 0].astype(str)
-                        segunda_coluna = data.iloc[:, 1].astype(str)
-                        
-                        nomes = primeira_coluna.str.split('-').str[0].str.strip()
-                        minutos = primeira_coluna.str[-13:].str.strip()
-                        periodos = primeira_coluna.apply(extrair_periodo)
-                        
-                        periodos_unicos = sorted([p for p in periodos.unique() if p and p.strip() != ""])
-                        posicoes_unicas = sorted([p for p in segunda_coluna.unique() if p and p.strip() != ""])
-                        
-                        variaveis_quant = []
-                        dados_quantitativos = {}
-                        
-                        for col_idx in range(2, data.shape[1]):
-                            nome_var = data.columns[col_idx]
-                            valores = pd.to_numeric(data.iloc[:, col_idx], errors='coerce')
-                            
-                            if not valores.dropna().empty:
-                                variaveis_quant.append(nome_var)
-                                dados_quantitativos[nome_var] = valores.reset_index(drop=True)
-                        
-                        if variaveis_quant:
-                            df_completo = pd.DataFrame({
-                                'Nome': nomes.reset_index(drop=True),
-                                'Posição': segunda_coluna.reset_index(drop=True),
-                                'Período': periodos.reset_index(drop=True),
-                                'Minuto': minutos.reset_index(drop=True)
-                            })
-                            
-                            for var_nome, var_valores in dados_quantitativos.items():
-                                df_completo[var_nome] = var_valores
-                            
-                            df_completo = df_completo[df_completo['Nome'].str.len() > 0]
-                            
-                            if not df_completo.empty:
-                                st.session_state.df_completo = df_completo
-                                st.session_state.variaveis_quantitativas = variaveis_quant
-                                st.session_state.atletas_selecionados = sorted(df_completo['Nome'].unique().tolist())
-                                st.session_state.todos_posicoes = posicoes_unicas
-                                st.session_state.posicoes_selecionadas = posicoes_unicas.copy()
-                                st.session_state.todos_periodos = periodos_unicos
-                                st.session_state.periodos_selecionados = periodos_unicos.copy()
-                                st.session_state.ordem_personalizada = periodos_unicos.copy()
-                                st.session_state.upload_files_names = arquivos_validos
-                                st.session_state.upload_concluido = True
-                                
-                                if variaveis_quant and st.session_state.variavel_selecionada is None:
-                                    st.session_state.variavel_selecionada = variaveis_quant[0]
-                                
-                                sucesso_msg = ("arquivo(s) carregado(s)" if st.session_state.idioma == 'pt' else
-                                              "file(s) loaded" if st.session_state.idioma == 'en' else
-                                              "archivo(s) cargado(s)")
-                                st.success(f"✅ {len(arquivos_validos)} {sucesso_msg}")
-                                st.rerun()
-            except Exception as e:
-                st.error(f"❌ Erro: {str(e)}")
+    # Verificar se novos arquivos foram carregados
+    if upload_files and len(upload_files) > 0:
+        # Resetar flag de conclusão para permitir novo processamento
+        if st.session_state.upload_concluido and len(upload_files) != len(st.session_state.upload_files_names):
+            st.session_state.upload_concluido = False
+        
+        if not st.session_state.upload_concluido:
+            with st.spinner('🔄 Processando...'):
+                time.sleep(0.5)
+                sucesso = processar_upload(upload_files)
+                if sucesso:
+                    sucesso_msg = ("arquivo(s) carregado(s)" if st.session_state.idioma == 'pt' else
+                                  "file(s) loaded" if st.session_state.idioma == 'en' else
+                                  "archivo(s) cargado(s)")
+                    st.success(f"✅ {len(upload_files)} {sucesso_msg}")
+                    st.rerun()
     
     if st.session_state.df_completo is not None:
         st.markdown("---")
@@ -2292,7 +2289,7 @@ if st.session_state.df_completo is not None:
             t['tab_correlation'],
             t['tab_kmeans'],
             t['tab_comparador'],
-            t['tab_mbi'],  # NOVA ABA MBI
+            t['tab_mbi'],
             t['tab_executive']
         ]
         
@@ -2417,27 +2414,22 @@ if st.session_state.df_completo is not None:
                 'Percentual (%)': [contagens.get(r, 0) / len(df_filtrado) * 100 for r in rotulos]
             })
             
-            # =================================================================
-            # NOVA COLUNA: Faixa Percentual baseada nos VALORES (não na frequência)
-            # =================================================================
             percentuais_valores = []
             for i in range(n_classes):
                 limite_inferior = limites[i]
                 limite_superior = limites[i+1]
                 
-                # Calcula o percentual que este valor representa do total da amplitude
                 percentual_inferior = ((limite_inferior - minimo) / amplitude) * 100 if amplitude > 0 else 0
                 percentual_superior = ((limite_superior - minimo) / amplitude) * 100 if amplitude > 0 else 100
                 
                 percentuais_valores.append(f"{percentual_inferior:.1f}% - {percentual_superior:.1f}%")
             
-            # Inserir a nova coluna após 'Faixa de Valores' (posição 1)
             freq_table.insert(1, 'Faixa Percentual (baseada nos valores)', percentuais_valores)
             
-            # Continuar com as colunas existentes
             freq_table['Frequência Acumulada'] = freq_table['Frequência'].cumsum()
             freq_table['Percentual Acumulado (%)'] = freq_table['Percentual (%)'].cumsum()
             
+            # Tabela completa sem necessidade de expandir
             st.dataframe(
                 freq_table.style.format({
                     'Frequência': '{:.0f}',
@@ -2885,13 +2877,12 @@ if st.session_state.df_completo is not None:
                 if len(vars_corr) >= 2:
                     df_corr = df_filtrado[vars_corr].corr()
                     
-                    # Escala de cores acessível para daltônicos
                     colorscale = [
-                        [0, 'rgba(0, 114, 178, 0.9)'],      # Azul escuro
-                        [0.25, 'rgba(86, 180, 233, 0.9)'],   # Azul claro
-                        [0.5, 'rgba(255, 255, 255, 0.9)'],   # Branco
-                        [0.75, 'rgba(230, 159, 0, 0.9)'],    # Laranja
-                        [1, 'rgba(213, 94, 0, 0.9)']         # Vermelho alaranjado
+                        [0, 'rgba(0, 114, 178, 0.9)'],
+                        [0.25, 'rgba(86, 180, 233, 0.9)'],
+                        [0.5, 'rgba(255, 255, 255, 0.9)'],
+                        [0.75, 'rgba(230, 159, 0, 0.9)'],
+                        [1, 'rgba(213, 94, 0, 0.9)']
                     ]
                     
                     df_corr_display = df_corr.copy()
@@ -3459,7 +3450,7 @@ if st.session_state.df_completo is not None:
             else:
                 st.info("ℹ️ São necessários pelo menos 3 atletas e 3 variáveis para comparação")
         
-        with tabs[6]:  # NOVA ABA MBI
+        with tabs[6]:
             st.markdown(f"<h3>🔬 Análise de Magnitude (MBI)</h3>", unsafe_allow_html=True)
             
             st.markdown(f"""
@@ -3473,7 +3464,6 @@ if st.session_state.df_completo is not None:
             </div>
             """, unsafe_allow_html=True)
             
-            # HEATMAP DE MAGNITUDES
             st.markdown("### 🔥 Heatmap de Magnitudes (Z-Scores)")
             
             with st.expander("ℹ️ Sobre o Heatmap de Magnitudes"):
@@ -3485,7 +3475,6 @@ if st.session_state.df_completo is not None:
                 </p>
                 """, unsafe_allow_html=True)
             
-            # Seletor de posição para filtrar o heatmap
             posicao_heatmap = st.selectbox(
                 "Filtrar por posição (opcional)",
                 options=["Todas as posições"] + list(posicoes_selecionadas),
@@ -3505,7 +3494,6 @@ if st.session_state.df_completo is not None:
             
             st.markdown("---")
             
-            # ANÁLISE MBI INDIVIDUAL
             st.markdown("### 📊 Análise Individual por Magnitude")
             
             col_m1, col_m2 = st.columns(2)
