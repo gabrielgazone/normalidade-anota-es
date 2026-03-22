@@ -97,10 +97,11 @@ translations = {
         'min_value': 'VALOR MÍNIMO',
         'minute_of_max': 'Minuto do Máx',
         'minute_of_min': 'Minuto do Mín',
-        'threshold_80': 'LIMIAR 80%',
-        'critical_events': 'EVENTOS CRÍTICOS',
-        'above_threshold': 'acima do limiar de 80%',
-        'below_threshold': 'abaixo do limiar de 80%',
+        'threshold_75': 'LIMIAR 75%',
+        'high_intensity_events': 'EVENTOS DE ALTA INTENSIDADE',
+        'medium_high_intensity_events': 'EVENTOS DE INTENSIDADE MÉDIA-ALTA',
+        'above_threshold_75': 'acima do limiar de 75%',
+        'between_50_75': 'entre 50% e 75%',
         'intensity_zones': '🎚️ Zonas de Intensidade',
         'zone_method': 'Método de definição',
         'percentiles': 'Percentis',
@@ -194,10 +195,11 @@ translations = {
         'min_value': 'MINIMUM VALUE',
         'minute_of_max': 'Max Minute',
         'minute_of_min': 'Min Minute',
-        'threshold_80': '80% THRESHOLD',
-        'critical_events': 'CRITICAL EVENTS',
-        'above_threshold': 'above 80% threshold',
-        'below_threshold': 'below 80% threshold',
+        'threshold_75': '75% THRESHOLD',
+        'high_intensity_events': 'HIGH INTENSITY EVENTS',
+        'medium_high_intensity_events': 'MEDIUM-HIGH INTENSITY EVENTS',
+        'above_threshold_75': 'above 75% threshold',
+        'between_50_75': 'between 50% and 75%',
         'intensity_zones': '🎚️ Intensity Zones',
         'zone_method': 'Definition method',
         'percentiles': 'Percentiles',
@@ -291,10 +293,11 @@ translations = {
         'min_value': 'VALOR MÍNIMO',
         'minute_of_max': 'Minuto del Máx',
         'minute_of_min': 'Minuto del Mín',
-        'threshold_80': 'UMBRAL 80%',
-        'critical_events': 'EVENTOS CRÍTICOS',
-        'above_threshold': 'por encima del umbral 80%',
-        'below_threshold': 'por debajo del umbral 80%',
+        'threshold_75': 'UMBRAL 75%',
+        'high_intensity_events': 'EVENTOS DE ALTA INTENSIDAD',
+        'medium_high_intensity_events': 'EVENTOS DE INTENSIDAD MEDIA-ALTA',
+        'above_threshold_75': 'por encima del umbral 75%',
+        'between_50_75': 'entre 50% y 75%',
         'intensity_zones': '🎚️ Zonas de Intensidad',
         'zone_method': 'Método de definición',
         'percentiles': 'Percentiles',
@@ -406,11 +409,6 @@ st.markdown(f"""
         font-size: 2rem;
         font-weight: 700;
         margin: 5px 0;
-    }}
-    
-    .executive-card .delta {{
-        font-size: 0.9rem;
-        margin: 0;
     }}
     
     .executive-card .icon {{
@@ -530,6 +528,37 @@ st.markdown(f"""
     }}
     
     .warning-card .sub-label {{
+        font-size: 0.8rem;
+        opacity: 0.8;
+    }}
+    
+    /* Medium-high intensity card */
+    .medium-card {{
+        background: linear-gradient(135deg, {COR_SECUNDARIA} 0%, #c97e00 100%);
+        padding: 20px;
+        border-radius: 16px;
+        box-shadow: 0 10px 25px rgba(230, 159, 0, 0.2);
+        text-align: center;
+        color: white;
+        margin: 10px 0;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }}
+    
+    .medium-card .label {{
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        opacity: 0.9;
+        font-weight: 500;
+    }}
+    
+    .medium-card .value {{
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 10px 0;
+    }}
+    
+    .medium-card .sub-label {{
         font-size: 0.8rem;
         opacity: 0.8;
     }}
@@ -957,19 +986,13 @@ def verificar_estruturas_arquivos(dataframes):
     
     return True, primeira_estrutura
 
-def executive_card(titulo, valor, delta, icone, cor_status=COR_PRIMARIA):
-    delta_icon = "▲" if delta > 0 else "▼"
-    delta_color = COR_SUCESSO if delta > 0 else COR_ALERTA
-    
+def executive_card(titulo, valor, icone, cor_status=COR_PRIMARIA):
     st.markdown(f"""
     <div class="executive-card" style="border-left-color: {cor_status};">
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <div>
                 <p class="label">{titulo}</p>
                 <p class="value">{valor}</p>
-                <p class="delta" style="color: {delta_color};">
-                    {delta_icon} {abs(delta):.1f}% vs. média
-                </p>
             </div>
             <div class="icon">{icone}</div>
         </div>
@@ -997,6 +1020,15 @@ def time_metric_card(label, valor, sub_label="", cor=COR_PRIMARIA):
 def warning_card(titulo, valor, subtitulo, icone="⚠️"):
     st.markdown(f"""
     <div class="warning-card fade-in">
+        <div class="label">{icone} {titulo}</div>
+        <div class="value">{valor}</div>
+        <div class="sub-label">{subtitulo}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+def medium_card(titulo, valor, subtitulo, icone="📊"):
+    st.markdown(f"""
+    <div class="medium-card fade-in">
         <div class="label">{icone} {titulo}</div>
         <div class="value">{valor}</div>
         <div class="sub-label">{subtitulo}</div>
@@ -1054,48 +1086,47 @@ def criar_timeline_profissional(df, variavel, t):
     
     media_movevel = df[variavel].rolling(window=5, min_periods=1).mean()
     valor_maximo = df[variavel].max()
-    limiar_80 = valor_maximo * 0.8
+    limiar_75 = valor_maximo * 0.75
     
-    acima_limiar = df[variavel] > limiar_80
-    abaixo_limiar = df[variavel] <= limiar_80
+    acima_limiar = df[variavel] > limiar_75
     
     fig.add_hrect(
-        y0=limiar_80,
+        y0=limiar_75,
         y1=valor_maximo * 1.05,
         fillcolor=f"rgba(213, 94, 0, 0.15)",
         line_width=0,
         layer="below",
-        name=f"{t['above_threshold']}"
+        name=f"{t['above_threshold_75']}"
     )
     
     fig.add_hrect(
         y0=0,
-        y1=limiar_80,
+        y1=limiar_75,
         fillcolor=f"rgba(0, 114, 178, 0.1)",
         line_width=0,
         layer="below",
-        name=f"{t['below_threshold']}"
+        name=f"abaixo do limiar de 75%"
     )
     
     fig.add_hline(
-        y=limiar_80,
+        y=limiar_75,
         line_dash="solid",
         line_color=COR_ALERTA,
         line_width=2,
-        annotation_text=f"🔴 {t['threshold_80']}: {limiar_80:.2f}",
+        annotation_text=f"🔴 {t['threshold_75']}: {limiar_75:.2f}",
         annotation_position="top left",
         annotation_font=dict(color="white", size=11)
     )
     
     df_acima = df[acima_limiar].copy()
-    df_abaixo = df[abaixo_limiar].copy()
+    df_abaixo = df[~acima_limiar].copy()
     
     if not df_acima.empty:
         fig.add_trace(go.Scatter(
             x=df_acima['Minuto'],
             y=df_acima[variavel],
             mode='markers',
-            name=t['above_threshold'],
+            name=t['above_threshold_75'],
             marker=dict(
                 size=10,
                 color=COR_ALERTA,
@@ -1103,7 +1134,7 @@ def criar_timeline_profissional(df, variavel, t):
                 line=dict(color='white', width=1)
             ),
             hovertemplate='<b>Minuto:</b> %{x}<br>' +
-                          '<b>Valor:</b> %{y:.2f} (ACIMA DO LIMIAR)<extra></extra>'
+                          '<b>Valor:</b> %{y:.2f} (ALTA INTENSIDADE)<extra></extra>'
         ))
     
     if not df_abaixo.empty:
@@ -1111,7 +1142,7 @@ def criar_timeline_profissional(df, variavel, t):
             x=df_abaixo['Minuto'],
             y=df_abaixo[variavel],
             mode='markers',
-            name=t['below_threshold'],
+            name='abaixo do limiar',
             marker=dict(
                 size=8,
                 color=COR_PRIMARIA,
@@ -1153,7 +1184,7 @@ def criar_timeline_profissional(df, variavel, t):
     )
     
     fig.update_layout(
-        title=f"Evolução de {variavel} - Áreas: Azul (abaixo do limiar) | Vermelho (acima do limiar)",
+        title=f"Evolução de {variavel} - Áreas: Azul (abaixo do limiar) | Vermelho (acima do limiar de 75%)",
         xaxis_title="Minuto",
         yaxis_title=variavel,
         hovermode='closest',
@@ -1319,7 +1350,7 @@ def criar_timeline_multipla(df, variavel, periodos, t):
             continue
         
         valor_maximo = df_periodo[variavel].max()
-        limiar_80 = valor_maximo * 0.8
+        limiar_75 = valor_maximo * 0.75
         
         fig.add_trace(
             go.Scatter(
@@ -1335,7 +1366,7 @@ def criar_timeline_multipla(df, variavel, periodos, t):
         )
         
         fig.add_hline(
-            y=limiar_80,
+            y=limiar_75,
             line_dash="dash",
             line_color=COR_ALERTA,
             line_width=1,
@@ -1428,34 +1459,34 @@ def criar_timeline_unica_com_seletor(df, variavel, periodos_selecionados, t):
             ))
     else:
         valor_maximo = df_plot[variavel].max()
-        limiar_80 = valor_maximo * 0.8
+        limiar_75 = valor_maximo * 0.75
         media = df_plot[variavel].mean()
         desvio = df_plot[variavel].std()
         
         fig.add_hrect(
-            y0=limiar_80,
+            y0=limiar_75,
             y1=valor_maximo * 1.05,
             fillcolor=f"rgba(213, 94, 0, 0.15)",
             line_width=0,
             layer="below",
-            name="Acima do limiar"
+            name="Acima do limiar de 75%"
         )
         
         fig.add_hrect(
             y0=0,
-            y1=limiar_80,
+            y1=limiar_75,
             fillcolor=f"rgba(0, 114, 178, 0.1)",
             line_width=0,
             layer="below",
-            name="Abaixo do limiar"
+            name="Abaixo do limiar de 75%"
         )
         
         fig.add_hline(
-            y=limiar_80,
+            y=limiar_75,
             line_dash="solid",
             line_color=COR_ALERTA,
             line_width=2,
-            annotation_text=f"🔴 Limiar 80%: {limiar_80:.2f}",
+            annotation_text=f"🔴 Limiar 75%: {limiar_75:.2f}",
             annotation_position="top left"
         )
         
@@ -2256,25 +2287,25 @@ if st.session_state.df_completo is not None:
         st.markdown(f"<h2>📊 {t['title'].split('Pro')[0] if 'Pro' in t['title'] else 'Visão Geral'}</h2>", unsafe_allow_html=True)
         
         media_global = df_filtrado[variavel_analise].mean()
-        media_posicoes = df_filtrado.groupby('Posição')[variavel_analise].mean()
-        melhor_posicao = media_posicoes.idxmax() if not media_posicoes.empty else "N/A"
-        pior_posicao = media_posicoes.idxmin() if not media_posicoes.empty else "N/A"
+        desvio_global = df_filtrado[variavel_analise].std()
+        cv_global = calcular_cv(media_global, desvio_global)
+        amplitude_global = df_filtrado[variavel_analise].max() - df_filtrado[variavel_analise].min()
         
         if n_colunas == 1:
-            executive_card(t['mean'], f"{media_global:.2f}", 5.2, "📊")
-            executive_card("Melhor Posição", melhor_posicao, 8.1, "🏆", COR_SUCESSO)
-            executive_card("Pior Posição", pior_posicao, -3.4, "📉", COR_ALERTA)
-            executive_card(t['observations'], len(df_filtrado), 0, "👥")
+            executive_card(t['mean'], f"{media_global:.2f}", "📊")
+            executive_card(t['cv'], f"{cv_global:.1f}%", "📈")
+            executive_card(t['amplitude'], f"{amplitude_global:.2f}", "📏")
+            executive_card(t['observations'], len(df_filtrado), "👥")
         else:
             cols_exec = st.columns(4)
             with cols_exec[0]:
-                executive_card(t['mean'], f"{media_global:.2f}", 5.2, "📊")
+                executive_card(t['mean'], f"{media_global:.2f}", "📊")
             with cols_exec[1]:
-                executive_card("Melhor Posição", melhor_posicao, 8.1, "🏆", COR_SUCESSO)
+                executive_card(t['cv'], f"{cv_global:.1f}%", "📈")
             with cols_exec[2]:
-                executive_card("Pior Posição", pior_posicao, -3.4, "📉", COR_ALERTA)
+                executive_card(t['amplitude'], f"{amplitude_global:.2f}", "📏")
             with cols_exec[3]:
-                executive_card(t['observations'], len(df_filtrado), 0, "👥")
+                executive_card(t['observations'], len(df_filtrado), "👥")
         
         st.markdown("---")
         
@@ -2451,10 +2482,14 @@ if st.session_state.df_completo is not None:
             minuto_maximo = extrair_minuto_do_extremo(df_tempo, variavel_analise, 'Minuto', 'max')
             minuto_minimo = extrair_minuto_do_extremo(df_tempo, variavel_analise, 'Minuto', 'min')
             media_tempo = df_tempo[variavel_analise].mean()
-            limiar_80 = valor_maximo * 0.8
+            limiar_75 = valor_maximo * 0.75
+            limiar_50 = valor_maximo * 0.5
             
-            eventos_acima_80 = (df_tempo[variavel_analise] > limiar_80).sum()
-            percentual_acima_80 = (eventos_acima_80 / len(df_tempo)) * 100 if len(df_tempo) > 0 else 0
+            eventos_acima_75 = (df_tempo[variavel_analise] >= limiar_75).sum()
+            percentual_acima_75 = (eventos_acima_75 / len(df_tempo)) * 100 if len(df_tempo) > 0 else 0
+            
+            eventos_entre_50_75 = ((df_tempo[variavel_analise] >= limiar_50) & (df_tempo[variavel_analise] < limiar_75)).sum()
+            percentual_entre_50_75 = (eventos_entre_50_75 / len(df_tempo)) * 100 if len(df_tempo) > 0 else 0
             
             cols_t = st.columns(5)
             with cols_t[0]:
@@ -2464,9 +2499,16 @@ if st.session_state.df_completo is not None:
             with cols_t[2]:
                 time_metric_card(t['mean'], f"{media_tempo:.2f}", t['mean'], COR_PRIMARIA)
             with cols_t[3]:
-                time_metric_card(t['threshold_80'], f"{limiar_80:.2f}", f"80% do máx ({valor_maximo:.2f})", COR_SECUNDARIA)
+                time_metric_card(t['threshold_75'], f"{limiar_75:.2f}", f"75% do máx ({valor_maximo:.2f})", COR_SECUNDARIA)
             with cols_t[4]:
-                warning_card(t['critical_events'], f"{eventos_acima_80}", f"{percentual_acima_80:.1f}% {t['above_threshold']}", "⚠️")
+                warning_card(t['high_intensity_events'], f"{eventos_acima_75}", f"{percentual_acima_75:.1f}% {t['above_threshold_75']}", "⚡")
+            
+            st.markdown("---")
+            
+            # Card adicional para eventos de intensidade média-alta
+            col_medium1, col_medium2, col_medium3 = st.columns([1, 2, 1])
+            with col_medium2:
+                medium_card(t['medium_high_intensity_events'], f"{eventos_entre_50_75}", f"{percentual_entre_50_75:.1f}% {t['between_50_75']}", "📊")
             
             st.markdown("---")
             st.markdown(f"<h4>{t['intensity_zones']}</h4>", unsafe_allow_html=True)
