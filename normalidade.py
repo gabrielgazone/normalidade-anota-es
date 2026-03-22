@@ -98,6 +98,7 @@ translations = {
         'minute_of_max': 'Minuto do Máx',
         'minute_of_min': 'Minuto do Mín',
         'threshold_75': 'LIMIAR 75%',
+        'threshold_50': 'LIMIAR 50%',
         'high_intensity_events': 'EVENTOS DE ALTA INTENSIDADE',
         'medium_high_intensity_events': 'EVENTOS DE INTENSIDADE MÉDIA-ALTA',
         'above_threshold_75': 'acima do limiar de 75%',
@@ -196,6 +197,7 @@ translations = {
         'minute_of_max': 'Max Minute',
         'minute_of_min': 'Min Minute',
         'threshold_75': '75% THRESHOLD',
+        'threshold_50': '50% THRESHOLD',
         'high_intensity_events': 'HIGH INTENSITY EVENTS',
         'medium_high_intensity_events': 'MEDIUM-HIGH INTENSITY EVENTS',
         'above_threshold_75': 'above 75% threshold',
@@ -294,6 +296,7 @@ translations = {
         'minute_of_max': 'Minuto del Máx',
         'minute_of_min': 'Minuto del Mín',
         'threshold_75': 'UMBRAL 75%',
+        'threshold_50': 'UMBRAL 50%',
         'high_intensity_events': 'EVENTOS DE ALTA INTENSIDAD',
         'medium_high_intensity_events': 'EVENTOS DE INTENSIDAD MEDIA-ALTA',
         'above_threshold_75': 'por encima del umbral 75%',
@@ -2483,7 +2486,7 @@ if st.session_state.df_completo is not None:
             minuto_minimo = extrair_minuto_do_extremo(df_tempo, variavel_analise, 'Minuto', 'min')
             media_tempo = df_tempo[variavel_analise].mean()
             limiar_75 = valor_maximo * 0.75
-            limiar_50 = valor_maximo * 0.5
+            limiar_50 = valor_maximo * 0.50
             
             eventos_acima_75 = (df_tempo[variavel_analise] >= limiar_75).sum()
             percentual_acima_75 = (eventos_acima_75 / len(df_tempo)) * 100 if len(df_tempo) > 0 else 0
@@ -2491,24 +2494,27 @@ if st.session_state.df_completo is not None:
             eventos_entre_50_75 = ((df_tempo[variavel_analise] >= limiar_50) & (df_tempo[variavel_analise] < limiar_75)).sum()
             percentual_entre_50_75 = (eventos_entre_50_75 / len(df_tempo)) * 100 if len(df_tempo) > 0 else 0
             
+            # Cards na ordem solicitada: Mínimo, Máximo, Média, Limiar 50%, Limiar 75%
             cols_t = st.columns(5)
             with cols_t[0]:
-                time_metric_card(t['max_value'], f"{valor_maximo:.2f}", f"{t['minute_of_max']}: {minuto_maximo}", COR_ALERTA)
-            with cols_t[1]:
                 time_metric_card(t['min_value'], f"{valor_minimo:.2f}", f"{t['minute_of_min']}: {minuto_minimo}", COR_SUCESSO)
+            with cols_t[1]:
+                time_metric_card(t['max_value'], f"{valor_maximo:.2f}", f"{t['minute_of_max']}: {minuto_maximo}", COR_ALERTA)
             with cols_t[2]:
                 time_metric_card(t['mean'], f"{media_tempo:.2f}", t['mean'], COR_PRIMARIA)
             with cols_t[3]:
-                time_metric_card(t['threshold_75'], f"{limiar_75:.2f}", f"75% do máx ({valor_maximo:.2f})", COR_SECUNDARIA)
+                time_metric_card(t['threshold_50'], f"{limiar_50:.2f}", f"50% do máx ({valor_maximo:.2f})", COR_SECUNDARIA)
             with cols_t[4]:
-                warning_card(t['high_intensity_events'], f"{eventos_acima_75}", f"{percentual_acima_75:.1f}% {t['above_threshold_75']}", "⚡")
+                time_metric_card(t['threshold_75'], f"{limiar_75:.2f}", f"75% do máx ({valor_maximo:.2f})", COR_ALERTA)
             
             st.markdown("---")
             
-            # Card adicional para eventos de intensidade média-alta
-            col_medium1, col_medium2, col_medium3 = st.columns([1, 2, 1])
-            with col_medium2:
+            # Dois cards lado a lado: Eventos de Média-Alta e Eventos de Alta Intensidade
+            col_intensity1, col_intensity2 = st.columns(2)
+            with col_intensity1:
                 medium_card(t['medium_high_intensity_events'], f"{eventos_entre_50_75}", f"{percentual_entre_50_75:.1f}% {t['between_50_75']}", "📊")
+            with col_intensity2:
+                warning_card(t['high_intensity_events'], f"{eventos_acima_75}", f"{percentual_acima_75:.1f}% {t['above_threshold_75']}", "⚡")
             
             st.markdown("---")
             st.markdown(f"<h4>{t['intensity_zones']}</h4>", unsafe_allow_html=True)
