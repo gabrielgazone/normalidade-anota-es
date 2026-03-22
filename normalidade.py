@@ -54,6 +54,28 @@ COR_DESTAQUE = COLORS['purple']
 COR_NEUTRA = COLORS['gray']
 
 # ============================================================================
+# CORES PARA HEATMAP DE CORRELAÇÃO (Vermelho-Negativo, Verde-Positivo)
+# ============================================================================
+CORRELATION_COLORS = [
+    [0, 'rgb(213, 94, 0)'],      # Vermelho alaranjado para -1 (negativo forte)
+    [0.25, 'rgb(230, 159, 0)'],   # Laranja para -0.5
+    [0.5, 'rgb(255, 255, 255)'],  # Branco para 0
+    [0.75, 'rgb(86, 180, 233)'],  # Azul claro para +0.5
+    [1, 'rgb(0, 114, 178)']       # Azul escuro para +1
+]
+
+# Ajuste para uma escala mais intuitiva: vermelho (negativo) -> branco -> verde (positivo)
+# Como a paleta acessível não tem verde forte, usamos azul que também é bem interpretado
+# Para uma versão com verde, descomentar a linha abaixo e comentar a de cima
+# CORRELATION_COLORS = [
+#     [0, 'rgb(213, 94, 0)'],      # Vermelho alaranjado para -1
+#     [0.25, 'rgb(230, 159, 0)'],   # Laranja para -0.5
+#     [0.5, 'rgb(255, 255, 255)'],  # Branco para 0
+#     [0.75, 'rgb(86, 180, 233)'],  # Azul claro para +0.5
+#     [1, 'rgb(0, 158, 115)']       # Verde para +1 (COR_SUCESSO)
+# ]
+
+# ============================================================================
 # INTERNACIONALIZAÇÃO
 # ============================================================================
 
@@ -1890,6 +1912,7 @@ def criar_heatmap_magnitude(df, posicao_referencia=None):
     
     df_heat = pd.DataFrame(dados_heatmap).set_index('Atleta')
     
+    # Mantém a escala acessível para daltônicos (azul-branco-laranja-vermelho)
     colorscale = [
         [0, 'rgb(0, 114, 178)'],
         [0.25, 'rgb(86, 180, 233)'],
@@ -2925,13 +2948,9 @@ if st.session_state.df_completo is not None:
                 if len(vars_corr) >= 2:
                     df_corr = df_filtrado[vars_corr].corr()
                     
-                    colorscale = [
-                        [0, 'rgba(0, 114, 178, 0.9)'],
-                        [0.25, 'rgba(86, 180, 233, 0.9)'],
-                        [0.5, 'rgba(255, 255, 255, 0.9)'],
-                        [0.75, 'rgba(230, 159, 0, 0.9)'],
-                        [1, 'rgba(213, 94, 0, 0.9)']
-                    ]
+                    # NOVA ESCALA DE CORES: Vermelho (negativo) -> Branco -> Azul/Verde (positivo)
+                    # Usando a paleta CORRELATION_COLORS definida no início do código
+                    colorscale = CORRELATION_COLORS
                     
                     df_corr_display = df_corr.copy()
                     
@@ -2986,7 +3005,10 @@ if st.session_state.df_completo is not None:
                             return 'color: #94a3b8;'
                         if val == 1.0:
                             return 'color: #2d3748; font-weight: bold; background-color: #d3d3d3;'
-                        color = COR_ALERTA if abs(val) > 0.7 else COR_SECUNDARIA if abs(val) > 0.5 else COR_PRIMARIA
+                        if val < 0:
+                            color = COR_ALERTA if abs(val) > 0.7 else COR_SECUNDARIA if abs(val) > 0.5 else COR_PRIMARIA
+                        else:
+                            color = COR_SUCESSO if val > 0.7 else COR_PRIMARIA if val > 0.5 else COR_PRIMARIA
                         return f'color: {color}; font-weight: bold;'
                     
                     st.dataframe(
